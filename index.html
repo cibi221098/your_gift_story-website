@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Your Gift Story — Beyond Just a Gift</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
@@ -288,6 +291,7 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
 <!-- ═══ HOME PAGE ═══ -->
 <div id="page-home" class="page active">
 
+  <!-- YGS v2.5 - fixed fetch - 2026-05-23 -->
   <!-- HERO: Style E — ghost word + blobs + cream BG -->
   <section class="hero">
     <div class="hero-blob hero-blob-1"></div>
@@ -575,7 +579,7 @@ async function initSite() {
 
   // Show debug info on page temporarily
   const dbgEl = document.getElementById('sbDebug');
-  if (dbgEl) dbgEl.textContent = dbg.join(' | ');
+  if (dbgEl) dbgEl.textContent = 'v2.5 | ' + dbg.join(' | ');
 
   renderBestsellers();
   renderCategoriesGrid();
@@ -606,15 +610,7 @@ function bsCardHTML(p) {
     ? `<img src="${p.photos[0]}" style="width:100%;height:100%;object-fit:cover" alt="${p.name}">`
     : (p.emoji || '🎁');
   const imgBg = p.photos && p.photos[0] ? '' : 'bs-i1';
-  return `<div class="bs-card" onclick="showPage('shop')">
-    <span class="bs-badge${p.is_bestseller ? '' : ' new'}">${p.is_bestseller ? 'Bestseller' : 'New'}</span>
-    <div class="bs-img ${imgBg}" style="${p.photos&&p.photos[0]?'padding:0;overflow:hidden':''}">${img}</div>
-    <div class="bs-body">
-      <div class="bs-name">${p.name}</div>
-      <div class="bs-desc">${p.description||''}</div>
-      <div class="bs-footer"><span class="bs-price">₹${Number(p.price).toLocaleString('en-IN')}</span><button class="bs-btn">Shop Now</button></div>
-    </div>
-  </div>`;
+  return `<div class="bs-card" onclick="showPage('shop')">   <span class="bs-badge${p.is_bestseller ? '' : ' new'}">${p.is_bestseller ? 'Bestseller' : 'New'}</span>   <div class="bs-img ${imgBg}" style="${p.photos&&p.photos[0]?'padding:0;overflow:hidden':''}">${img}</div>   <div class="bs-body">    <div class="bs-name">${p.name}</div>    <div class="bs-desc">${p.description||''}</div>    <div class="bs-footer"><span class="bs-price">₹${Number(p.price).toLocaleString('en-IN')}</span><button class="bs-btn">Shop Now</button></div>   </div>  </div>`;
 }
 
 /* ═══════════════════════════════════════
@@ -625,11 +621,7 @@ function renderCategoriesGrid() {
   if (!ALL_CATEGORIES.length) { grid.innerHTML = ''; return; }
   grid.innerHTML = ALL_CATEGORIES.map(c => {
     const count = ALL_PRODUCTS.filter(p => p.category === c.name).length;
-    return `<div class="cat-card" onclick="showPage('shop','${c.name}')">
-      <span class="cat-icon">${c.icon||'🎁'}</span>
-      <div class="cat-name">${c.name}</div>
-      <div class="cat-count">${count} item${count!==1?'s':''}</div>
-    </div>`;
+    return `<div class="cat-card" onclick="showPage('shop','${c.name}')">    <span class="cat-icon">${c.icon||'🎁'}</span>    <div class="cat-name">${c.name}</div>    <div class="cat-count">${count} item${count!==1?'s':''}</div>   </div>`;
   }).join('');
 }
 
@@ -642,10 +634,7 @@ function renderSidebar() {
   document.getElementById('countAll').textContent = total;
   const catItems = ALL_CATEGORIES.map(c => {
     const count = ALL_PRODUCTS.filter(p => p.category === c.name).length;
-    return `<div class="sidebar-cat" data-cat="${c.name}" onclick="filterShop('${c.name}')">
-      <span>${c.icon||''} ${c.name}</span>
-      <span class="sidebar-cat-count">${count}</span>
-    </div>`;
+    return `<div class="sidebar-cat" data-cat="${c.name}" onclick="filterShop('${c.name}')">    <span>${c.icon||''} ${c.name}</span>    <span class="sidebar-cat-count">${count}</span>   </div>`;
   }).join('');
   // Keep "All Gifts" + append categories
   sb.innerHTML = `<div class="sidebar-cat active" data-cat="all" onclick="filterShop('all')"><span>All Gifts</span><span class="sidebar-cat-count" id="countAll">${total}</span></div>` + catItems;
@@ -715,12 +704,7 @@ function productCardHTML(p) {
   const imgBg = p.photos && p.photos[0] ? 'style="padding:0;overflow:hidden"' : '';
 
   const opts = p.customisation_options || [];
-  const optHTML = opts.map(g => `
-    <div class="ctrl-label">${g.label}</div>
-    <div class="chips">${(g.options||[]).map((o,i) =>
-      `<span class="chip${i===0?' active':''}" onclick="selectChip(this)">${o}</span>`
-    ).join('')}</div>
-  `).join('');
+  const optHTML = opts.map(g => `   <div class="ctrl-label">${g.label}</div>   <div class="chips">${(g.options||[]).map((o,i) =>    `<span class="chip${i===0?' active':''}" onclick="selectChip(this)">${o}</span>`   ).join('')}</div>  `).join('');
 
   const badge = p.is_bestseller
     ? '<span class="product-badge">Bestseller</span>'
@@ -728,15 +712,7 @@ function productCardHTML(p) {
 
   const price = Number(p.price).toLocaleString('en-IN');
 
-  return `${badge}
-    <div class="product-img" ${imgBg}>${imgHTML}</div>
-    <div class="product-body">
-      <div class="product-name">${p.name}</div>
-      <div class="product-desc">${p.description||''}</div>
-      <div class="product-price">₹${price}</div>
-      <div class="customise-section">${optHTML}</div>
-      <button class="btn-atc" onclick="addToCart(this,'${p.name.replace(/'/g,"\'")}',${p.price},'${p.emoji||'🎁'}','')">🛒 Add to Cart</button>
-    </div>`;
+  return `${badge}   <div class="product-img" ${imgBg}>${imgHTML}</div>   <div class="product-body">    <div class="product-name">${p.name}</div>    <div class="product-desc">${p.description||''}</div>    <div class="product-price">₹${price}</div>    <div class="customise-section">${optHTML}</div>    <button class="btn-atc" onclick="addToCart(this,'${p.name.replace(/'/g,"\'")}',${p.price},'${p.emoji||'🎁'}','')">🛒 Add to Cart</button>   </div>`;
 }
 
 /* ═══════════════════════════════════════
@@ -806,27 +782,12 @@ function buildSpotlight() {
   const thumbsEl = document.getElementById('spThumbs');
   if (!stage) return;
   const testiData = ALL_TESTIMONIALS.length ? ALL_TESTIMONIALS.map(t => ({stars:"★".repeat(t.rating||5),text:t.review_text,name:t.customer_name,occasion:(t.occasion||"")+(t.location?(" · "+t.location):""),initials:t.customer_name.split(" ").map(w=>w[0]).join("").substring(0,2).toUpperCase()})) : [{stars:"★★★★★",text:"Wonderful handcrafted gifts, made with so much love and care!",name:"Happy Customer",occasion:"Coimbatore",initials:"HC"}];
-  stage.innerHTML = testiData.map((t,i) => `
-    <div class="sp-card${i===0?' active':''}" id="sp-card-${i}">
-      <span class="sp-mark">&#8220;</span>
-      <div class="sp-stars">${t.stars}</div>
-      <p class="sp-text">${t.text}</p>
-      <div class="sp-author">
-        <div class="sp-avatar">${t.initials}</div>
-        <div class="sp-info">
-          <div class="sp-name">${t.name}</div>
-          <div class="sp-occ">${t.occasion}</div>
-        </div>
-      </div>
-    </div>`).join('');
+  stage.innerHTML = testiData.map((t,i) => `   <div class="sp-card${i===0?' active':''}" id="sp-card-${i}">    <span class="sp-mark">&#8220;</span>    <div class="sp-stars">${t.stars}</div>    <p class="sp-text">${t.text}</p>    <div class="sp-author">     <div class="sp-avatar">${t.initials}</div>     <div class="sp-info">      <div class="sp-name">${t.name}</div>      <div class="sp-occ">${t.occasion}</div>     </div>    </div>   </div>`).join('');
   dotsEl.innerHTML = TESTIMONIALS.map((_,i) =>
     `<button class="sp-dot${i===0?' active':''}" onclick="spGo(${i})" aria-label="Review ${i+1}"></button>`
   ).join('');
   thumbsEl.innerHTML = testiData.map((t,i) =>
-    `<div class="sp-thumb${i===0?' active':''}" onclick="spGo(${i})">
-      <span class="sp-thumb-name">${t.name}</span>
-      <span class="sp-thumb-occ">${t.occasion.split('·')[0].trim()}</span>
-    </div>`
+    `<div class="sp-thumb${i===0?' active':''}" onclick="spGo(${i})">    <span class="sp-thumb-name">${t.name}</span>    <span class="sp-thumb-occ">${t.occasion.split('·')[0].trim()}</span>   </div>`
   ).join('');
   spTimer = setInterval(() => spGo(spCur + 1), 4500);
 }
@@ -874,15 +835,7 @@ function updateCartUI() {
   cart.forEach(item => {
     const div = document.createElement('div');
     div.className = 'cart-item';
-    div.innerHTML = `<div class="cart-item-img ${item.imgClass}">${item.icon}</div>
-      <div class="cart-item-info">
-        <div class="cart-item-name">${item.name}</div>
-        <div class="cart-item-custom">${item.custom}</div>
-        <div class="cart-item-row">
-          <span class="cart-item-price">₹${Number(item.price).toLocaleString('en-IN')}</span>
-          <button class="btn-remove" onclick="removeFromCart(${item.id})">✕</button>
-        </div>
-      </div>`;
+    div.innerHTML = `<div class="cart-item-img ${item.imgClass}">${item.icon}</div>    <div class="cart-item-info">     <div class="cart-item-name">${item.name}</div>     <div class="cart-item-custom">${item.custom}</div>     <div class="cart-item-row">      <span class="cart-item-price">₹${Number(item.price).toLocaleString('en-IN')}</span>      <button class="btn-remove" onclick="removeFromCart(${item.id})">✕</button>     </div>    </div>`;
     el.appendChild(div);
   });
   updateTotal();
