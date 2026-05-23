@@ -154,17 +154,26 @@ section{padding:5rem 2rem}
 .sp-thumb-occ{font-size:10px;color:rgba(250,246,239,0.35)}
 
 /* ── ABOUT ── */
-.about-section{background:var(--gold-light);border-top:1px solid rgba(201,166,104,0.2);border-bottom:1px solid rgba(201,166,104,0.2)}
-.about-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center}
-.about-emoji-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.about-tile{background:var(--white);border-radius:16px;padding:1.5rem;text-align:center;border:1px solid rgba(201,166,104,0.2)}
-.about-tile-icon{font-size:30px;margin-bottom:0.5rem}
-.about-tile-text{font-size:13px;font-weight:500;color:var(--teal)}
-.about-h2{font-family:var(--font-display);font-size:clamp(28px,3.5vw,42px);font-weight:400;color:var(--teal);margin-bottom:1rem;line-height:1.2}
-.about-p{font-size:14px;color:var(--gray);line-height:1.8;margin-bottom:1.5rem}
-.about-features{display:flex;flex-direction:column;gap:0.75rem}
+.about-section{background:var(--gold-light);border-top:1px solid rgba(201,166,104,0.25);border-bottom:1px solid rgba(201,166,104,0.25)}
+.about-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center}
+.about-eyebrow{font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:1rem;opacity:0.9}
+.about-h2{font-family:var(--font-display);font-size:clamp(30px,3.8vw,46px);font-weight:400;color:var(--teal);margin-bottom:1rem;line-height:1.15}
+.about-h2 em{font-style:italic;color:var(--teal)}
+.about-p{font-size:14px;color:var(--gray);line-height:1.85;margin-bottom:1.75rem}
+.about-features{display:flex;flex-direction:column;gap:0.85rem}
 .about-feat{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--charcoal)}
-.feat-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0}
+.about-feat-icon{width:24px;height:24px;border-radius:50%;background:var(--pink);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;color:var(--teal);font-weight:600;font-family:var(--font-body)}
+.feat-dot{display:none}
+.about-timeline{display:flex;flex-direction:column;gap:0}
+.about-tl-step{display:flex;gap:12px;padding-bottom:18px}
+.about-tl-step:last-child{padding-bottom:0}
+.about-tl-linewrap{display:flex;flex-direction:column;align-items:center;flex-shrink:0}
+.about-tl-dot{width:36px;height:36px;border-radius:50%;background:#fff;border:1px solid rgba(201,166,104,0.4);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;box-shadow:0 2px 8px rgba(201,166,104,0.15)}
+.about-tl-conn{width:1px;flex:1;background:rgba(201,166,104,0.3);margin-top:4px;min-height:18px}
+.about-tl-step:last-child .about-tl-conn{display:none}
+.about-tl-content{padding-top:6px}
+.about-tl-title{font-size:14px;font-weight:500;color:var(--teal);font-family:var(--font-body);margin-bottom:2px}
+.about-tl-sub{font-size:11px;color:var(--gray);font-family:var(--font-body)}
 
 /* ── SHOP PAGE ── */
 .shop-page-hero{background:var(--teal);padding:3.5rem 2rem 2.5rem;margin-top:64px}
@@ -271,6 +280,90 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
 .btn-whatsapp:hover{background:#1ebe5d}
 .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(80px);background:var(--teal);color:var(--cream);padding:12px 24px;border-radius:40px;font-size:13px;font-weight:500;z-index:300;transition:transform .4s cubic-bezier(.4,0,.2,1);white-space:nowrap;pointer-events:none}
 .toast.show{transform:translateX(-50%) translateY(0)}
+
+/* ══════════════════════════════════════
+   MOBILE RESPONSIVE
+══════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* NAV */
+  .nav-links{display:none}
+  .nav-inner{padding:0 1rem}
+  .btn-cart{padding:8px 14px;font-size:12px}
+
+  /* HERO */
+  .hero{height:auto;min-height:85vh}
+  .hero-body{padding:2rem 1.25rem 1.5rem}
+  .hero-ghost{font-size:clamp(60px,20vw,100px)}
+  .hero-tagline{font-size:clamp(26px,7vw,40px)}
+  .hero-tagline-2{font-size:clamp(20px,5.5vw,32px);margin-bottom:1rem}
+  .hero-sub{font-size:13px;margin-bottom:1.25rem}
+  .hero-btns{flex-direction:column;align-items:center;gap:10px;width:100%}
+  .hero-btn-p,.hero-btn-w{width:100%;text-align:center;padding:13px 20px}
+  .hero-eyebrow{margin-bottom:.75rem}
+
+  /* MARQUEE */
+  .marquee-item{font-size:11px;padding:0 1rem}
+
+  /* BESTSELLERS */
+  .bestsellers-grid{grid-template-columns:1fr 1fr;gap:12px}
+  .bs-img{height:130px}
+  .bs-name{font-size:13px}
+  .bs-desc{display:none}
+  .bs-price{font-size:16px}
+
+  /* CATEGORIES */
+  .categories-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .cat-icon{font-size:28px;margin-bottom:.5rem}
+  .cat-name{font-size:12px}
+
+  /* SECTION HEADERS */
+  .section-title{font-size:clamp(28px,7vw,38px)}
+  section{padding:3rem 1.25rem}
+
+  /* TESTIMONIALS */
+  .spotlight-outer{padding:0 1rem}
+  .sp-arrow-prev{left:-8px}
+  .sp-arrow-next{right:-8px}
+  .sp-text{font-size:clamp(16px,4.5vw,20px)}
+  .sp-thumbs{display:none}
+  .spotlight-stage{min-height:260px;border-radius:16px}
+
+  /* ABOUT SECTION */
+  .about-inner{grid-template-columns:1fr;gap:2.5rem}
+  .about-timeline{max-width:400px}
+  .about-emoji-grid{grid-template-columns:1fr 1fr;gap:10px}
+  .about-tile{padding:1.25rem}
+  .about-h2{font-size:clamp(28px,7vw,38px)}
+  .about-p{font-size:14px}
+
+  /* SHOP PAGE */
+  .shop-layout{grid-template-columns:1fr;padding:1.25rem}
+  .shop-sidebar{position:static;border-radius:12px}
+  .shop-page-hero{padding:2rem 1.25rem 1.5rem}
+  .table-header{display:none}
+  .table-row{grid-template-columns:48px 1fr auto auto;gap:.5rem}
+  .table-row>div:nth-child(3),
+  .table-row>div:nth-child(4){display:none}
+  .shop-grid{grid-template-columns:1fr 1fr;gap:12px}
+  .cat-section-heading{margin-top:.5rem}
+
+  /* FOOTER */
+  .footer-top{grid-template-columns:1fr;gap:2rem}
+  .footer-bottom{flex-direction:column;gap:.75rem;text-align:center}
+
+  /* CART DRAWER */
+  .cart-drawer{width:100vw}
+}
+
+@media (max-width: 480px) {
+  /* Very small screens */
+  .bestsellers-grid{grid-template-columns:1fr}
+  .categories-grid{grid-template-columns:repeat(3,1fr)}
+  .shop-grid{grid-template-columns:1fr}
+  .hero-ghost{font-size:clamp(50px,18vw,80px)}
+  .section-title{font-size:clamp(24px,8vw,32px)}
+  .about-emoji-grid{grid-template-columns:1fr 1fr}
+}
 </style>
 </head>
 <body>
@@ -377,24 +470,36 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
   </section>
 
   <!-- ABOUT -->
-  <section id="about-section" class="about-section">
+    <section id="about-section" class="about-section">
     <div class="about-inner section-inner">
       <div>
-        <div class="section-eyebrow" style="text-align:left">Our Story</div>
+        <div class="about-eyebrow">✦ Our Story</div>
         <h2 class="about-h2">Gifts made with<br><em>intention & love</em></h2>
-        <p class="about-p">We make gifts that mean something. Every item at Your Gift Story is crafted with care in Coimbatore — designed by hand, finished with attention, and made to feel personal. We use tools where precision matters, but the thought, the detail, and the love behind every gift is always human.</p>
+        <p class="about-p">Every item at Your Gift Story is crafted with care in Coimbatore — designed by hand, finished with attention, and made to feel personal. The thought, the detail, and the love behind every gift is always human.</p>
         <div class="about-features">
-          <div class="about-feat"><span class="feat-dot"></span>Handcrafted with care — designed and finished by hand.</div>
-          <div class="about-feat"><span class="feat-dot"></span>Fully personalised — your name, your story.</div>
-          <div class="about-feat"><span class="feat-dot"></span>Delivered across India. Pickup in Coimbatore.</div>
-          <div class="about-feat"><span class="feat-dot"></span>Bulk &amp; corporate gifting — we've got you.</div>
+          <div class="about-feat"><span class="about-feat-icon">✓</span>Handcrafted with care — designed and finished by hand.</div>
+          <div class="about-feat"><span class="about-feat-icon">✓</span>Fully personalised — your name, your story.</div>
+          <div class="about-feat"><span class="about-feat-icon">✓</span>Delivered across India. Pickup in Coimbatore.</div>
+          <div class="about-feat"><span class="about-feat-icon">✓</span>Bulk &amp; corporate gifting — we've got you.</div>
         </div>
       </div>
-      <div class="about-emoji-grid">
-        <div class="about-tile"><div class="about-tile-icon">🫙</div><div class="about-tile-text">Resin Art</div></div>
-        <div class="about-tile"><div class="about-tile-icon">🧵</div><div class="about-tile-text">Embroidery</div></div>
-        <div class="about-tile"><div class="about-tile-icon">🖼️</div><div class="about-tile-text">Photo Gifts</div></div>
-        <div class="about-tile"><div class="about-tile-icon">🎀</div><div class="about-tile-text">Hampers</div></div>
+      <div class="about-timeline">
+        <div class="about-tl-step">
+          <div class="about-tl-linewrap"><div class="about-tl-dot">🌸</div><div class="about-tl-conn"></div></div>
+          <div class="about-tl-content"><div class="about-tl-title">Resin Art</div><div class="about-tl-sub">Keychains · Frames · Bookmarks</div></div>
+        </div>
+        <div class="about-tl-step">
+          <div class="about-tl-linewrap"><div class="about-tl-dot">🧵</div><div class="about-tl-conn"></div></div>
+          <div class="about-tl-content"><div class="about-tl-title">Embroidery & Crochet</div><div class="about-tl-sub">Hoops · Bouquets · Fabric gifts</div></div>
+        </div>
+        <div class="about-tl-step">
+          <div class="about-tl-linewrap"><div class="about-tl-dot">🖼️</div><div class="about-tl-conn"></div></div>
+          <div class="about-tl-content"><div class="about-tl-title">Photo Gifts</div><div class="about-tl-sub">Tiles · Memory books · Frames</div></div>
+        </div>
+        <div class="about-tl-step">
+          <div class="about-tl-linewrap"><div class="about-tl-dot">🎁</div><div class="about-tl-conn"></div></div>
+          <div class="about-tl-content"><div class="about-tl-title">Gift Hampers</div><div class="about-tl-sub">Curated · Occasion · Corporate</div></div>
+        </div>
       </div>
     </div>
   </section>
@@ -790,20 +895,29 @@ function resetFilters() {
 function buildMarquee() {
   const el = document.getElementById('marqueeInner');
   if (!el) return;
+  // Auto-read categories from Supabase data
   const items = ALL_CATEGORIES.length
     ? ALL_CATEGORIES.map(c => (c.icon && c.icon !== 'null' ? c.icon + ' ' : '') + c.name)
-    : ['🫙 Resin Art','🎨 Craft Items','🧵 Embroidery','🖼️ Photo Gifts','🎀 Hampers','🎂 Occasion Gifts'];
-  const single = items.map(t => `<span class="marquee-item">${t} <span class="marquee-sep">✦</span></span>`).join('');
+    : ['Resin Art','Craft Items','Embroidery & Crochet','Photo Gifts','Gift Hampers','Occasion Gifts'];
+  // Build triple set for seamless loop
+  const single = items.map(t => '<span class="marquee-item">' + t + ' <span class="marquee-sep">✦</span></span>').join('');
   el.innerHTML = single + single + single;
-  let x = 0, paused = false;
-  const getHalf = () => el.scrollWidth / 3;
-  el.parentElement.addEventListener('mouseenter', () => paused = true);
-  el.parentElement.addEventListener('mouseleave', () => paused = false);
-  function tick() {
-    if (!paused) { x -= 0.7; if (x <= -getHalf()) x = 0; el.style.transform = 'translateX(' + x + 'px)'; }
+  // Wait for layout then measure
+  requestAnimationFrame(() => {
+    const oneW = el.scrollWidth / 3;
+    let x = 0, paused = false;
+    el.parentElement.addEventListener('mouseenter', () => paused = true);
+    el.parentElement.addEventListener('mouseleave', () => paused = false);
+    function tick() {
+      if (!paused) {
+        x -= 0.7;
+        if (x <= -oneW) x = 0;
+        el.style.transform = 'translateX(' + x + 'px)';
+      }
+      requestAnimationFrame(tick);
+    }
     requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
+  });
 }
 
 
