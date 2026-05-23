@@ -898,6 +898,7 @@ function renderShopGrid(filterCat, minP, maxP) {
       card.className = 'product-card';
       card.dataset.cat = cat;
       card.dataset.price = p.price;
+      card.dataset.productId = p.id;
       card.innerHTML = productCardHTML(p);
       grid.insertBefore(card, emptyEl);
     });
@@ -919,7 +920,7 @@ function productCardHTML(p) {
 
   const price = getPriceDisplay(p);
 
-  return `${badge}   <div class="product-img" ${imgBg}>${imgHTML}</div>   <div class="product-body">    <div class="product-name">${p.name}</div>    <div class="product-desc">${p.description||''}</div>    <div class="product-price">₹${price}</div>    <div class="customise-section">${optHTML}</div>    <button class="btn-atc" onclick="addToCart(this,'${p.name.replace(/'/g,"\'")}',${p.price},'${p.emoji||'🎁'}','')">🛒 Add to Cart</button>   </div>`;
+  return `${badge}   <div class="product-img" ${imgBg}>${imgHTML}</div>   <div class="product-body">    <div class="product-name">${p.name}</div>    <div class="product-desc">${p.description||''}</div>    <div class="product-price">${price}</div>    <div class="customise-section">${optHTML}</div>    <button class="btn-atc" onclick="addToCartFromCard(this,'${p.name.replace(/'/g,"\\'")}','${p.emoji||'🎁'}')">🛒 Add to Cart</button>   </div>`;
 }
 
 /* ═══════════════════════════════════════
@@ -1023,15 +1024,51 @@ function spGo(idx) {
    CART
 ═══════════════════════════════════════ */
 function selectChip(el) {
-  el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.parentElement.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('active'); });
   el.classList.add('active');
+  // Update price display based on selected variants
+  var card = el.closest('[data-product-id]');
+  if (!card) return;
+  var p = ALL_PRODUCTS.find(function(x){ return x.id === card.dataset.productId; });
+  if (!p) return;
+  var priceEl = card.querySelector('.product-price');
+  if (!priceEl) return;
+  var opts = p.customisation_options || [];
+  var allChipGroups = card.querySelectorAll('.chips');
+  var basePrice = Number(p.price) || 0;
+  var finalPrice = basePrice;
+  opts.forEach(function(g, gi) {
+    var grp = allChipGroups[gi];
+    if (!grp) return;
+    var activeChip = grp.querySelector('.chip.active');
+    var sel = activeChip ? activeChip.textContent.trim() : (g.options ? g.options[0] : '');
+    if (g.priceType === 'per_variant' && g.variantPrices && g.variantPrices[sel]) {
+      finalPrice = Number(g.variantPrices[sel]);
+    } else if (g.priceType === 'addon' && g.variantPrices && g.variantPrices[sel]) {
+      finalPrice = basePrice + Number(g.variantPrices[sel]);
+    }
+  });
+  priceEl.textContent = '₹' + finalPrice.toLocaleString('en-IN');
 }
+
 
 function getCustomisation(card) {
   let parts = [];
   card.querySelectorAll('.chips').forEach(g => { const a = g.querySelector('.chip.active'); if (a) parts.push(a.textContent.trim()); });
   card.querySelectorAll('.gift-input').forEach(i => { if (i.value.trim()) parts.push(i.value.trim()); });
   return parts.join(' · ') || 'Standard';
+}
+
+function addToCartFromCard(btn, name, icon) {
+  const card = btn.closest('.product-card');
+  const priceEl = card.querySelector('.product-price');
+  let priceText = priceEl ? priceEl.textContent.trim() : '0';
+  // If range, take first value; selectChip already updates to single value on selection
+  priceText = priceText.split('–')[0].replace(/[₹,\s]/g, '').trim();
+  const price = Number(priceText) || 0;
+  cart.push({ name, price, icon, imgClass: '', custom: getCustomisation(card), id: Date.now() });
+  updateCartUI();
+  showToast('✓ ' + name + ' added!');
 }
 
 function addToCart(btn, name, price, icon, imgClass) {
