@@ -458,6 +458,31 @@ html,body{height:100%;font-family:var(--font-body);background:#f4f1ec;color:var(
 
       <button class="btn-sm btn-outline" style="font-size:11px;margin-top:.75rem" onclick="startNewGroup()">+ Add Another Group</button>
 
+      <div class="form-section-title">Customer Text Customisation</div>
+      <div style="display:flex;flex-direction:column;gap:.75rem;margin-bottom:1.25rem">
+        <div class="form-toggle-row">
+          <div>
+            <div class="form-toggle-label">Allow customer to type a custom message</div>
+            <div class="form-toggle-sub">Shows a text box on the product card for things like names, dates, or special notes</div>
+          </div>
+          <label class="toggle"><input type="checkbox" id="f-allow-text" onchange="toggleTextFields()"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+        </div>
+        <div id="text-fields-wrap" style="display:none;flex-direction:column;gap:.6rem;background:#f4f1ec;border-radius:12px;padding:.85rem 1rem;border:1px solid var(--border)">
+          <div class="form-group" style="margin:0">
+            <label class="form-label">Field Label *</label>
+            <input class="form-input" id="f-text-label" placeholder="e.g. Name to print, Special message, Date…" style="font-size:13px">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">Placeholder hint shown to customer</label>
+            <input class="form-input" id="f-text-placeholder" placeholder="e.g. Enter name here (max 20 chars)" style="font-size:13px">
+          </div>
+          <div style="display:flex;align-items:center;gap:.5rem">
+            <label class="toggle" style="flex-shrink:0"><input type="checkbox" id="f-text-required"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+            <span style="font-size:13px;color:var(--char)">Make this field required before adding to cart</span>
+          </div>
+        </div>
+      </div>
+
       <div class="form-section-title">Visibility</div>
       <div style="display:flex;flex-direction:column;gap:.75rem">
         <div class="form-toggle-row">
@@ -792,6 +817,14 @@ function openProductModal(id) {
     document.getElementById('f-desc').value = p.description || '';
     document.getElementById('f-bestseller').checked = !!p.is_bestseller;
     document.getElementById('f-active').checked = !!p.is_active;
+
+    // Restore text customisation (flat columns)
+    const tcEnabled = !!p.text_customisation_enabled;
+    document.getElementById('f-allow-text').checked = tcEnabled;
+    document.getElementById('f-text-label').value = p.text_customisation_label || '';
+    document.getElementById('f-text-placeholder').value = p.text_customisation_placeholder || '';
+    document.getElementById('f-text-required').checked = !!p.text_customisation_required;
+    document.getElementById('text-fields-wrap').style.display = tcEnabled ? 'flex' : 'none';
     _chipGroups = [];
     _variantRowCount = 0;
     loadProductOptions(id).then(opts => { _chipGroups = opts; renderOptionGroups(); });
@@ -801,10 +834,13 @@ function openProductModal(id) {
     }
   } else {
     document.getElementById('modalTitle').textContent = 'Add New Product';
-    ['f-name','f-price','f-desc','f-opt-label'].forEach(i => { const el=document.getElementById(i); if(el) el.value=''; });
+    ['f-name','f-price','f-desc','f-opt-label','f-text-label','f-text-placeholder'].forEach(i => { const el=document.getElementById(i); if(el) el.value=''; });
     document.getElementById('f-category').value = '';
     document.getElementById('f-bestseller').checked = false;
     document.getElementById('f-active').checked = true;
+    document.getElementById('f-allow-text').checked = false;
+    document.getElementById('f-text-required').checked = false;
+    document.getElementById('text-fields-wrap').style.display = 'none';
     clearCurrentGroup();
     addVariantRow();
   }
@@ -850,6 +886,10 @@ async function saveProduct() {
       customisation_options: _chipGroups,
       is_bestseller: document.getElementById('f-bestseller').checked,
       is_active: document.getElementById('f-active').checked,
+      text_customisation_enabled: document.getElementById('f-allow-text').checked,
+      text_customisation_label: document.getElementById('f-allow-text').checked ? (document.getElementById('f-text-label').value.trim() || 'Custom message') : null,
+      text_customisation_placeholder: document.getElementById('f-allow-text').checked ? document.getElementById('f-text-placeholder').value.trim() : null,
+      text_customisation_required: document.getElementById('f-allow-text').checked ? document.getElementById('f-text-required').checked : false,
     };
 
     if (_editingId) {
@@ -1276,6 +1316,13 @@ function addVariantRow(name, price) {
 }
 function toggleEditRow(id) { /* kept for compat */ }
 function startNewGroup() { try{clearCurrentGroup();}catch(e){} setTimeout(function(){const l=document.getElementById('f-opt-label');if(l)l.focus();},50); }
+
+function toggleTextFields() {
+  const on = document.getElementById('f-allow-text').checked;
+  const wrap = document.getElementById('text-fields-wrap');
+  wrap.style.display = on ? 'flex' : 'none';
+  if (on) document.getElementById('f-text-label').focus();
+}
 function clearCurrentGroup() {
   const lbl=document.getElementById('f-opt-label'); if(lbl) lbl.value='';
   const pt=document.getElementById('f-price-type'); if(pt) pt.value='none';
