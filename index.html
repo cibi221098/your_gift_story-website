@@ -914,33 +914,25 @@ function whatsappOrder() {
   const sel = document.getElementById('shippingSelect');
   const sub = cart.reduce((s,i) => s + i.price, 0);
   const total = sub + (parseInt(sel.value) || 0);
-  const items = cart.map(i => `• ${i.name} — ₹${Number(i.price).toLocaleString('en-IN')}
-  Customisation: ${i.custom}`).join('
-');
+  const items = cart.map(i => '• ' + i.name + ' \u2014 \u20b9' + Number(i.price).toLocaleString('en-IN') + '\n  Customisation: ' + i.custom).join('\n');
   const msg = encodeURIComponent(
-    `Hi! I would like to place an order from Your Gift Story 🎁
-
-*Order Summary:*
-${items}
-
-*Shipping:* ${sel.options[sel.selectedIndex].text}
-*Total:* ₹${total.toLocaleString('en-IN')}
-
-Please confirm availability. Thank you!`
+    'Hi! I would like to place an order from Your Gift Story \ud83c\udf81\n\n' +
+    '*Order Summary:*\n' + items + '\n\n' +
+    '*Shipping:* ' + sel.options[sel.selectedIndex].text + '\n' +
+    '*Total:* \u20b9' + total.toLocaleString('en-IN') + '\n\n' +
+    'Please confirm availability. Thank you!'
   );
   window.open('https://wa.me/919876543210?text=' + msg, '_blank');
 }
 
 function bulkOrderWhatsapp() {
   const msg = encodeURIComponent(
-    "Hi! I'm interested in placing a bulk order with Your Gift Story.
-
-Could you please share details on:
-• Minimum order quantity
-• Customisation options
-• Pricing & delivery timeline
-
-Thank you!"
+    "Hi! I'm interested in placing a bulk order with Your Gift Story.\n\n" +
+    "Could you please share details on:\n" +
+    "\u2022 Minimum order quantity\n" +
+    "\u2022 Customisation options\n" +
+    "\u2022 Pricing & delivery timeline\n\n" +
+    "Thank you!"
   );
   window.open('https://wa.me/919876543210?text=' + msg, '_blank');
 }
