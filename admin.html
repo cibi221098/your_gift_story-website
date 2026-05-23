@@ -106,12 +106,14 @@ html,body{height:100%;font-family:var(--font-body);background:#f4f1ec;color:var(
 .product-name{font-size:13px;font-weight:500;color:var(--char);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .product-cat{font-size:11px;color:var(--gray)}
 .product-price-cell{font-size:14px;font-weight:600;color:var(--teal);font-family:var(--font-display)}
-.toggle{position:relative;width:38px;height:22px;cursor:pointer;flex-shrink:0}
+.toggle{position:relative;width:44px;height:26px;cursor:pointer;flex-shrink:0;display:inline-block}
 .toggle input{opacity:0;width:0;height:0;position:absolute}
-.toggle-track{position:absolute;inset:0;background:#d1d5db;border-radius:20px;transition:background .2s}
-.toggle input:checked+.toggle-track{background:var(--teal)}
-.toggle-thumb{position:absolute;width:16px;height:16px;background:#fff;border-radius:50%;top:3px;left:3px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
-.toggle input:checked~.toggle-thumb{transform:translateX(16px)}
+.toggle-track{position:absolute;inset:0;background:#e5e7eb;border-radius:30px;transition:background .25s;border:1.5px solid #d1d5db}
+.toggle input:checked+.toggle-track{background:var(--teal);border-color:var(--teal)}
+.toggle-thumb{position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:3px;left:3px;transition:transform .25s;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.toggle input:checked~.toggle-thumb{transform:translateX(18px)}
+.toggle-star{position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:9px;color:rgba(255,255,255,0);transition:color .25s;pointer-events:none}
+.toggle input:checked~.toggle-star{color:var(--gold)}
 .row-actions{display:flex;gap:5px}
 .act-btn{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .2s}
 .act-btn:hover{background:var(--teal);border-color:var(--teal);color:var(--cream)}
@@ -700,7 +702,7 @@ function renderProducts() {
       <div class="product-name-cell"><div class="product-name">${p.name}</div><div class="product-cat">${p.category}</div></div>
       <div class="product-price-cell">₹${Number(p.price).toLocaleString('en-IN')}</div>
       <div><span class="badge badge-active" style="font-size:11px">${p.category}</span></div>
-      <div><label class="toggle" onclick="toggleBestseller('${p.id}',${!p.is_bestseller})"><input type="checkbox" ${p.is_bestseller?'checked':''}><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>
+      <div><label class="toggle" title="${p.is_bestseller?'Remove from bestsellers':'Mark as bestseller'}" onclick="toggleBestseller('${p.id}',${!p.is_bestseller})"><input type="checkbox" ${p.is_bestseller?'checked':''}><div class="toggle-track"></div><div class="toggle-thumb"></div><span class="toggle-star">★</span></label></div>
       <div><span class="badge ${p.is_active?'badge-active':'badge-hidden'}">${p.is_active?'Active':'Hidden'}</span></div>
       <div class="row-actions">
         <button class="act-btn" onclick="openProductModal('${p.id}')" title="Edit">✏️</button>
