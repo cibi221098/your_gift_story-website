@@ -2,9 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Your Gift Story — Beyond Just a Gift</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
@@ -291,7 +288,6 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
 <!-- ═══ HOME PAGE ═══ -->
 <div id="page-home" class="page active">
 
-  <!-- YGS v2.5 - fixed fetch - 2026-05-23 -->
   <!-- HERO: Style E — ghost word + blobs + cream BG -->
   <section class="hero">
     <div class="hero-blob hero-blob-1"></div>
@@ -324,7 +320,6 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
         <h2 class="section-title" style="font-size:clamp(48px,6vw,80px);margin-bottom:1rem">Most <em>Loved</em></h2>
         <p class="section-sub">The gifts our customers keep coming back for — handmade, personalised, and gifted with so much love.</p>
       </div>
-      <div style="font-size:11px;color:var(--gray);text-align:center;padding:4px;font-family:monospace" id="sbDebug"></div>
       <div class="bestsellers-grid" id="bestsellersGrid">
         <div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--gray);font-size:14px">Loading gifts...</div>
       </div>
@@ -560,26 +555,17 @@ let spCur = 0, spTimer = null;
    INIT — load everything from Supabase
 ═══════════════════════════════════════ */
 async function initSite() {
-  let dbg = [];
-
   try {
     ALL_PRODUCTS = await sbGet('products', 'is_active=eq.true&order=created_at.desc');
-    dbg.push('products:' + ALL_PRODUCTS.length);
-  } catch(e) { console.error('Products error:', e.message); dbg.push('products:ERR:'+e.message); ALL_PRODUCTS = []; }
+  } catch(e) { console.error('Products:', e.message); ALL_PRODUCTS = []; }
 
   try {
     ALL_CATEGORIES = await sbGet('categories', 'is_active=eq.true&order=display_order.asc');
-    dbg.push('cats:' + ALL_CATEGORIES.length);
-  } catch(e) { console.error('Categories error:', e.message); dbg.push('cats:ERR:'+e.message); ALL_CATEGORIES = []; }
+  } catch(e) { console.error('Categories:', e.message); ALL_CATEGORIES = []; }
 
   try {
     ALL_TESTIMONIALS = await sbGet('testimonials', 'is_active=eq.true&order=created_at.asc');
-    dbg.push('testis:' + ALL_TESTIMONIALS.length);
-  } catch(e) { console.error('Testimonials error:', e.message); dbg.push('testis:ERR:'+e.message); ALL_TESTIMONIALS = []; }
-
-  // Show debug info on page temporarily
-  const dbgEl = document.getElementById('sbDebug');
-  if (dbgEl) dbgEl.textContent = 'v2.5 | ' + dbg.join(' | ');
+  } catch(e) { console.error('Testimonials:', e.message); ALL_TESTIMONIALS = []; }
 
   renderBestsellers();
   renderCategoriesGrid();
@@ -759,7 +745,7 @@ function buildMarquee() {
   const el = document.getElementById('marqueeInner');
   if (!el) return;
   const items = ALL_CATEGORIES.length
-    ? ALL_CATEGORIES.map(c => c.icon + ' ' + c.name)
+    ? ALL_CATEGORIES.map(c => (c.icon && c.icon !== 'null' ? c.icon + ' ' : '') + c.name)
     : ['🫙 Resin Art','🎨 Craft Items','🧵 Embroidery','🖼️ Photo Gifts','🎀 Hampers','🎂 Occasion Gifts'];
   const single = items.map(t => `<span class="marquee-item">${t} <span class="marquee-sep">✦</span></span>`).join('');
   el.innerHTML = single + single + single;
@@ -783,7 +769,7 @@ function buildSpotlight() {
   if (!stage) return;
   const testiData = ALL_TESTIMONIALS.length ? ALL_TESTIMONIALS.map(t => ({stars:"★".repeat(t.rating||5),text:t.review_text,name:t.customer_name,occasion:(t.occasion||"")+(t.location?(" · "+t.location):""),initials:t.customer_name.split(" ").map(w=>w[0]).join("").substring(0,2).toUpperCase()})) : [{stars:"★★★★★",text:"Wonderful handcrafted gifts, made with so much love and care!",name:"Happy Customer",occasion:"Coimbatore",initials:"HC"}];
   stage.innerHTML = testiData.map((t,i) => `   <div class="sp-card${i===0?' active':''}" id="sp-card-${i}">    <span class="sp-mark">&#8220;</span>    <div class="sp-stars">${t.stars}</div>    <p class="sp-text">${t.text}</p>    <div class="sp-author">     <div class="sp-avatar">${t.initials}</div>     <div class="sp-info">      <div class="sp-name">${t.name}</div>      <div class="sp-occ">${t.occasion}</div>     </div>    </div>   </div>`).join('');
-  dotsEl.innerHTML = TESTIMONIALS.map((_,i) =>
+  dotsEl.innerHTML = ALL_TESTIMONIALS.map((_,i) =>
     `<button class="sp-dot${i===0?' active':''}" onclick="spGo(${i})" aria-label="Review ${i+1}"></button>`
   ).join('');
   thumbsEl.innerHTML = testiData.map((t,i) =>
@@ -895,6 +881,7 @@ function scrollToContact() { if (currentPage !== 'home') showPage('home'); setTi
 
 /* start */
 initSite();
+
 </script>
 </body>
 </html>
