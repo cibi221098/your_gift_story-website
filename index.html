@@ -914,13 +914,18 @@ function productCardHTML(p) {
   const opts = p.customisation_options || [];
   const optHTML = opts.map(g => `   <div class="ctrl-label">${g.label}</div>   <div class="chips">${(g.options||[]).map((o,i) =>    `<span class="chip${i===0?' active':''}" onclick="selectChip(this)">${o}</span>`   ).join('')}</div>  `).join('');
 
+  // Free-text customisation field (admin-controlled, flat columns)
+  const textHTML = p.text_customisation_enabled
+    ? `<div class="ctrl-label">${p.text_customisation_label || 'Custom message'}${p.text_customisation_required ? ' <span style="color:#E24B4A">*</span>' : ''}</div><input class="gift-input" placeholder="${p.text_customisation_placeholder || 'Type here…'}" ${p.text_customisation_required ? 'data-tc-required="1"' : ''}>`
+    : '';
+
   const badge = p.is_bestseller
     ? '<span class="product-badge">Bestseller</span>'
     : '';
 
   const price = getPriceDisplay(p);
 
-  return `${badge}   <div class="product-img" ${imgBg}>${imgHTML}</div>   <div class="product-body">    <div class="product-name">${p.name}</div>    <div class="product-desc">${p.description||''}</div>    <div class="product-price">${price}</div>    <div class="customise-section">${optHTML}</div>    <button class="btn-atc" onclick="addToCartFromCard(this,'${p.name.replace(/'/g,"\\'")}','${p.emoji||'🎁'}')">🛒 Add to Cart</button>   </div>`;
+  return `${badge}   <div class="product-img" ${imgBg}>${imgHTML}</div>   <div class="product-body">    <div class="product-name">${p.name}</div>    <div class="product-desc">${p.description||''}</div>    <div class="product-price">${price}</div>    <div class="customise-section">${optHTML}${textHTML}</div>    <button class="btn-atc" onclick="addToCartFromCard(this,'${p.name.replace(/'/g,"\\'")}','${p.emoji||'🎁'}')">🛒 Add to Cart</button>   </div>`;
 }
 
 /* ═══════════════════════════════════════
@@ -1061,9 +1066,19 @@ function getCustomisation(card) {
 
 function addToCartFromCard(btn, name, icon) {
   const card = btn.closest('.product-card');
+
+  // Check required text customisation fields
+  const reqInput = card.querySelector('.gift-input[data-tc-required="1"]');
+  if (reqInput && !reqInput.value.trim()) {
+    reqInput.style.borderColor = '#E24B4A';
+    reqInput.focus();
+    showToast('Please fill in the required field before adding to cart.');
+    setTimeout(() => reqInput.style.borderColor = '', 2000);
+    return;
+  }
+
   const priceEl = card.querySelector('.product-price');
   let priceText = priceEl ? priceEl.textContent.trim() : '0';
-  // If range, take first value; selectChip already updates to single value on selection
   priceText = priceText.split('–')[0].replace(/[₹,\s]/g, '').trim();
   const price = Number(priceText) || 0;
   cart.push({ name, price, icon, imgClass: '', custom: getCustomisation(card), id: Date.now() });
