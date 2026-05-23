@@ -158,6 +158,18 @@ html,body{height:100%;font-family:var(--font-body);background:#f4f1ec;color:var(
 .chip-tag{display:inline-flex;align-items:center;gap:5px;background:var(--teal-l);border:1px solid rgba(31,78,74,.2);border-radius:20px;padding:4px 10px;font-size:12px;color:var(--teal)}
 .chip-tag-del{background:none;border:none;cursor:pointer;color:var(--teal);font-size:14px;line-height:1;padding:0}
 .chips-input{border:none;outline:none;font-size:12px;font-family:var(--font-body);min-width:100px;background:transparent;color:var(--char)}
+.opt-group-builder{background:#f9f7f4;border:1px solid var(--border);border-radius:12px;padding:1rem;margin-bottom:.5rem}.vt-row{display:grid;grid-template-columns:1fr 100px 32px;gap:6px;align-items:center;padding:5px 4px;border-bottom:.5px solid #f0ede8}.vt-row:last-child{border-bottom:none}.vt-row input{padding:5px 8px;border:1px solid var(--border);border-radius:7px;font-size:12px;font-family:var(--font-body);background:var(--white);color:var(--char);outline:none;width:100%}.vt-row input:focus{border-color:var(--teal)}.vt-price-badge{font-size:11px;color:var(--teal);font-weight:500;font-family:var(--font-body)}
+.variant-row{display:grid;grid-template-columns:1fr 100px 28px;gap:6px;align-items:center}
+.variant-row input{padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:var(--font-body);background:var(--white);color:var(--char);outline:none;width:100%}
+.variant-row input:focus{border-color:var(--teal)}
+.variant-row-del{background:none;border:none;color:var(--gray);cursor:pointer;font-size:16px;padding:0;width:28px;text-align:center;border-radius:6px;transition:color .2s}
+.variant-row-del:hover{color:#dc2626}
+.opt-group-saved{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:.85rem}
+.opt-group-saved-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.opt-group-saved-label{font-size:12px;font-weight:600;color:var(--teal)}
+.opt-group-saved-type{font-size:10px;color:var(--gold);background:var(--gold-light);padding:2px 8px;border-radius:20px}
+.opt-group-saved-variants{display:flex;flex-wrap:wrap;gap:5px}
+.opt-group-variant-chip{font-size:11px;padding:3px 10px;background:#f4f1ec;border:1px solid var(--border);border-radius:20px;color:var(--char)}
 .upload-progress{height:4px;background:var(--teal-l);border-radius:4px;margin-top:.5rem;overflow:hidden;display:none}
 .upload-progress-bar{height:100%;background:var(--teal);border-radius:4px;width:0;transition:width .3s}
 
@@ -381,33 +393,40 @@ html,body{height:100%;font-family:var(--font-body);background:#f4f1ec;color:var(
       <div class="photo-previews" id="photoPreviews"></div>
 
       <div class="form-section-title">Customisation Options</div>
-      <p style="font-size:12px;color:var(--gray);margin-bottom:.75rem">Add options customers choose from. Press Enter or comma after each value.</p>
-      <div class="form-group" style="margin-bottom:.75rem">
-        <label class="form-label">Option Group Label</label>
+      <p style="font-size:12px;color:var(--gray);margin-bottom:.75rem">Add option groups (e.g. Size, Colour). Each group has variants with optional prices. Saved to Supabase row by row.</p>
+      <div id="optionGroupsList" style="display:flex;flex-direction:column;gap:.75rem;margin-bottom:.75rem"></div>
+      <div class="opt-group-builder" id="optGroupBuilder">
+        <div style="display:flex;gap:8px;margin-bottom:.75rem;align-items:center">
+          <div style="flex:1">
+            <label class="form-label">Group Label</label>
+            <input class="form-input" id="f-opt-label" placeholder="e.g. Size, Colour, Frame Size">
+          </div>
+          <div style="width:160px">
+            <label class="form-label">Pricing</label>
+            <select class="form-select" id="f-price-type" style="font-size:12px" onchange="togglePriceCol()">
+              <option value="none">No difference</option>
+              <option value="per_variant">Per variant ₹</option>
+              <option value="addon">Add-on ₹</option>
+            </select>
+          </div>
+        </div>
+        <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:.75rem">
+          <div id="variantTableHeader" style="display:grid;grid-template-columns:1fr 100px 32px;gap:6px;background:#f9f7f4;padding:7px 10px;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);font-family:var(--font-body)">
+            <span>Variant Name</span><span id="priceColHeader" style="display:none">Price (₹)</span><span></span>
+          </div>
+          <div id="variantRows" style="padding:0 6px"></div>
+          <div style="padding:6px;border-top:.5px solid var(--border);display:grid;grid-template-columns:1fr 100px 32px;gap:6px;align-items:center">
+            <input class="form-input" id="newVariantName" placeholder="Type variant name…" style="font-size:12px;padding:7px 9px" onkeydown="if(event.key==='Enter'){event.preventDefault();addVariantRow()}">
+            <input class="form-input" id="newVariantPrice" type="number" placeholder="₹ price" style="font-size:12px;padding:7px 9px;display:none" id="newVariantPrice" onkeydown="if(event.key==='Enter'){event.preventDefault();addVariantRow()}">
+            <button class="btn-sm btn-primary" style="font-size:12px;padding:6px 0;text-align:center" onclick="addVariantRow()">+</button>
+          </div>
+        </div>
         <div style="display:flex;gap:8px">
-          <input class="form-input" id="f-opt-label" placeholder="e.g. Size, Colour, Finish" style="flex:1">
+          <button class="btn-sm btn-primary" onclick="saveOptionGroup()">✓ Save Group</button>
+          <button class="btn-sm btn-outline" onclick="clearCurrentGroup()">✕ Clear</button>
         </div>
       </div>
-      <div class="form-group" style="margin-bottom:.5rem">
-        <label class="form-label">Option Values <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--gray);font-size:11px">— press Enter or comma after each value</span></label>
-        <div class="chips-editor" id="chipsEditor" onclick="document.getElementById('chipsInput').focus()">
-          <input class="chips-input" id="chipsInput" placeholder="e.g. Small, Medium, Large…" onkeydown="handleChipKey(event)" oninput="handleChipInput(event)">
-        </div>
-      </div>
-      <div class="form-group" style="margin-bottom:.5rem">
-        <label class="form-label">Pricing type for this group</label>
-        <select class="form-select" id="f-price-type" style="font-size:12px" onchange="updateVariantPriceFields()">
-          <option value="none">No price difference</option>
-          <option value="per_variant">Per variant price (each variant has its own price)</option>
-          <option value="addon">Add-on price (base price + extra per variant)</option>
-        </select>
-      </div>
-      <div id="variantPriceFields" style="display:none;margin-bottom:.5rem"></div>
-      <div id="optionGroupsList" style="display:flex;flex-direction:column;gap:.5rem;margin-bottom:.75rem"></div>
-      <div style="display:flex;gap:8px">
-        <button class="btn-sm btn-primary" style="font-size:11px" onclick="addOptionGroup()">✓ Add This Group</button>
-        <button class="btn-sm btn-outline" style="font-size:11px;color:var(--gray)" onclick="clearCurrentGroup()">✕ Clear</button>
-      </div>
+      <button class="btn-sm btn-outline" style="font-size:11px;margin-top:.75rem" onclick="startNewGroup()">+ Add Another Group</button>
 
       <div class="form-section-title">Visibility</div>
       <div style="display:flex;flex-direction:column;gap:.75rem">
@@ -748,8 +767,9 @@ function openProductModal(id) {
     document.getElementById('f-desc').value = p.description || '';
     document.getElementById('f-bestseller').checked = !!p.is_bestseller;
     document.getElementById('f-active').checked = !!p.is_active;
-    _chipGroups = p.customisation_options ? JSON.parse(JSON.stringify(p.customisation_options)) : [];
-    renderOptionGroups();
+    _chipGroups = [];
+    _variantRowCount = 0;
+    loadProductOptions(id).then(opts => { _chipGroups = opts; renderOptionGroups(); });
     if (p.photos && p.photos.length) {
       _photoUrls = [...p.photos];
       renderPhotoPreviews();
@@ -760,6 +780,8 @@ function openProductModal(id) {
     document.getElementById('f-category').value = '';
     document.getElementById('f-bestseller').checked = false;
     document.getElementById('f-active').checked = true;
+    clearCurrentGroup();
+    addVariantRow();
   }
   document.getElementById('productModal').classList.add('open');
 }
@@ -816,6 +838,10 @@ async function saveProduct() {
       showToast('Product added!', 'success');
     }
 
+    if (_editingId || (created && created[0])) {
+      const pid = _editingId || created[0].id;
+      await saveProductOptions(pid);
+    }
     closeProductModal();
     renderProducts();
     renderDashboard();
