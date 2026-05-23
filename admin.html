@@ -158,7 +158,15 @@ html,body{height:100%;font-family:var(--font-body);background:#f4f1ec;color:var(
 .chip-tag{display:inline-flex;align-items:center;gap:5px;background:var(--teal-l);border:1px solid rgba(31,78,74,.2);border-radius:20px;padding:4px 10px;font-size:12px;color:var(--teal)}
 .chip-tag-del{background:none;border:none;cursor:pointer;color:var(--teal);font-size:14px;line-height:1;padding:0}
 .chips-input{border:none;outline:none;font-size:12px;font-family:var(--font-body);min-width:100px;background:transparent;color:var(--char)}
-.opt-group-builder{background:#f9f7f4;border:1px solid var(--border);border-radius:12px;padding:1rem;margin-bottom:.5rem}.vt-row{display:grid;grid-template-columns:1fr 100px 32px;gap:6px;align-items:center;padding:5px 4px;border-bottom:.5px solid #f0ede8}.vt-row:last-child{border-bottom:none}.vt-row input{padding:5px 8px;border:1px solid var(--border);border-radius:7px;font-size:12px;font-family:var(--font-body);background:var(--white);color:var(--char);outline:none;width:100%}.vt-row input:focus{border-color:var(--teal)}.vt-price-badge{font-size:11px;color:var(--teal);font-weight:500;font-family:var(--font-body)}
+.opt-group-builder{background:#f9f7f4;border:1px solid var(--border);border-radius:12px;padding:1rem;margin-bottom:.5rem}.vt-row{display:grid;grid-template-columns:1fr 90px 70px;gap:6px;align-items:center;padding:5px 6px;border-bottom:.5px solid #f0ede8}
+.vt-row:last-child{border-bottom:none}
+.vt-row input{padding:5px 8px;border:1px solid var(--border);border-radius:7px;font-size:12px;font-family:var(--font-body);background:var(--white);color:var(--char);outline:none;width:100%}
+.vt-row input:focus{border-color:var(--teal)}
+.vt-row-editing input{border-color:var(--gold);background:var(--gold-l)}
+.vt-row-actions{display:flex;gap:4px}
+.vt-act{padding:3px 8px;border-radius:6px;font-size:10px;cursor:pointer;font-family:var(--font-body);font-weight:500;border:1px solid var(--border);background:var(--white);color:var(--gray);transition:all .15s}
+.vt-act:hover{border-color:var(--teal);color:var(--teal)}
+.vt-act.del:hover{border-color:#fecaca;color:var(--red);background:#fee2e2}
 .variant-row{display:grid;grid-template-columns:1fr 100px 28px;gap:6px;align-items:center}
 .variant-row input{padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:var(--font-body);background:var(--white);color:var(--char);outline:none;width:100%}
 .variant-row input:focus{border-color:var(--teal)}
@@ -393,39 +401,61 @@ html,body{height:100%;font-family:var(--font-body);background:#f4f1ec;color:var(
       <div class="photo-previews" id="photoPreviews"></div>
 
       <div class="form-section-title">Customisation Options</div>
-      <p style="font-size:12px;color:var(--gray);margin-bottom:.75rem">Add option groups (e.g. Size, Colour). Each group has variants with optional prices. Saved to Supabase row by row.</p>
-      <div id="optionGroupsList" style="display:flex;flex-direction:column;gap:.75rem;margin-bottom:.75rem"></div>
-      <div class="opt-group-builder" id="optGroupBuilder">
-        <div style="display:flex;gap:8px;margin-bottom:.75rem;align-items:center">
+
+      <!-- Saved groups list -->
+      <div id="optionGroupsList" style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:1rem"></div>
+
+      <!-- Step-by-step builder -->
+      <div id="optGroupBuilder" style="border:1.5px solid var(--teal);border-radius:16px;overflow:hidden;background:var(--white)">
+
+        <!-- STEP 1: Label + Pricing -->
+        <div style="background:var(--teal);padding:.6rem 1rem;display:flex;align-items:center;gap:8px">
+          <span style="background:var(--gold);color:var(--char);border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">1</span>
+          <span style="font-size:12px;font-weight:600;color:var(--cream);letter-spacing:.04em">Set Label &amp; Pricing</span>
+        </div>
+        <div style="padding:.85rem 1rem;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:flex-end">
           <div style="flex:1">
-            <label class="form-label">Group Label</label>
-            <input class="form-input" id="f-opt-label" placeholder="e.g. Size, Colour, Frame Size">
+            <label class="form-label" style="margin-bottom:5px;display:block">Group Label *</label>
+            <input class="form-input" id="f-opt-label" placeholder="e.g. Size, Colour, Frame Size" style="font-size:13px">
           </div>
           <div style="width:160px">
-            <label class="form-label">Pricing</label>
+            <label class="form-label" style="margin-bottom:5px;display:block">Pricing</label>
             <select class="form-select" id="f-price-type" style="font-size:12px" onchange="togglePriceCol()">
-              <option value="none">No difference</option>
-              <option value="per_variant">Per variant ₹</option>
-              <option value="addon">Add-on ₹</option>
+              <option value="none">Same price for all</option>
+              <option value="per_variant">Each variant has own price</option>
+              <option value="addon">Add-on price (+₹)</option>
             </select>
           </div>
         </div>
-        <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:.75rem">
-          <div id="variantTableHeader" style="display:grid;grid-template-columns:1fr 100px 32px;gap:6px;background:#f9f7f4;padding:7px 10px;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);font-family:var(--font-body)">
-            <span>Variant Name</span><span id="priceColHeader" style="display:none">Price (₹)</span><span></span>
-          </div>
-          <div id="variantRows" style="padding:0 6px"></div>
-          <div style="padding:6px;border-top:.5px solid var(--border);display:grid;grid-template-columns:1fr 100px 32px;gap:6px;align-items:center">
-            <input class="form-input" id="newVariantName" placeholder="Type variant name…" style="font-size:12px;padding:7px 9px" onkeydown="if(event.key==='Enter'){event.preventDefault();addVariantRow()}">
-            <input class="form-input" id="newVariantPrice" type="number" placeholder="₹ price" style="font-size:12px;padding:7px 9px;display:none" id="newVariantPrice" onkeydown="if(event.key==='Enter'){event.preventDefault();addVariantRow()}">
-            <button class="btn-sm btn-primary" style="font-size:12px;padding:6px 0;text-align:center" onclick="addVariantRow()">+</button>
+
+        <!-- STEP 2: Add Variants -->
+        <div style="background:var(--teal);padding:.6rem 1rem;display:flex;align-items:center;gap:8px">
+          <span style="background:var(--gold);color:var(--char);border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">2</span>
+          <span style="font-size:12px;font-weight:600;color:var(--cream);letter-spacing:.04em">Add Variants One by One</span>
+        </div>
+        <div style="padding:.75rem 1rem;border-bottom:1px solid var(--border)">
+          <!-- Variant rows list -->
+          <div id="variantRows" style="display:flex;flex-direction:column;gap:4px;margin-bottom:.6rem"></div>
+          <!-- Add new variant input -->
+          <div style="display:flex;gap:6px;align-items:center;background:#f4f1ec;border-radius:10px;padding:6px 8px">
+            <input class="form-input" id="newVariantName" placeholder="Variant name (e.g. Small, Red, 4×6)" style="flex:1;font-size:12px;padding:7px 10px;background:var(--white)" onkeydown="if(event.key==='Enter'){event.preventDefault();quickAddVariant()}">
+            <input class="form-input" id="newVariantPrice" type="number" placeholder="₹" style="width:72px;font-size:12px;padding:7px 9px;display:none;background:var(--white)" onkeydown="if(event.key==='Enter'){event.preventDefault();quickAddVariant()}">
+            <button class="btn-sm btn-primary" style="padding:7px 14px;font-size:12px;white-space:nowrap;border-radius:8px" onclick="quickAddVariant()">+ Add</button>
           </div>
         </div>
-        <div style="display:flex;gap:8px">
-          <button class="btn-sm btn-primary" onclick="saveOptionGroup()">✓ Save Group</button>
-          <button class="btn-sm btn-outline" onclick="clearCurrentGroup()">✕ Clear</button>
+
+        <!-- STEP 3: Save Group -->
+        <div style="background:var(--teal);padding:.6rem 1rem;display:flex;align-items:center;gap:8px">
+          <span style="background:var(--gold);color:var(--char);border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">3</span>
+          <span style="font-size:12px;font-weight:600;color:var(--cream);letter-spacing:.04em">Save This Group</span>
+        </div>
+        <div style="padding:.75rem 1rem;display:flex;gap:8px;align-items:center">
+          <button class="btn-sm btn-primary" style="padding:8px 18px" onclick="saveOptionGroup()">✓ Save Group</button>
+          <button class="btn-sm btn-outline" style="padding:8px 14px" onclick="clearCurrentGroup()">✕ Clear</button>
+          <span style="font-size:11px;color:var(--gray);margin-left:4px">Then add another group if needed</span>
         </div>
       </div>
+
       <button class="btn-sm btn-outline" style="font-size:11px;margin-top:.75rem" onclick="startNewGroup()">+ Add Another Group</button>
 
       <div class="form-section-title">Visibility</div>
@@ -517,8 +547,7 @@ html,body{height:100%;font-family:var(--font-body);background:#f4f1ec;color:var(
 
 
 
-<script>
-/* ═══════════════════════════════════════
+<script>/* ═══════════════════════════════════════
    SUPABASE CONFIG — not displayed in UI
 ═══════════════════════════════════════ */
 const _cfg = Object.freeze({
@@ -574,6 +603,7 @@ let _photoFiles = [];
 let _photoUrls = [];
 
 /* ═══════════════════════════════════════  AUTH — uses admin_users table  */
+
 async function doLogin() {
   const username = document.getElementById('loginUser').value.trim();
   const pass = document.getElementById('loginPass').value;
@@ -656,7 +686,6 @@ async function enterApp() {
   document.getElementById('loadingOverlay').classList.add('hidden');
 }
 
-/* ═══════════════════════════════════════  DATA LOADERS  */
 async function loadProducts() {
   _products = await sb.query('products', '?order=created_at.desc');
 }
@@ -665,7 +694,6 @@ async function loadCategories() {
   _categories = await sb.query('categories', '?order=display_order.asc');
 }
 
-/* ═══════════════════════════════════════  NAVIGATION  */
 function showPanel(name, el) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -679,7 +707,6 @@ function showPanel(name, el) {
   if (name === 'dashboard') renderDashboard();
 }
 
-/* ═══════════════════════════════════════  DASHBOARD  */
 function renderDashboard() {
   document.getElementById('stat-total').innerHTML = '<em>' + _products.length + '</em>';
   document.getElementById('stat-active').innerHTML = '<em>' + _products.filter(p=>p.is_active).length + '</em>';
@@ -707,7 +734,6 @@ function quickItem(p, type) {
   return `<div class="quick-item"><div class="quick-item-icon">${thumb}</div><div class="quick-item-name">${p.name}</div><div class="quick-item-price">₹${Number(p.price).toLocaleString('en-IN')}</div>${badge}</div>`;
 }
 
-/* ═══════════════════════════════════════  PRODUCTS TABLE  */
 function renderProducts() {
   const q = document.querySelector('.search-box')?.value.toLowerCase() || '';
   const cf = document.getElementById('catFilter')?.value || '';
@@ -746,7 +772,6 @@ function renderProducts() {
   }).join('');
 }
 
-/* ═══════════════════════════════════════  PRODUCT CRUD  */
 function openProductModal(id) {
   _editingId = id || null;
   _chipGroups = [];
@@ -880,7 +905,6 @@ async function toggleActive(id, val) {
   } catch(e) { showToast('Error: ' + e.message, 'error'); }
 }
 
-/* ═══════════════════════════════════════  PHOTOS  */
 function handlePhotoSelect(e) {
   const files = Array.from(e.target.files);
   files.forEach(file => {
@@ -905,84 +929,6 @@ function removePhoto(i) {
   renderPhotoPreviews();
 }
 
-/* ═══════════════════════════════════════  CHIPS  */
-function handleChipKey(e) {
-  if (e.key === 'Enter' || e.key === ',') {
-    e.preventDefault();
-    const val = e.target.value.trim().replace(/,$/,'');
-    if (!val) return;
-    const editor = document.getElementById('chipsEditor');
-    const chip = document.createElement('span');
-    chip.className = 'chip-tag'; chip.dataset.val = val;
-    chip.innerHTML = val + '<button class="chip-tag-del" onclick="this.parentElement.remove()">×</button>';
-    editor.insertBefore(chip, e.target);
-    e.target.value = '';
-  }
-}
-
-function collectPendingChipGroup() {
-  const label = document.getElementById('f-opt-label')?.value.trim();
-  const inp = document.getElementById('chipsInput');
-  if (inp && inp.value.trim()) { addChip(inp.value.trim()); inp.value = ''; }
-  const chips = Array.from(document.querySelectorAll('#chipsEditor .chip-tag')).map(c => c.dataset.val);
-  if (label && chips.length) {
-    const priceType = document.getElementById('f-price-type')?.value || 'none';
-    let variantPrices = {};
-    if (priceType !== 'none') {
-      chips.forEach(c => {
-        const el = document.getElementById('vp_' + c.replace(/\s/g,'_'));
-        if (el) variantPrices[c] = parseFloat(el.value) || 0;
-      });
-    }
-    _chipGroups.push({label, options: chips, priceType, variantPrices});
-  }
-}
-
-function addOptionGroup() {
-  const label = document.getElementById('f-opt-label').value.trim();
-  // Also confirm any pending chip input
-  const inp = document.getElementById('chipsInput');
-  if (inp && inp.value.trim()) { addChip(inp.value.trim()); inp.value = ''; }
-  const chips = Array.from(document.querySelectorAll('#chipsEditor .chip-tag')).map(c => c.dataset.val);
-  if (!label || !chips.length) { showToast('Add a label and at least one option first.', 'error'); return; }
-  const priceType = document.getElementById('f-price-type')?.value || 'none';
-  let variantPrices = {};
-  if (priceType !== 'none') {
-    chips.forEach(c => {
-      const el = document.getElementById('vp_' + c.replace(/\s/g,'_'));
-      if (el) variantPrices[c] = parseFloat(el.value) || 0;
-    });
-  }
-  _chipGroups.push({label, options: chips, priceType, variantPrices});
-  document.getElementById('f-opt-label').value = '';
-  document.getElementById('f-price-type').value = 'none';
-  document.getElementById('variantPriceFields').style.display = 'none';
-  resetChipsEditor();
-  renderOptionGroups();
-  showToast('Option group added!');
-}
-
-function resetChipsEditor() {
-  try { clearCurrentGroup(); } catch(e) {}
-}
-
-function renderOptionGroups() {
-  document.getElementById('optionGroupsList').innerHTML = _chipGroups.map((g,i) => {
-    const priceInfo = g.priceType && g.priceType !== 'none'
-      ? `<div style="font-size:10px;color:var(--teal);margin-top:4px">${g.priceType === 'per_variant' ? '₹ Per variant pricing' : '₹ Add-on pricing'}: ${g.options.map(o => o + (g.variantPrices?.[o] ? ' ₹'+g.variantPrices[o] : '')).join(', ')}</div>`
-      : '';
-    return `<div style="background:#f9f7f4;border:1px solid var(--border);border-radius:10px;padding:.75rem;display:flex;align-items:flex-start;gap:.75rem">
-      <div style="flex:1">
-        <div style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">${g.label}</div>
-        <div style="display:flex;gap:4px;flex-wrap:wrap">${g.options.map(o=>'<span class="chip-tag">'+o+'</span>').join('')}</div>
-        ${priceInfo}
-      </div>
-      <button onclick="_chipGroups.splice(${i},1);renderOptionGroups()" style="background:none;border:none;color:var(--gray);cursor:pointer;font-size:16px;flex-shrink:0">🗑️</button>
-    </div>`;
-  }).join('');
-}
-
-/* ═══════════════════════════════════════  CATEGORIES  */
 function renderCategoryFilter() {
   const el = document.getElementById('catFilter');
   const cur = el.value;
@@ -1070,12 +1016,6 @@ async function deleteCat(id) {
     showToast('Category deleted.','error');
   } catch(e) { showToast('Error: '+e.message,'error'); }
 }
-
-
-/* ═══════════════════════════════════════  TESTIMONIALS  */
-let _testimonials = [];
-let _editingTestiId = null;
-let _editingCatId = null;
 
 async function loadTestimonials() {
   try {
@@ -1187,7 +1127,6 @@ async function deleteTesti(id) {
   } catch(e) { showToast('Error: ' + e.message, 'error'); }
 }
 
-/* ═══════════════════════════════════════  SETTINGS  */
 async function saveSettings() {
   const settings = [
     {key:'whatsapp', value: document.getElementById('waNumber').value.trim()},
@@ -1234,7 +1173,6 @@ async function loadSettings() {
   } catch(e) { console.log('Settings load:', e.message); }
 }
 
-/* ═══════════════════════════════════════  TOAST  */
 function showToast(msg, type) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -1242,169 +1180,198 @@ function showToast(msg, type) {
   setTimeout(() => t.className='toast', 3500);
 }
 
-/* hide loading, check existing session */
-document.getElementById('loadingOverlay').classList.add('hidden');
-if (!checkExistingSession()) {
-  // No saved session, show login
-}/* === VARIANT TABLE CUSTOMISATION === */
+/* === VARIANT UI === */
 let _variantRowCount = 0;
 
 function togglePriceCol() {
   const pt = document.getElementById('f-price-type');
   const show = pt && pt.value !== 'none';
-  const hdr = document.getElementById('priceColHeader');
-  if (hdr) hdr.style.display = show ? 'block' : 'none';
-  document.querySelectorAll('.vt-price-input').forEach(function(el){ el.style.display = show ? 'block' : 'none'; });
+  document.querySelectorAll('#variantRows .vt-price-input').forEach(function(el){ el.style.display = show ? 'block' : 'none'; });
   const np = document.getElementById('newVariantPrice');
-  if (np) np.style.display = show ? 'block' : 'none';
+  if (np) np.style.display = show ? 'inline-block' : 'none';
 }
-
+function quickAddVariant() {
+  const ni = document.getElementById('newVariantName'), pi = document.getElementById('newVariantPrice');
+  const name = ni ? ni.value.trim() : '';
+  if (!name) { if(ni) ni.focus(); return; }
+  const price = pi ? (parseFloat(pi.value)||0) : 0;
+  addVariantRow(name, price);
+  if(ni) ni.value=''; if(pi) pi.value=''; if(ni) ni.focus();
+}
 function addVariantRow(name, price) {
   _variantRowCount++;
   const id = 'vrow_' + _variantRowCount;
   const pt = document.getElementById('f-price-type');
-  const showPrice = pt && pt.value !== 'none';
+  const showP = pt && pt.value !== 'none';
   const vr = document.getElementById('variantRows');
   if (!vr) return;
+
   const row = document.createElement('div');
-  row.className = 'vt-row';
   row.id = id;
-  const nameIn = document.createElement('input');
-  nameIn.type = 'text';
-  nameIn.className = 'vt-name-input';
-  nameIn.value = name || '';
-  nameIn.placeholder = 'e.g. Small, 6x4, Red';
-  const priceIn = document.createElement('input');
-  priceIn.type = 'number';
-  priceIn.className = 'vt-price-input';
-  priceIn.value = price || '';
-  priceIn.placeholder = '0';
-  priceIn.style.display = showPrice ? 'block' : 'none';
-  const delBtn = document.createElement('button');
-  delBtn.textContent = 'x';
-  delBtn.style.cssText = 'background:none;border:none;color:var(--gray);cursor:pointer;font-size:14px;padding:0';
-  delBtn.onclick = function() { row.remove(); };
-  row.appendChild(nameIn);
-  row.appendChild(priceIn);
-  row.appendChild(delBtn);
+  row.style.cssText = 'display:flex;align-items:center;gap:6px;padding:5px 6px;background:var(--white);border:1px solid var(--border);border-radius:8px';
+
+  // Name display span
+  const nameSpan = document.createElement('span');
+  nameSpan.className = 'vt-name-display';
+  nameSpan.textContent = name || '';
+  nameSpan.style.cssText = 'flex:1;font-size:13px;font-weight:500;color:var(--char)';
+
+  // Price display span
+  const priceSpan = document.createElement('span');
+  priceSpan.className = 'vt-price-display';
+  priceSpan.textContent = price ? '₹' + price : '';
+  priceSpan.style.cssText = 'font-size:12px;color:var(--teal);font-weight:600;min-width:40px;display:'+(showP?'inline':'none');
+
+  // Name edit input (hidden by default)
+  const ni = document.createElement('input');
+  ni.type='text'; ni.className='vt-name-input form-input'; ni.value=name||''; ni.placeholder='Variant name';
+  ni.style.cssText='flex:1;font-size:12px;padding:5px 8px;display:none;border-color:var(--gold);background:#fef9e7';
+
+  // Price edit input (hidden by default)
+  const pi2 = document.createElement('input');
+  pi2.type='number'; pi2.className='vt-price-input form-input'; pi2.value=price||''; pi2.placeholder='₹';
+  pi2.style.cssText='width:70px;font-size:12px;padding:5px 8px;display:none;border-color:var(--gold);background:#fef9e7';
+
+  // Edit button
+  const eb = document.createElement('button');
+  eb.className='vt-act'; eb.textContent='✏️ Edit';
+  eb.onclick = function() {
+    const isEditing = eb.textContent.includes('Save');
+    if (isEditing) {
+      // Save
+      const newName = ni.value.trim();
+      if (!newName) { ni.focus(); return; }
+      nameSpan.textContent = newName;
+      const newPrice = parseFloat(pi2.value)||0;
+      priceSpan.textContent = newPrice ? '₹'+newPrice : '';
+      // switch back to display
+      nameSpan.style.display=''; ni.style.display='none';
+      const showPrice = pt && pt.value !== 'none';
+      priceSpan.style.display = showPrice ? 'inline' : 'none'; pi2.style.display='none';
+      eb.textContent='✏️ Edit';
+    } else {
+      // Enter edit mode
+      ni.value = nameSpan.textContent;
+      pi2.value = priceSpan.textContent.replace('₹','');
+      nameSpan.style.display='none'; ni.style.display='block';
+      const showPrice = pt && pt.value !== 'none';
+      priceSpan.style.display='none'; pi2.style.display = showPrice ? 'block' : 'none';
+      eb.textContent='💾 Save';
+      ni.focus();
+    }
+  };
+
+  // Delete button
+  const db = document.createElement('button');
+  db.className='vt-act del'; db.textContent='🗑️';
+  db.onclick=function(){row.remove();};
+
+  row.appendChild(nameSpan);
+  row.appendChild(priceSpan);
+  row.appendChild(ni);
+  row.appendChild(pi2);
+  row.appendChild(eb);
+  row.appendChild(db);
   vr.appendChild(row);
-  nameIn.focus();
 }
-
-
-function startNewGroup() {
-  try { clearCurrentGroup(); } catch(e) {}
-  const b = document.getElementById('optGroupBuilder');
-  if (b) b.style.display = 'block';
-  setTimeout(function(){ const l = document.getElementById('f-opt-label'); if(l) l.focus(); }, 50);
-}
-
+function toggleEditRow(id) { /* kept for compat */ }
+function startNewGroup() { try{clearCurrentGroup();}catch(e){} setTimeout(function(){const l=document.getElementById('f-opt-label');if(l)l.focus();},50); }
 function clearCurrentGroup() {
-  const els = {'f-opt-label':'value','newVariantName':'value','newVariantPrice':'value'};
-  Object.keys(els).forEach(function(id){ const el=document.getElementById(id); if(el) el[els[id]]=''; });
-  const pt = document.getElementById('f-price-type'); if (pt) pt.value = 'none';
-  const vr = document.getElementById('variantRows'); if (vr) vr.innerHTML = '';
-  const np = document.getElementById('newVariantPrice'); if (np) np.style.display = 'none';
-  const ph = document.getElementById('priceColHeader'); if (ph) ph.style.display = 'none';
-  _variantRowCount = 0;
+  const lbl=document.getElementById('f-opt-label'); if(lbl) lbl.value='';
+  const pt=document.getElementById('f-price-type'); if(pt) pt.value='none';
+  const vr=document.getElementById('variantRows'); if(vr) vr.innerHTML='';
+  const ni=document.getElementById('newVariantName'); if(ni) ni.value='';
+  const np=document.getElementById('newVariantPrice'); if(np){np.value='';np.style.display='none';}
+  const ph=document.getElementById('priceColHeader'); if(ph) ph.style.display='none';
+  _variantRowCount=0;
 }
-
 function saveOptionGroup() {
-  const lblEl = document.getElementById('f-opt-label');
-  const label = lblEl ? lblEl.value.trim() : '';
-  const ptEl = document.getElementById('f-price-type');
-  const priceType = ptEl ? ptEl.value : 'none';
-  if (!label) { showToast('Enter a group label first.', 'error'); return; }
-  const rows = document.querySelectorAll('#variantRows .vt-row');
-  if (!rows.length) { showToast('Click + to add at least one variant.', 'error'); return; }
-  const options = [], variantPrices = {};
-  let allValid = true;
-  rows.forEach(function(row) {
-    const nameEl = row.querySelector('.vt-name-input');
-    const priceEl = row.querySelector('.vt-price-input');
-    const name = nameEl ? nameEl.value.trim() : '';
-    const price = priceEl ? (parseFloat(priceEl.value) || 0) : 0;
-    if (!name) { allValid = false; return; }
-    options.push(name);
-    if (priceType !== 'none') variantPrices[name] = price;
+  const lbl=document.getElementById('f-opt-label'), label=lbl?lbl.value.trim():'';
+  const pt=document.getElementById('f-price-type'), priceType=pt?pt.value:'none';
+  if(!label){showToast('Enter a group label first.','error');if(lbl)lbl.focus();return;}
+  const rows=document.querySelectorAll('#variantRows > div');
+  if(!rows.length){showToast('Add at least one variant.','error');return;}
+  const options=[],vp={};
+  rows.forEach(function(r){
+    // Get name: prefer the edit input if in edit mode, else the display span
+    const ni=r.querySelector('.vt-name-input'), ns=r.querySelector('.vt-name-display');
+    const pi=r.querySelector('.vt-price-input'), ps=r.querySelector('.vt-price-display');
+    const name=(ni&&ni.style.display!=='none'?ni.value.trim():ns?ns.textContent.trim():'');
+    const price=(pi&&pi.style.display!=='none'?parseFloat(pi.value)||0:ps?parseFloat(ps.textContent.replace('₹',''))||0:0);
+    if(!name)return; options.push(name); if(priceType!=='none')vp[name]=price;
   });
-  if (!allValid || !options.length) { showToast('Fill in all variant names.', 'error'); return; }
-  _chipGroups.push({label:label, options:options, priceType:priceType, variantPrices:variantPrices});
-  renderOptionGroups();
-  clearCurrentGroup();
-  showToast('Group saved!');
+  if(!options.length){showToast('Add at least one variant.','error');return;}
+  _chipGroups.push({label:label,options:options,priceType:priceType,variantPrices:vp});
+  renderOptionGroups(); clearCurrentGroup(); showToast('Group saved!');
 }
-
-function addOptionGroup() { saveOptionGroup(); }
-function collectPendingChipGroup() {}
-function resetChipsEditor() { try { clearCurrentGroup(); } catch(e) {} }
-
+function addOptionGroup(){saveOptionGroup();}
 function renderOptionGroups() {
-  const list = document.getElementById('optionGroupsList');
-  if (!list) return;
-  list.innerHTML = _chipGroups.map(function(g, i) {
-    const typeLabel = g.priceType === 'per_variant' ? 'Per variant' : g.priceType === 'addon' ? 'Add-on' : '';
-    const chips = (g.options||[]).map(function(o) {
-      const p = g.variantPrices ? g.variantPrices[o] : 0;
-      return '<span class="opt-group-variant-chip">'+o+(p ? ' <b style="color:var(--teal)">Rs'+p+'</b>' : '')+'</span>';
+  const list=document.getElementById('optionGroupsList'); if(!list)return;
+  list.innerHTML=_chipGroups.map(function(g,i){
+    const tl=g.priceType==='per_variant'?'Own price':g.priceType==='addon'?'Add-on ₹':'Same price';
+    const tlColor=g.priceType!=='none'?'background:#fef3c7;color:#92400e':'background:#f0fdf4;color:#166534';
+    const chips=(g.options||[]).map(function(o){
+      const p=g.variantPrices?g.variantPrices[o]:0;
+      return '<span style="font-size:11px;padding:4px 10px;background:var(--teal-l);border:1px solid rgba(31,78,74,.2);border-radius:20px;color:var(--teal);display:inline-flex;gap:4px;align-items:center">'+o+(p?'<b style="color:var(--gold)">+₹'+p+'</b>':'')+'</span>';
     }).join('');
-    return '<div class="opt-group-saved"><div class="opt-group-saved-header">' +
-      '<span class="opt-group-saved-label">'+g.label+'</span>' +
-      '<div style="display:flex;gap:6px;align-items:center">' +
-      (typeLabel ? '<span class="opt-group-saved-type">'+typeLabel+'</span>' : '') +
-      '<button onclick="_chipGroups.splice('+i+',1);renderOptionGroups()" style="background:none;border:none;color:var(--gray);cursor:pointer;font-size:14px">Del</button>' +
-      '</div></div><div class="opt-group-saved-variants">'+chips+'</div></div>';
+    return '<div style="background:var(--white);border:1.5px solid var(--border);border-radius:12px;padding:.85rem 1rem">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
+      +'<div style="display:flex;gap:8px;align-items:center">'
+      +'<span style="font-size:13px;font-weight:600;color:var(--teal)">'+g.label+'</span>'
+      +'<span style="font-size:10px;padding:2px 8px;border-radius:20px;'+tlColor+'">'+tl+'</span>'
+      +'</div>'
+      +'<div style="display:flex;gap:5px">'
+      +'<button class="btn-sm btn-outline" style="font-size:11px;padding:4px 12px" onclick="editSavedGroup('+i+')">✏️ Edit</button>'
+      +'<button class="btn-sm btn-danger" style="font-size:11px;padding:4px 10px" onclick="_chipGroups.splice('+i+',1);renderOptionGroups()">🗑️</button>'
+      +'</div></div>'
+      +'<div style="display:flex;flex-wrap:wrap;gap:5px">'+chips+'</div></div>';
   }).join('');
 }
-
-/* === SUPABASE OPTION ROWS === */
+function editSavedGroup(i) {
+  const g=_chipGroups[i]; if(!g)return;
+  _chipGroups.splice(i,1); renderOptionGroups(); clearCurrentGroup();
+  const lbl=document.getElementById('f-opt-label'); if(lbl)lbl.value=g.label;
+  const pt=document.getElementById('f-price-type'); if(pt){pt.value=g.priceType||'none';togglePriceCol();}
+  (g.options||[]).forEach(function(o){addVariantRow(o,g.variantPrices?(g.variantPrices[o]||0):0);});
+  showToast('Edit and click Save Group.');
+}
+function collectPendingChipGroup(){}
+function resetChipsEditor(){try{clearCurrentGroup();}catch(e){}}
 async function saveProductOptions(productId) {
-  if (!productId || !_chipGroups.length) return;
-  try {
-    await fetch(_cfg.u + '/rest/v1/product_option_groups?product_id=eq.' + productId, {
-      method: 'DELETE',
-      headers: {'apikey':_cfg.k,'Authorization':'Bearer '+(_session ? _session.access_token : _cfg.k)}
-    });
-    for (let gi = 0; gi < _chipGroups.length; gi++) {
-      const g = _chipGroups[gi];
-      const gRes = await fetch(_cfg.u + '/rest/v1/product_option_groups', {
-        method: 'POST',
-        headers: {'apikey':_cfg.k,'Authorization':'Bearer '+(_session ? _session.access_token : _cfg.k),'Content-Type':'application/json','Prefer':'return=representation'},
-        body: JSON.stringify({product_id:productId, label:g.label, price_type:g.priceType||'none', display_order:gi})
-      });
-      const gData = await gRes.json();
-      const groupId = gData[0] ? gData[0].id : null;
-      if (!groupId) continue;
-      for (let vi = 0; vi < g.options.length; vi++) {
-        const val = g.options[vi];
-        const price = g.variantPrices ? (g.variantPrices[val] || 0) : 0;
-        await fetch(_cfg.u + '/rest/v1/product_option_values', {
-          method: 'POST',
-          headers: {'apikey':_cfg.k,'Authorization':'Bearer '+(_session ? _session.access_token : _cfg.k),'Content-Type':'application/json'},
-          body: JSON.stringify({product_id:productId, group_id:groupId, value:val, price:price, display_order:vi})
-        });
+  if(!productId)return;
+  try{
+    await fetch(_cfg.u+'/rest/v1/product_option_groups?product_id=eq.'+productId,{method:'DELETE',headers:{'apikey':_cfg.k,'Authorization':'Bearer '+(_session?_session.access_token:_cfg.k)}});
+    for(let gi=0;gi<_chipGroups.length;gi++){
+      const g=_chipGroups[gi];
+      const gRes=await fetch(_cfg.u+'/rest/v1/product_option_groups',{method:'POST',headers:{'apikey':_cfg.k,'Authorization':'Bearer '+(_session?_session.access_token:_cfg.k),'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify({product_id:productId,label:g.label,price_type:g.priceType||'none',display_order:gi})});
+      const gData=await gRes.json(); const groupId=gData[0]?gData[0].id:null; if(!groupId)continue;
+      for(let vi=0;vi<g.options.length;vi++){
+        const val=g.options[vi],price=g.variantPrices?(g.variantPrices[val]||0):0;
+        await fetch(_cfg.u+'/rest/v1/product_option_values',{method:'POST',headers:{'apikey':_cfg.k,'Authorization':'Bearer '+(_session?_session.access_token:_cfg.k),'Content-Type':'application/json'},body:JSON.stringify({product_id:productId,group_id:groupId,value:val,price:price,display_order:vi})});
       }
     }
-  } catch(e) { console.log('saveProductOptions error:', e.message); }
+  }catch(e){console.log('saveProductOptions:',e.message);}
 }
-
 async function loadProductOptions(productId) {
-  if (!productId) return [];
-  try {
-    const groups = await sb.query('product_option_groups','?product_id=eq.'+productId+'&order=display_order.asc');
-    if (!groups || !groups.length) return [];
-    const values = await sb.query('product_option_values','?product_id=eq.'+productId+'&order=display_order.asc');
-    return groups.map(function(g) {
-      const vals = (values||[]).filter(function(v){ return v.group_id === g.id; });
-      const options = vals.map(function(v){ return v.value; });
-      const variantPrices = {};
-      vals.forEach(function(v){ if (v.price) variantPrices[v.value] = v.price; });
-      return {label:g.label, options:options, priceType:g.price_type, variantPrices:variantPrices};
+  if(!productId)return[];
+  try{
+    const groups=await sb.query('product_option_groups','?product_id=eq.'+productId+'&order=display_order.asc');
+    if(!groups||!groups.length)return[];
+    const values=await sb.query('product_option_values','?product_id=eq.'+productId+'&order=display_order.asc');
+    return groups.map(function(g){
+      const vals=(values||[]).filter(function(v){return v.group_id===g.id;});
+      const options=vals.map(function(v){return v.value;});
+      const vp={};vals.forEach(function(v){if(v.price)vp[v.value]=v.price;});
+      return{label:g.label,options:options,priceType:g.price_type,variantPrices:vp};
     });
-  } catch(e) { console.log('loadProductOptions:', e.message); return []; }
+  }catch(e){return[];}
 }
 
-
+/* hide loading, check existing session */
+document.getElementById('loadingOverlay').classList.add('hidden');
+if (!checkExistingSession()) {
+  // No saved session, show login
+}
 </script>
 </body>
 </html>
