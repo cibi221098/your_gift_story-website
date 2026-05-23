@@ -17,6 +17,15 @@
   --font-display:'Cormorant Garamond',serif;
 }
 html{scroll-behavior:smooth}
+/* ── WEBSITE LOADER ── */
+.site-loader{position:fixed;inset:0;background:var(--cream);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;transition:opacity .5s ease,visibility .5s ease}
+.site-loader.hidden{opacity:0;visibility:hidden;pointer-events:none}
+.site-loader-logo{font-family:var(--font-display);font-size:32px;font-weight:400;color:var(--teal);letter-spacing:.02em;animation:loaderFadeUp .6s ease both}
+.site-loader-tag{font-size:10px;color:var(--gold);letter-spacing:.18em;text-transform:uppercase;font-weight:600;margin-top:6px;margin-bottom:2.5rem;animation:loaderFadeUp .7s ease both}
+.site-loader-bar-wrap{width:160px;height:2px;background:rgba(201,166,104,.2);border-radius:2px;overflow:hidden;animation:loaderFadeUp .8s ease both}
+.site-loader-bar{height:100%;background:var(--gold);border-radius:2px;width:0%;transition:width .3s ease}
+@keyframes loaderFadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
 body{font-family:var(--font-body);background:var(--cream);color:var(--charcoal);overflow-x:hidden}
 .page{display:none}.page.active{display:block}
 
@@ -173,8 +182,8 @@ section{padding:5rem 2rem}
 .sidebar-cat.active{background:var(--teal);color:var(--cream)}
 .sidebar-cat-count{font-size:11px;opacity:0.6}
 .sidebar-divider{border:none;border-top:1px solid var(--border)}
-.sidebar-price-row{display:flex;gap:8px}
-.sidebar-price-input{flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:10px;font-size:12px;font-family:var(--font-body);background:var(--cream);color:var(--charcoal);outline:none}
+.sidebar-price-row{display:flex;gap:8px;align-items:center}
+.sidebar-price-input{flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:10px;font-size:12px;font-family:var(--font-body);background:var(--cream);color:var(--charcoal);outline:none;min-width:0;width:100%}.sidebar-price-input:focus{border-color:var(--teal)}.sidebar-price-sep{font-size:11px;color:var(--gray);flex-shrink:0;padding:0 2px}
 .sidebar-price-input:focus{border-color:var(--teal)}
 .sidebar-occasions{display:flex;flex-wrap:wrap;gap:6px}
 .occ-chip{font-size:11px;padding:5px 12px;border:1px solid var(--border);border-radius:20px;cursor:pointer;color:var(--charcoal);background:var(--cream);transition:all .15s}
@@ -267,6 +276,16 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
 <body>
 
 <!-- NAV -->
+
+<!-- SITE LOADER -->
+<div class="site-loader" id="siteLoader">
+  <div class="site-loader-logo">Your Gift Story</div>
+  <div class="site-loader-tag">Beyond Just a Gift</div>
+  <div class="site-loader-bar-wrap">
+    <div class="site-loader-bar" id="loaderBar"></div>
+  </div>
+</div>
+
 <nav>
   <div class="nav-inner">
     <div class="nav-logo" onclick="showPage('home')">
@@ -413,9 +432,9 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
         </div>
         <div>
           <div class="footer-col-title">Contact</div>
-          <div class="footer-contact-item"><span class="footer-contact-icon">📍</span><span>Coimbatore, Tamil Nadu, India</span></div>
-          <div class="footer-contact-item"><span class="footer-contact-icon">📱</span><span>+91 98765 43210</span></div>
-          <div class="footer-contact-item"><span class="footer-contact-icon">📧</span><span>hello@yourgiftstory.in</span></div>
+          <div class="footer-contact-item"><span class="footer-contact-icon">📍</span><span id="footerLocation">Coimbatore, Tamil Nadu, India</span></div>
+          <div class="footer-contact-item"><span class="footer-contact-icon">📱</span><span id="footerPhone">+91 98765 43210</span></div>
+          <div class="footer-contact-item"><span class="footer-contact-icon">📧</span><span id="footerEmail">hello@yourgiftstory.in</span></div>
           <div class="footer-contact-item"><span class="footer-contact-icon">🕐</span><span>Mon–Sat, 10am – 7pm IST</span></div>
         </div>
       </div>
@@ -448,8 +467,9 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
       <div>
         <div class="sidebar-section-title">Price Range (₹)</div>
         <div class="sidebar-price-row">
-          <input class="sidebar-price-input" type="number" id="priceMin" placeholder="Min" min="0" onchange="applyFilters()">
-          <input class="sidebar-price-input" type="number" id="priceMax" placeholder="Max" min="0" onchange="applyFilters()">
+          <input class="sidebar-price-input" type="number" id="priceMin" placeholder="Min ₹" min="0" onchange="applyFilters()">
+          <span class="sidebar-price-sep">—</span>
+          <input class="sidebar-price-input" type="number" id="priceMax" placeholder="Max ₹" min="0" onchange="applyFilters()">
         </div>
       </div>
       <hr class="sidebar-divider">
@@ -555,17 +575,37 @@ let spCur = 0, spTimer = null;
    INIT — load everything from Supabase
 ═══════════════════════════════════════ */
 async function initSite() {
+  const bar = document.getElementById('loaderBar');
+  const setBar = (pct) => { if (bar) bar.style.width = pct + '%'; };
+
+  setBar(10);
   try {
     ALL_PRODUCTS = await sbGet('products', 'is_active=eq.true&order=created_at.desc');
+    setBar(40);
   } catch(e) { console.error('Products:', e.message); ALL_PRODUCTS = []; }
 
   try {
     ALL_CATEGORIES = await sbGet('categories', 'is_active=eq.true&order=display_order.asc');
+    setBar(65);
   } catch(e) { console.error('Categories:', e.message); ALL_CATEGORIES = []; }
 
   try {
     ALL_TESTIMONIALS = await sbGet('testimonials', 'is_active=eq.true&order=created_at.asc');
+    setBar(85);
   } catch(e) { console.error('Testimonials:', e.message); ALL_TESTIMONIALS = []; }
+
+  // Load site settings for contact details
+  try {
+    const settings = await sbGet('site_settings', 'select=key,value');
+    if (settings && settings.length) {
+      const s = {};
+      settings.forEach(r => { s[r.key] = r.value; });
+      const setEl = (id, val) => { const el = document.getElementById(id); if (el && val) el.textContent = val; };
+      setEl('footerPhone', s.whatsapp); setEl('footerPhone2', s.whatsapp);
+      setEl('footerEmail', s.email); setEl('footerEmail2', s.email);
+      setEl('footerLocation', s.location); setEl('footerLocation2', s.location);
+    }
+  } catch(e) { console.log('Settings not loaded:', e.message); }
 
   renderBestsellers();
   renderCategoriesGrid();
@@ -573,6 +613,12 @@ async function initSite() {
   renderShopGrid();
   buildMarquee();
   buildSpotlight();
+
+  setBar(100);
+  setTimeout(() => {
+    const loader = document.getElementById('siteLoader');
+    if (loader) loader.classList.add('hidden');
+  }, 400);
 }
 
 /* ═══════════════════════════════════════
