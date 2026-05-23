@@ -752,10 +752,10 @@ function openProductModal(id) {
   _chipGroups = [];
   _photoFiles = [];
   _photoUrls = [];
-  resetChipsEditor();
-  document.getElementById('optionGroupsList').innerHTML = '';
-  document.getElementById('photoPreviews').innerHTML = '';
-  document.getElementById('uploadProgress').style.display = 'none';
+  try { clearCurrentGroup(); } catch(e) {}
+  const _og = document.getElementById('optionGroupsList'); if(_og) _og.innerHTML = '';
+  const _pp = document.getElementById('photoPreviews'); if(_pp) _pp.innerHTML = '';
+  const _up = document.getElementById('uploadProgress'); if(_up) _up.style.display = 'none';
 
   if (id) {
     const p = _products.find(x => x.id === id);
@@ -963,7 +963,7 @@ function addOptionGroup() {
 }
 
 function resetChipsEditor() {
-  document.getElementById('chipsEditor').innerHTML = '<input class="chips-input" id="chipsInput" placeholder="Type option, press Enter…" onkeydown="handleChipKey(event)">';
+  try { clearCurrentGroup(); } catch(e) {}
 }
 
 function renderOptionGroups() {
