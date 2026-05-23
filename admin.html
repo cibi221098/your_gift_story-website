@@ -608,7 +608,7 @@ async function enterApp() {
     if (el) el.textContent = loaderMsgs[msgIdx++ % loaderMsgs.length];
   }, 800);
   try {
-    await Promise.all([loadCategories(), loadProducts(), loadTestimonials()]);
+    await Promise.all([loadCategories(), loadProducts(), loadTestimonials(), loadSettings()]);
     clearInterval(loaderInterval);
     renderDashboard();
     renderCategoryFilter();
@@ -1114,8 +1114,50 @@ async function deleteTesti(id) {
 }
 
 /* ═══════════════════════════════════════  SETTINGS  */
-function saveSettings() {
-  showToast('Settings saved! (Connect these to your site config)', 'success');
+async function saveSettings() {
+  const settings = [
+    {key:'whatsapp', value: document.getElementById('waNumber').value.trim()},
+    {key:'email',    value: document.getElementById('shopEmail').value.trim()},
+    {key:'shopName', value: document.getElementById('shopName').value.trim()},
+    {key:'tagline',  value: document.getElementById('shopTagline').value.trim()},
+    {key:'location', value: document.getElementById('shopLocation').value.trim()},
+  ];
+  try {
+    for (const s of settings) {
+      // Upsert: insert or update based on key
+      await fetch(_cfg.u + '/rest/v1/site_settings', {
+        method: 'POST',
+        headers: {
+          'apikey': _cfg.k,
+          'Authorization': 'Bearer ' + (_session?.access_token || _cfg.k),
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates'
+        },
+        body: JSON.stringify(s)
+      });
+    }
+    showToast('Settings saved and live on website!', 'success');
+  } catch(e) {
+    showToast('Error saving: ' + e.message, 'error');
+  }
+}
+
+async function loadSettings() {
+  try {
+    const res = await fetch(_cfg.u + '/rest/v1/site_settings?select=key,value', {
+      headers: {'apikey': _cfg.k, 'Authorization': 'Bearer ' + _cfg.k}
+    });
+    const data = await res.json();
+    if (data && data.length) {
+      const s = {};
+      data.forEach(r => { s[r.key] = r.value; });
+      if (s.whatsapp) document.getElementById('waNumber').value = s.whatsapp;
+      if (s.email) document.getElementById('shopEmail').value = s.email;
+      if (s.shopName) document.getElementById('shopName').value = s.shopName;
+      if (s.tagline) document.getElementById('shopTagline').value = s.tagline;
+      if (s.location) document.getElementById('shopLocation').value = s.location;
+    }
+  } catch(e) { console.log('Settings load:', e.message); }
 }
 
 /* ═══════════════════════════════════════  TOAST  */
