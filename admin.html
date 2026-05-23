@@ -838,9 +838,10 @@ async function saveProduct() {
       showToast('Product added!', 'success');
     }
 
-    if (_editingId || (created && created[0])) {
-      const pid = _editingId || created[0].id;
-      await saveProductOptions(pid);
+    if (_editingId) {
+      await saveProductOptions(_editingId);
+    } else if (typeof created !== 'undefined' && created && created[0]) {
+      await saveProductOptions(created[0].id);
     }
     closeProductModal();
     renderProducts();
