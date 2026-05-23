@@ -518,8 +518,7 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
 </div>
 <div class="toast" id="toast"></div>
 
-<script>
-/* ═══════════════════════════════════════
+<script>/* ═══════════════════════════════════════
    SUPABASE CONFIG
 ═══════════════════════════════════════ */
 const _SB = {
@@ -527,28 +526,18 @@ const _SB = {
   k: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJsd2F2cmx3ZmZxdWNmeWhyZWRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTIwMzEsImV4cCI6MjA5NTAyODAzMX0.YuDNPuQ614xN6eP6AxCGBSMWUS6zTF1crByk1CdfQC8'
 };
 
-function sbGet(table, params) {
-  return new Promise((resolve, reject) => {
-    let urlStr = _SB.u + '/rest/v1/' + table + '?';
-    if (params) urlStr += Object.entries(params).map(([k,v]) => k + '=' + encodeURIComponent(v)).join('&');
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', urlStr, true);
-    xhr.setRequestHeader('apikey', _SB.k);
-    xhr.setRequestHeader('Authorization', 'Bearer ' + _SB.k);
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.onload = function() {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try { resolve(JSON.parse(xhr.responseText)); }
-        catch(e) { reject(new Error('Invalid JSON response')); }
-      } else {
-        reject(new Error('HTTP ' + xhr.status + ': ' + xhr.responseText));
-      }
-    };
-    xhr.onerror = function() {
-      reject(new Error('Network error — if opening as file://, use Chrome or a local server.'));
-    };
-    xhr.send();
+async function sbGet(table, qs) {
+  let url = _SB.u + '/rest/v1/' + table;
+  if (qs) url += '?' + qs;
+  const res = await fetch(url, {
+    headers: {
+      'apikey': _SB.k,
+      'Authorization': 'Bearer ' + _SB.k,
+      'Content-Type': 'application/json'
+    }
   });
+  if (!res.ok) throw new Error('Supabase error ' + res.status + ': ' + await res.text());
+  return res.json();
 }
 
 /* ═══════════════════════════════════════
@@ -556,6 +545,7 @@ function sbGet(table, params) {
 ═══════════════════════════════════════ */
 let ALL_PRODUCTS = [];
 let ALL_CATEGORIES = [];
+let ALL_TESTIMONIALS = [];
 let cart = [];
 let currentPage = 'home';
 let activeCategory = 'all';
@@ -566,29 +556,25 @@ let spCur = 0, spTimer = null;
 ═══════════════════════════════════════ */
 async function initSite() {
   try {
-    const [prods, cats] = await Promise.all([
-      sbGet('products', {'is_active': 'eq.true', 'order': 'created_at.desc'}),
-      sbGet('categories', {'is_active': 'eq.true', 'order': 'display_order.asc'})
+    const [prods, cats, testis] = await Promise.all([
+      sbGet('products', 'is_active=eq.true&order=created_at.desc'),
+      sbGet('categories', 'is_active=eq.true&order=display_order.asc'),
+      sbGet('testimonials', 'is_active=eq.true&order=created_at.asc')
     ]);
     ALL_PRODUCTS = prods || [];
     ALL_CATEGORIES = cats || [];
-    renderBestsellers();
-    renderCategoriesGrid();
-    renderSidebar();
-    renderShopGrid();
-    buildMarquee();
+    ALL_TESTIMONIALS = testis || [];
   } catch(e) {
-    console.error('Supabase load error:', e);
-    const bg = document.getElementById('bestsellersGrid');
-    const cg = document.getElementById('categoriesGrid');
-    console.error('Full error:', e.message);
-    const isFile = window.location.protocol === 'file:';
-    const msg = isFile
-      ? '<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--gray);font-size:14px">⚠️ Open this file in <strong>Chrome</strong> (not Safari) to load products from Supabase.<br><small style=\"font-size:11px;margin-top:4px;display:block\">Safari blocks external requests from local files.</small></div>'
-      : '<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--gray);font-size:14px">Products coming soon!</div>';
-    if (bg) bg.innerHTML = msg;
-    if (cg) cg.innerHTML = '';
+    console.error('Supabase load error:', e.message);
+    ALL_PRODUCTS = [];
+    ALL_CATEGORIES = [];
+    ALL_TESTIMONIALS = [];
   }
+  renderBestsellers();
+  renderCategoriesGrid();
+  renderSidebar();
+  renderShopGrid();
+  buildMarquee();
   buildSpotlight();
 }
 
@@ -805,24 +791,15 @@ function buildMarquee() {
   requestAnimationFrame(tick);
 }
 
-/* ═══════════════════════════════════════
-   TESTIMONIALS — Rotating Spotlight
-═══════════════════════════════════════ */
-const TESTIMONIALS = [
-  {stars:"★★★★★",text:"Ordered a custom embroidered hoop for my best friend's birthday. She cried happy tears! Quality and personalisation were beyond what I expected.",name:"Sneha R.",occasion:"Birthday gift · Coimbatore",initials:"SR"},
-  {stars:"★★★★★",text:"The resin keychain with my sister's name is just stunning. Packaging was gorgeous — felt so premium. Will definitely order again!",name:"Anjali K.",occasion:"Raksha Bandhan · Mumbai",initials:"AK"},
-  {stars:"★★★★★",text:"Gifted the photo tile to my parents on their anniversary. They absolutely love it. Fast delivery and print quality is excellent!",name:"Priya V.",occasion:"Anniversary · Bangalore",initials:"PV"},
-  {stars:"★★★★★",text:"Got a crochet bouquet for my girlfriend — she was absolutely delighted! Never seen anything like it. Will definitely order again.",name:"Karthik M.",occasion:"Valentine's Day · Chennai",initials:"KM"},
-  {stars:"★★★★★",text:"The gift hamper was so thoughtfully curated. Every element felt personal and special. My mom keeps asking where I got it from!",name:"Divya S.",occasion:"Mother's Day · Pune",initials:"DS"},
-  {stars:"★★★★★",text:"Beautifully handcrafted, quick delivery, personalisation was spot on. Best gifting store I've found — 10/10!",name:"Lakshmi N.",occasion:"Birthday gift · Kochi",initials:"LN"},
-];
+
 
 function buildSpotlight() {
   const stage = document.getElementById('spStage');
   const dotsEl = document.getElementById('spDots');
   const thumbsEl = document.getElementById('spThumbs');
   if (!stage) return;
-  stage.innerHTML = TESTIMONIALS.map((t,i) => `
+  const testiData = ALL_TESTIMONIALS.length ? ALL_TESTIMONIALS.map(t => ({stars:"★".repeat(t.rating||5),text:t.review_text,name:t.customer_name,occasion:(t.occasion||"")+(t.location?(" · "+t.location):""),initials:t.customer_name.split(" ").map(w=>w[0]).join("").substring(0,2).toUpperCase()})) : [{stars:"★★★★★",text:"Wonderful handcrafted gifts, made with so much love and care!",name:"Happy Customer",occasion:"Coimbatore",initials:"HC"}];
+  stage.innerHTML = testiData.map((t,i) => `
     <div class="sp-card${i===0?' active':''}" id="sp-card-${i}">
       <span class="sp-mark">&#8220;</span>
       <div class="sp-stars">${t.stars}</div>
@@ -838,7 +815,7 @@ function buildSpotlight() {
   dotsEl.innerHTML = TESTIMONIALS.map((_,i) =>
     `<button class="sp-dot${i===0?' active':''}" onclick="spGo(${i})" aria-label="Review ${i+1}"></button>`
   ).join('');
-  thumbsEl.innerHTML = TESTIMONIALS.map((t,i) =>
+  thumbsEl.innerHTML = testiData.map((t,i) =>
     `<div class="sp-thumb${i===0?' active':''}" onclick="spGo(${i})">
       <span class="sp-thumb-name">${t.name}</span>
       <span class="sp-thumb-occ">${t.occasion.split('·')[0].trim()}</span>
@@ -848,7 +825,7 @@ function buildSpotlight() {
 }
 
 function spGo(idx) {
-  const total = TESTIMONIALS.length;
+  const total = document.querySelectorAll(".sp-card").length || 1;
   idx = ((idx % total) + total) % total;
   document.querySelectorAll('.sp-card').forEach((c,i) => c.classList.toggle('active', i===idx));
   document.querySelectorAll('.sp-dot').forEach((d,i) => d.classList.toggle('active', i===idx));
