@@ -320,6 +320,7 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
         <h2 class="section-title" style="font-size:clamp(48px,6vw,80px);margin-bottom:1rem">Most <em>Loved</em></h2>
         <p class="section-sub">The gifts our customers keep coming back for — handmade, personalised, and gifted with so much love.</p>
       </div>
+      <div style="font-size:11px;color:var(--gray);text-align:center;padding:4px;font-family:monospace" id="sbDebug"></div>
       <div class="bestsellers-grid" id="bestsellersGrid">
         <div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--gray);font-size:14px">Loading gifts...</div>
       </div>
@@ -555,21 +556,27 @@ let spCur = 0, spTimer = null;
    INIT — load everything from Supabase
 ═══════════════════════════════════════ */
 async function initSite() {
+  let dbg = [];
+
   try {
-    const [prods, cats, testis] = await Promise.all([
-      sbGet('products', 'is_active=eq.true&order=created_at.desc'),
-      sbGet('categories', 'is_active=eq.true&order=display_order.asc'),
-      sbGet('testimonials', 'is_active=eq.true&order=created_at.asc')
-    ]);
-    ALL_PRODUCTS = prods || [];
-    ALL_CATEGORIES = cats || [];
-    ALL_TESTIMONIALS = testis || [];
-  } catch(e) {
-    console.error('Supabase load error:', e.message);
-    ALL_PRODUCTS = [];
-    ALL_CATEGORIES = [];
-    ALL_TESTIMONIALS = [];
-  }
+    ALL_PRODUCTS = await sbGet('products', 'is_active=eq.true&order=created_at.desc');
+    dbg.push('products:' + ALL_PRODUCTS.length);
+  } catch(e) { console.error('Products error:', e.message); dbg.push('products:ERR:'+e.message); ALL_PRODUCTS = []; }
+
+  try {
+    ALL_CATEGORIES = await sbGet('categories', 'is_active=eq.true&order=display_order.asc');
+    dbg.push('cats:' + ALL_CATEGORIES.length);
+  } catch(e) { console.error('Categories error:', e.message); dbg.push('cats:ERR:'+e.message); ALL_CATEGORIES = []; }
+
+  try {
+    ALL_TESTIMONIALS = await sbGet('testimonials', 'is_active=eq.true&order=created_at.asc');
+    dbg.push('testis:' + ALL_TESTIMONIALS.length);
+  } catch(e) { console.error('Testimonials error:', e.message); dbg.push('testis:ERR:'+e.message); ALL_TESTIMONIALS = []; }
+
+  // Show debug info on page temporarily
+  const dbgEl = document.getElementById('sbDebug');
+  if (dbgEl) dbgEl.textContent = dbg.join(' | ');
+
   renderBestsellers();
   renderCategoriesGrid();
   renderSidebar();
