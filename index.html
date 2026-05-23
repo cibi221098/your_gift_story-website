@@ -914,9 +914,10 @@ function productCardHTML(p) {
   const opts = p.customisation_options || [];
   const optHTML = opts.map(g => `   <div class="ctrl-label">${g.label}</div>   <div class="chips">${(g.options||[]).map((o,i) =>    `<span class="chip${i===0?' active':''}" onclick="selectChip(this)">${o}</span>`   ).join('')}</div>  `).join('');
 
-  // Free-text customisation field (admin-controlled, flat columns)
-  const textHTML = p.text_customisation_enabled
-    ? `<div class="ctrl-label">${p.text_customisation_label || 'Custom message'}${p.text_customisation_required ? ' <span style="color:#E24B4A">*</span>' : ''}</div><input class="gift-input" placeholder="${p.text_customisation_placeholder || 'Type here…'}" ${p.text_customisation_required ? 'data-tc-required="1"' : ''}>`
+  // Free-text customisation field (admin-controlled)
+  const tc = p.text_customisation;
+  const textHTML = tc && tc.enabled
+    ? `<div class="ctrl-label">${tc.label || 'Custom message'}${tc.required ? ' <span style="color:#E24B4A">*</span>' : ''}</div><input class="gift-input" placeholder="${tc.placeholder || 'Type here…'}" ${tc.required ? 'required data-tc-required="1"' : ''}>`
     : '';
 
   const badge = p.is_bestseller
@@ -1041,18 +1042,33 @@ function selectChip(el) {
   var opts = p.customisation_options || [];
   var allChipGroups = card.querySelectorAll('.chips');
   var basePrice = Number(p.price) || 0;
-  var finalPrice = basePrice;
+
+  // Pass 1: check if any per_variant group is selected — that overrides the base price
+  var effectiveBase = basePrice;
   opts.forEach(function(g, gi) {
     var grp = allChipGroups[gi];
     if (!grp) return;
     var activeChip = grp.querySelector('.chip.active');
     var sel = activeChip ? activeChip.textContent.trim() : (g.options ? g.options[0] : '');
-    if (g.priceType === 'per_variant' && g.variantPrices && g.variantPrices[sel]) {
-      finalPrice = Number(g.variantPrices[sel]);
-    } else if (g.priceType === 'addon' && g.variantPrices && g.variantPrices[sel]) {
-      finalPrice = basePrice + Number(g.variantPrices[sel]);
+    if (g.priceType === 'per_variant' && g.variantPrices) {
+      var vp = Number(g.variantPrices[sel]);
+      if (!isNaN(vp) && vp > 0) effectiveBase = vp;
     }
   });
+
+  // Pass 2: stack all addon prices on top of the effective base
+  var finalPrice = effectiveBase;
+  opts.forEach(function(g, gi) {
+    var grp = allChipGroups[gi];
+    if (!grp) return;
+    var activeChip = grp.querySelector('.chip.active');
+    var sel = activeChip ? activeChip.textContent.trim() : (g.options ? g.options[0] : '');
+    if (g.priceType === 'addon' && g.variantPrices) {
+      var ap = Number(g.variantPrices[sel]);
+      if (!isNaN(ap) && ap > 0) finalPrice += ap;
+    }
+  });
+
   priceEl.textContent = '₹' + finalPrice.toLocaleString('en-IN');
 }
 
