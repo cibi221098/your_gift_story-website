@@ -719,6 +719,22 @@ async function initSite() {
   setBar(10);
   try {
     ALL_PRODUCTS = await sbGet('products', 'is_active=eq.true&order=created_at.desc');
+    // Fetch option groups and values, merge into products
+    try {
+      const optGroups = await sbGet('product_option_groups', 'order=display_order.asc');
+      const optValues = await sbGet('product_option_values', 'order=display_order.asc');
+      ALL_PRODUCTS = ALL_PRODUCTS.map(function(p) {
+        var groups = (optGroups||[]).filter(function(g){return g.product_id===p.id;});
+        var customisation_options = groups.map(function(g) {
+          var vals = (optValues||[]).filter(function(v){return v.group_id===g.id;});
+          var options = vals.map(function(v){return v.value;});
+          var variantPrices = {};
+          vals.forEach(function(v){if(v.price) variantPrices[v.value]=v.price;});
+          return {label:g.label, options:options, priceType:g.price_type, variantPrices:variantPrices};
+        });
+        return Object.assign({}, p, {customisation_options: customisation_options.length ? customisation_options : (p.customisation_options||[])});
+      });
+    } catch(e) { console.log('Options load:', e.message); }
     setBar(40);
   } catch(e) { console.error('Products:', e.message); ALL_PRODUCTS = []; }
 
