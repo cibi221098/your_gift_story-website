@@ -384,16 +384,30 @@ html,body{height:100%;font-family:var(--font-body);background:#f4f1ec;color:var(
       <p style="font-size:12px;color:var(--gray);margin-bottom:.75rem">Add options customers choose from. Press Enter or comma after each value.</p>
       <div class="form-group" style="margin-bottom:.75rem">
         <label class="form-label">Option Group Label</label>
-        <input class="form-input" id="f-opt-label" placeholder="e.g. Size, Colour, Finish">
-      </div>
-      <div class="form-group" style="margin-bottom:.75rem">
-        <label class="form-label">Option Values</label>
-        <div class="chips-editor" id="chipsEditor" onclick="document.getElementById('chipsInput').focus()">
-          <input class="chips-input" id="chipsInput" placeholder="Type option, press Enter…" onkeydown="handleChipKey(event)">
+        <div style="display:flex;gap:8px">
+          <input class="form-input" id="f-opt-label" placeholder="e.g. Size, Colour, Finish" style="flex:1">
         </div>
       </div>
+      <div class="form-group" style="margin-bottom:.5rem">
+        <label class="form-label">Option Values <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--gray);font-size:11px">— press Enter or comma after each value</span></label>
+        <div class="chips-editor" id="chipsEditor" onclick="document.getElementById('chipsInput').focus()">
+          <input class="chips-input" id="chipsInput" placeholder="e.g. Small, Medium, Large…" onkeydown="handleChipKey(event)" oninput="handleChipInput(event)">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:.5rem">
+        <label class="form-label">Pricing type for this group</label>
+        <select class="form-select" id="f-price-type" style="font-size:12px" onchange="updateVariantPriceFields()">
+          <option value="none">No price difference</option>
+          <option value="per_variant">Per variant price (each variant has its own price)</option>
+          <option value="addon">Add-on price (base price + extra per variant)</option>
+        </select>
+      </div>
+      <div id="variantPriceFields" style="display:none;margin-bottom:.5rem"></div>
       <div id="optionGroupsList" style="display:flex;flex-direction:column;gap:.5rem;margin-bottom:.75rem"></div>
-      <button class="btn-sm btn-outline" style="font-size:11px" onclick="addOptionGroup()">+ Add Another Option Group</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn-sm btn-primary" style="font-size:11px" onclick="addOptionGroup()">✓ Add This Group</button>
+        <button class="btn-sm btn-outline" style="font-size:11px;color:var(--gray)" onclick="clearCurrentGroup()">✕ Clear</button>
+      </div>
 
       <div class="form-section-title">Visibility</div>
       <div style="display:flex;flex-direction:column;gap:.75rem">
@@ -881,18 +895,44 @@ function handleChipKey(e) {
 
 function collectPendingChipGroup() {
   const label = document.getElementById('f-opt-label')?.value.trim();
+  const inp = document.getElementById('chipsInput');
+  if (inp && inp.value.trim()) { addChip(inp.value.trim()); inp.value = ''; }
   const chips = Array.from(document.querySelectorAll('#chipsEditor .chip-tag')).map(c => c.dataset.val);
-  if (label && chips.length) { _chipGroups.push({label, options: chips}); }
+  if (label && chips.length) {
+    const priceType = document.getElementById('f-price-type')?.value || 'none';
+    let variantPrices = {};
+    if (priceType !== 'none') {
+      chips.forEach(c => {
+        const el = document.getElementById('vp_' + c.replace(/\s/g,'_'));
+        if (el) variantPrices[c] = parseFloat(el.value) || 0;
+      });
+    }
+    _chipGroups.push({label, options: chips, priceType, variantPrices});
+  }
 }
 
 function addOptionGroup() {
   const label = document.getElementById('f-opt-label').value.trim();
+  // Also confirm any pending chip input
+  const inp = document.getElementById('chipsInput');
+  if (inp && inp.value.trim()) { addChip(inp.value.trim()); inp.value = ''; }
   const chips = Array.from(document.querySelectorAll('#chipsEditor .chip-tag')).map(c => c.dataset.val);
   if (!label || !chips.length) { showToast('Add a label and at least one option first.', 'error'); return; }
-  _chipGroups.push({label, options: chips});
+  const priceType = document.getElementById('f-price-type')?.value || 'none';
+  let variantPrices = {};
+  if (priceType !== 'none') {
+    chips.forEach(c => {
+      const el = document.getElementById('vp_' + c.replace(/\s/g,'_'));
+      if (el) variantPrices[c] = parseFloat(el.value) || 0;
+    });
+  }
+  _chipGroups.push({label, options: chips, priceType, variantPrices});
   document.getElementById('f-opt-label').value = '';
+  document.getElementById('f-price-type').value = 'none';
+  document.getElementById('variantPriceFields').style.display = 'none';
   resetChipsEditor();
   renderOptionGroups();
+  showToast('Option group added!');
 }
 
 function resetChipsEditor() {
@@ -900,14 +940,19 @@ function resetChipsEditor() {
 }
 
 function renderOptionGroups() {
-  document.getElementById('optionGroupsList').innerHTML = _chipGroups.map((g,i) => `
-    <div style="background:#f9f7f4;border:1px solid var(--border);border-radius:10px;padding:.75rem;display:flex;align-items:center;gap:.75rem">
+  document.getElementById('optionGroupsList').innerHTML = _chipGroups.map((g,i) => {
+    const priceInfo = g.priceType && g.priceType !== 'none'
+      ? `<div style="font-size:10px;color:var(--teal);margin-top:4px">${g.priceType === 'per_variant' ? '₹ Per variant pricing' : '₹ Add-on pricing'}: ${g.options.map(o => o + (g.variantPrices?.[o] ? ' ₹'+g.variantPrices[o] : '')).join(', ')}</div>`
+      : '';
+    return `<div style="background:#f9f7f4;border:1px solid var(--border);border-radius:10px;padding:.75rem;display:flex;align-items:flex-start;gap:.75rem">
       <div style="flex:1">
         <div style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">${g.label}</div>
-        <div style="display:flex;gap:4px;flex-wrap:wrap">${g.options.map(o=>`<span class="chip-tag">${o}</span>`).join('')}</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap">${g.options.map(o=>'<span class="chip-tag">'+o+'</span>').join('')}</div>
+        ${priceInfo}
       </div>
-      <button onclick="_chipGroups.splice(${i},1);renderOptionGroups()" style="background:none;border:none;color:var(--gray);cursor:pointer;font-size:16px">🗑️</button>
-    </div>`).join('');
+      <button onclick="_chipGroups.splice(${i},1);renderOptionGroups()" style="background:none;border:none;color:var(--gray);cursor:pointer;font-size:16px;flex-shrink:0">🗑️</button>
+    </div>`;
+  }).join('');
 }
 
 /* ═══════════════════════════════════════  CATEGORIES  */
