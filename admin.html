@@ -624,8 +624,9 @@ let _products = [];
 let _categories = [];
 let _editingId = null;
 let _chipGroups = [];
-let _photoFiles = [];
-let _photoUrls = [];
+let _photoFiles = [];   // only NEW files (not yet uploaded)
+let _photoUrls = [];    // ALL urls: existing + newly uploaded
+let _existingPhotoCount = 0; // how many urls were pre-loaded (not new files)
 
 /* ═══════════════════════════════════════  AUTH — uses admin_users table  */
 
@@ -802,6 +803,7 @@ function openProductModal(id) {
   _chipGroups = [];
   _photoFiles = [];
   _photoUrls = [];
+  _existingPhotoCount = 0;
   try { clearCurrentGroup(); } catch(e) {}
   const _og = document.getElementById('optionGroupsList'); if(_og) _og.innerHTML = '';
   const _pp = document.getElementById('photoPreviews'); if(_pp) _pp.innerHTML = '';
@@ -818,18 +820,27 @@ function openProductModal(id) {
     document.getElementById('f-bestseller').checked = !!p.is_bestseller;
     document.getElementById('f-active').checked = !!p.is_active;
 
-    // Restore text customisation (flat columns)
-    const tcEnabled = !!p.text_customisation_enabled;
-    document.getElementById('f-allow-text').checked = tcEnabled;
-    document.getElementById('f-text-label').value = p.text_customisation_label || '';
-    document.getElementById('f-text-placeholder').value = p.text_customisation_placeholder || '';
-    document.getElementById('f-text-required').checked = !!p.text_customisation_required;
-    document.getElementById('text-fields-wrap').style.display = tcEnabled ? 'flex' : 'none';
+    // Restore text customisation
+    const tc = p.text_customisation || {};
+    document.getElementById('f-allow-text').checked = !!tc.enabled;
+    document.getElementById('f-text-label').value = tc.label || '';
+    document.getElementById('f-text-placeholder').value = tc.placeholder || '';
+    document.getElementById('f-text-required').checked = !!tc.required;
+    // Explicitly sync visibility — don't rely on onchange event
+    document.getElementById('text-fields-wrap').style.display = tc.enabled ? 'flex' : 'none';
     _chipGroups = [];
     _variantRowCount = 0;
-    loadProductOptions(id).then(opts => { _chipGroups = opts; renderOptionGroups(); });
+    // Use async load with proper await — show loading state
+    loadProductOptions(id).then(opts => {
+      _chipGroups = Array.isArray(opts) ? opts : [];
+      renderOptionGroups();
+    }).catch(() => {
+      _chipGroups = [];
+      renderOptionGroups();
+    });
     if (p.photos && p.photos.length) {
       _photoUrls = [...p.photos];
+      _existingPhotoCount = _photoUrls.length; // track how many are pre-existing
       renderPhotoPreviews();
     }
   } else {
@@ -883,15 +894,18 @@ async function saveProduct() {
       emoji: null,
       description: document.getElementById('f-desc').value.trim(),
       photos: _photoUrls,
-      customisation_options: _chipGroups,
+      // Note: customisation_options saved separately via saveProductOptions()
       is_bestseller: document.getElementById('f-bestseller').checked,
       is_active: document.getElementById('f-active').checked,
-      text_customisation_enabled: document.getElementById('f-allow-text').checked,
-      text_customisation_label: document.getElementById('f-allow-text').checked ? (document.getElementById('f-text-label').value.trim() || 'Custom message') : null,
-      text_customisation_placeholder: document.getElementById('f-allow-text').checked ? document.getElementById('f-text-placeholder').value.trim() : null,
-      text_customisation_required: document.getElementById('f-allow-text').checked ? document.getElementById('f-text-required').checked : false,
+      text_customisation: document.getElementById('f-allow-text').checked ? {
+        enabled: true,
+        label: document.getElementById('f-text-label').value.trim() || 'Custom message',
+        placeholder: document.getElementById('f-text-placeholder').value.trim() || '',
+        required: document.getElementById('f-text-required').checked
+      } : null,
     };
 
+    let savedId = _editingId;
     if (_editingId) {
       const updated = await sb.update('products', _editingId, payload);
       const idx = _products.findIndex(p => p.id === _editingId);
@@ -900,13 +914,12 @@ async function saveProduct() {
     } else {
       const created = await sb.insert('products', payload);
       _products.unshift(created[0] || payload);
+      savedId = created && created[0] ? created[0].id : null;
       showToast('Product added!', 'success');
     }
 
-    if (_editingId) {
-      await saveProductOptions(_editingId);
-    } else if (typeof created !== 'undefined' && created && created[0]) {
-      await saveProductOptions(created[0].id);
+    if (savedId) {
+      await saveProductOptions(savedId);
     }
     closeProductModal();
     renderProducts();
@@ -964,8 +977,14 @@ function renderPhotoPreviews() {
 }
 
 function removePhoto(i) {
-  _photoUrls.splice(i,1);
-  if (i < _photoFiles.length) _photoFiles.splice(i,1);
+  _photoUrls.splice(i, 1);
+  // Only remove from _photoFiles if this is a newly added file (index >= existing count)
+  const fileIdx = i - _existingPhotoCount;
+  if (fileIdx >= 0 && fileIdx < _photoFiles.length) {
+    _photoFiles.splice(fileIdx, 1);
+  }
+  // Update existing count if we removed an existing photo
+  if (i < _existingPhotoCount) _existingPhotoCount--;
   renderPhotoPreviews();
 }
 
