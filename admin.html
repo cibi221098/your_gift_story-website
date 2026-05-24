@@ -839,8 +839,8 @@ function openProductModal(id) {
       renderOptionGroups();
     });
     if (p.photos && p.photos.length) {
-      _photoUrls = [...p.photos];
-      _existingPhotoCount = _photoUrls.length; // track how many are pre-existing
+      _photoUrls = p.photos.filter(u => u && u.startsWith('http'));
+      _existingPhotoCount = _photoUrls.length;
       renderPhotoPreviews();
     }
   } else {
@@ -889,11 +889,14 @@ async function saveProduct() {
       _photoFiles = [];
     }
 
+    // Only save real remote URLs — strip out any base64 previews or nulls
+    const cleanPhotos = _photoUrls.filter(u => u && u.startsWith('http'));
+
     const payload = {
       name, price: parseFloat(price), category: cat,
       emoji: null,
       description: document.getElementById('f-desc').value.trim(),
-      photos: _photoUrls,
+      photos: cleanPhotos,
       // Note: customisation_options saved separately via saveProductOptions()
       is_bestseller: document.getElementById('f-bestseller').checked,
       is_active: document.getElementById('f-active').checked,
