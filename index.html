@@ -732,7 +732,7 @@ async function initSite() {
           vals.forEach(function(v){if(v.price) variantPrices[v.value]=v.price;});
           return {label:g.label, options:options, priceType:g.price_type, variantPrices:variantPrices};
         });
-        return Object.assign({}, p, {customisation_options: customisation_options.length ? customisation_options : (p.customisation_options||[])});
+        return Object.assign({}, p, {customisation_options: customisation_options});
       });
     } catch(e) { console.log('Options load:', e.message); }
     setBar(40);
@@ -1042,33 +1042,18 @@ function selectChip(el) {
   var opts = p.customisation_options || [];
   var allChipGroups = card.querySelectorAll('.chips');
   var basePrice = Number(p.price) || 0;
-
-  // Pass 1: check if any per_variant group is selected — that overrides the base price
-  var effectiveBase = basePrice;
+  var finalPrice = basePrice;
   opts.forEach(function(g, gi) {
     var grp = allChipGroups[gi];
     if (!grp) return;
     var activeChip = grp.querySelector('.chip.active');
     var sel = activeChip ? activeChip.textContent.trim() : (g.options ? g.options[0] : '');
-    if (g.priceType === 'per_variant' && g.variantPrices) {
-      var vp = Number(g.variantPrices[sel]);
-      if (!isNaN(vp) && vp > 0) effectiveBase = vp;
+    if (g.priceType === 'per_variant' && g.variantPrices && g.variantPrices[sel]) {
+      finalPrice = Number(g.variantPrices[sel]);
+    } else if (g.priceType === 'addon' && g.variantPrices && g.variantPrices[sel]) {
+      finalPrice = basePrice + Number(g.variantPrices[sel]);
     }
   });
-
-  // Pass 2: stack all addon prices on top of the effective base
-  var finalPrice = effectiveBase;
-  opts.forEach(function(g, gi) {
-    var grp = allChipGroups[gi];
-    if (!grp) return;
-    var activeChip = grp.querySelector('.chip.active');
-    var sel = activeChip ? activeChip.textContent.trim() : (g.options ? g.options[0] : '');
-    if (g.priceType === 'addon' && g.variantPrices) {
-      var ap = Number(g.variantPrices[sel]);
-      if (!isNaN(ap) && ap > 0) finalPrice += ap;
-    }
-  });
-
   priceEl.textContent = '₹' + finalPrice.toLocaleString('en-IN');
 }
 
