@@ -582,7 +582,7 @@ const _cfg = Object.freeze({
 
 /* Supabase REST helpers */
 const sb = {
-  headers: () => ({ 'Content-Type':'application/json', 'apikey': _cfg.k, 'Authorization': 'Bearer ' + (_session?.access_token || _cfg.k) }),
+  headers: () => ({ 'Content-Type':'application/json', 'apikey': _cfg.k, 'Authorization': 'Bearer ' + (_session?.access_token || _cfg.k), 'Cache-Control': 'no-store' }),
   url: (table, params='') => _cfg.u + '/rest/v1/' + table + params,
   auth: (path) => _cfg.u + '/auth/v1/' + path,
   storage: (bucket, path) => _cfg.u + '/storage/v1/object/' + bucket + '/' + path,
@@ -610,7 +610,7 @@ const sb = {
   },
   async uploadImage(file, path) {
     const r = await fetch(sb.storage('product-images', path), {
-      method:'POST', headers: { 'apikey': _cfg.k, 'Authorization': 'Bearer ' + (_session?.access_token || _cfg.k), 'Content-Type': file.type, 'x-upsert': 'true' },
+      method:'POST', headers: { 'apikey': _cfg.k, 'Authorization': 'Bearer ' + (_session?.access_token || _cfg.k), 'Content-Type': file.type, 'x-upsert': 'true', 'Cache-Control': 'no-store' },
       body: file
     });
     if (!r.ok) throw new Error(await r.text());
@@ -880,10 +880,10 @@ async function saveProduct() {
     if (_photoFiles.length) {
       document.getElementById('uploadProgress').style.display = 'block';
       for (let i = 0; i < _photoFiles.length; i++) {
-        const file = _photoFiles[i];
+        const { file, insertIdx } = _photoFiles[i];
         const path = 'products/' + Date.now() + '-' + file.name.replace(/\s+/g,'_');
         const url = await sb.uploadImage(file, path);
-        _photoUrls.push(url);
+        _photoUrls[insertIdx] = url; // replace the base64 preview with the real URL
         document.getElementById('uploadProgressBar').style.width = ((i+1)/_photoFiles.length*100) + '%';
       }
       _photoFiles = [];
@@ -962,9 +962,14 @@ function handlePhotoSelect(e) {
   const files = Array.from(e.target.files);
   files.forEach(file => {
     if (file.size > 5*1024*1024) { showToast('File too large: ' + file.name + ' (max 5MB)', 'error'); return; }
-    _photoFiles.push(file);
+    const insertIdx = _photoUrls.length; // remember slot for this file
+    _photoUrls.push(null); // placeholder so index is reserved
+    _photoFiles.push({ file, insertIdx }); // store file with its reserved slot
     const reader = new FileReader();
-    reader.onload = ev => { _photoUrls.push(ev.target.result); renderPhotoPreviews(); };
+    reader.onload = ev => {
+      _photoUrls[insertIdx] = ev.target.result; // fill placeholder with preview
+      renderPhotoPreviews();
+    };
     reader.readAsDataURL(file);
   });
   e.target.value = '';
@@ -978,11 +983,10 @@ function renderPhotoPreviews() {
 
 function removePhoto(i) {
   _photoUrls.splice(i, 1);
-  // Only remove from _photoFiles if this is a newly added file (index >= existing count)
-  const fileIdx = i - _existingPhotoCount;
-  if (fileIdx >= 0 && fileIdx < _photoFiles.length) {
-    _photoFiles.splice(fileIdx, 1);
-  }
+  // Remove matching entry from _photoFiles and update all insertIdx values after the removed slot
+  _photoFiles = _photoFiles
+    .filter(f => f.insertIdx !== i)
+    .map(f => ({ ...f, insertIdx: f.insertIdx > i ? f.insertIdx - 1 : f.insertIdx }));
   // Update existing count if we removed an existing photo
   if (i < _existingPhotoCount) _existingPhotoCount--;
   renderPhotoPreviews();
