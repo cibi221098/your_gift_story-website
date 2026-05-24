@@ -210,6 +210,18 @@ section{padding:5rem 2rem}
 .product-badge{position:absolute;top:10px;left:10px;background:var(--teal);color:var(--cream);font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;letter-spacing:0.05em;text-transform:uppercase;z-index:1}
 .product-badge.new{background:var(--gold);color:var(--charcoal)}
 .product-img{height:180px;display:flex;align-items:center;justify-content:center;font-size:52px}
+/* Photo gallery carousel */
+.product-gallery{height:180px;position:relative;overflow:hidden;background:var(--teal-light)}
+.gallery-slides{display:flex;height:100%;transition:transform .35s cubic-bezier(.4,0,.2,1)}
+.gallery-slide{min-width:100%;height:100%;flex-shrink:0}
+.gallery-slide img{width:100%;height:100%;object-fit:cover;display:block}
+.gallery-prev,.gallery-next{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.85);border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;z-index:2;opacity:0;transition:opacity .2s;box-shadow:0 2px 6px rgba(0,0,0,0.15)}
+.gallery-prev{left:7px}
+.gallery-next{right:7px}
+.product-card:hover .gallery-prev,.product-card:hover .gallery-next{opacity:1}
+.gallery-dots{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);display:flex;gap:5px;z-index:2}
+.gallery-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.5);border:none;cursor:pointer;padding:0;transition:background .2s,transform .2s}
+.gallery-dot.active{background:#fff;transform:scale(1.2)}
 .p-img-1{background:#e8f2f1}.p-img-2{background:#fdf0ee}.p-img-3{background:#fdf8f0}.p-img-4{background:#f0edf5}.p-img-5{background:#e8f2f1}.p-img-6{background:#fdf8f0}.p-img-7{background:#fdf0ee}.p-img-8{background:#e8f2f1}.p-img-9{background:#f5ece8}.p-img-10{background:#f0edf5}.p-img-11{background:#fdf8f0}.p-img-12{background:#e8f2f1}
 .product-body{padding:14px}
 .product-name{font-size:14px;font-weight:500;color:var(--charcoal);margin-bottom:3px}
@@ -905,29 +917,76 @@ function renderShopGrid(filterCat, minP, maxP) {
   });
 }
 
-function productCardHTML(p) {
-  const imgHTML = p.photos && p.photos[0]
-    ? `<img src="${p.photos[0]}" style="width:100%;height:100%;object-fit:cover" alt="${p.name}">`
-    : (p.emoji || '🎁');
-  const imgBg = p.photos && p.photos[0] ? 'style="padding:0;overflow:hidden"' : '';
-
-  const opts = p.customisation_options || [];
-  const optHTML = opts.map(g => `   <div class="ctrl-label">${g.label}</div>   <div class="chips">${(g.options||[]).map((o,i) =>    `<span class="chip${i===0?' active':''}" onclick="selectChip(this)">${o}</span>`   ).join('')}</div>  `).join('');
-
-  // Free-text customisation field (admin-controlled)
-  const tc = p.text_customisation;
-  const textHTML = tc && tc.enabled
-    ? `<div class="ctrl-label">${tc.label || 'Custom message'}${tc.required ? ' <span style="color:#E24B4A">*</span>' : ''}</div><input class="gift-input" placeholder="${tc.placeholder || 'Type here…'}" ${tc.required ? 'required data-tc-required="1"' : ''}>`
-    : '';
-
-  const badge = p.is_bestseller
-    ? '<span class="product-badge">Bestseller</span>'
-    : '';
-
-  const price = getPriceDisplay(p);
-
-  return `${badge}   <div class="product-img" ${imgBg}>${imgHTML}</div>   <div class="product-body">    <div class="product-name">${p.name}</div>    <div class="product-desc">${p.description||''}</div>    <div class="product-price">${price}</div>    <div class="customise-section">${optHTML}${textHTML}</div>    <button class="btn-atc" onclick="addToCartFromCard(this,'${p.name.replace(/'/g,"\\'")}','${p.emoji||'🎁'}')">🛒 Add to Cart</button>   </div>`;
+function galleryNav(card, dir) {
+  var slides = card.querySelector('.gallery-slides');
+  if (!slides) return;
+  var total = slides.children.length;
+  var cur = parseInt(slides.dataset.cur || 0);
+  cur = (cur + dir + total) % total;
+  slides.dataset.cur = cur;
+  slides.style.transform = 'translateX(-' + (cur * 100) + '%)';
+  card.querySelectorAll('.gallery-dot').forEach(function(d, i) { d.classList.toggle('active', i === cur); });
 }
+
+function setGallerySlide(btn, idx) {
+  var card = btn.closest('.product-card');
+  var slides = card.querySelector('.gallery-slides');
+  slides.dataset.cur = idx;
+  slides.style.transform = 'translateX(-' + (idx * 100) + '%)';
+  card.querySelectorAll('.gallery-dot').forEach(function(d, i) { d.classList.toggle('active', i === idx); });
+}
+
+function productCardHTML(p) {
+  var photos = (p.photos || []).filter(Boolean);
+  var imgSection;
+  if (photos.length > 1) {
+    var slidesHTML = photos.map(function(src) {
+      return '<div class="gallery-slide"><img src="' + src + '" alt="" loading="lazy"></div>';
+    }).join('');
+    var dotsHTML = photos.map(function(_, i) {
+      return '<button class="gallery-dot' + (i === 0 ? ' active' : '') + '" onclick="event.stopPropagation();setGallerySlide(this,' + i + ')"></button>';
+    }).join('');
+    imgSection = '<div class="product-gallery">'
+      + '<div class="gallery-slides" data-cur="0">' + slidesHTML + '</div>'
+      + '<button class="gallery-prev" onclick="event.stopPropagation();galleryNav(this.closest(\'.product-card\'),-1)">&#8249;</button>'
+      + '<button class="gallery-next" onclick="event.stopPropagation();galleryNav(this.closest(\'.product-card\'),1)">&#8250;</button>'
+      + '<div class="gallery-dots">' + dotsHTML + '</div>'
+      + '</div>';
+  } else if (photos.length === 1) {
+    imgSection = '<div class="product-img" style="padding:0;overflow:hidden"><img src="' + photos[0] + '" style="width:100%;height:100%;object-fit:cover" alt="" loading="lazy"></div>';
+  } else {
+    imgSection = '<div class="product-img">' + (p.emoji || '🎁') + '</div>';
+  }
+
+  var opts = p.customisation_options || [];
+  var optHTML = opts.map(function(g) {
+    var chips = (g.options || []).map(function(o, i) {
+      return '<span class="chip' + (i === 0 ? ' active' : '') + '" onclick="selectChip(this)">' + o + '</span>';
+    }).join('');
+    return '<div class="ctrl-label">' + g.label + '</div><div class="chips">' + chips + '</div>';
+  }).join('');
+
+  var tc = p.text_customisation;
+  var textHTML = tc && tc.enabled
+    ? '<div class="ctrl-label">' + (tc.label || 'Custom message') + (tc.required ? ' <span style="color:#E24B4A">*</span>' : '') + '</div>'
+      + '<input class="gift-input" placeholder="' + (tc.placeholder || 'Type here\u2026') + '" ' + (tc.required ? 'required data-tc-required="1"' : '') + '>'
+    : '';
+
+  var badge = p.is_bestseller ? '<span class="product-badge">Bestseller</span>' : '';
+  var price = getPriceDisplay(p);
+  var safeName = p.name.replace(/\\/g, '\\\\').replace(/"/g, '&quot;');
+  var safeEmoji = (p.emoji || '🎁');
+
+  return badge + imgSection
+    + '<div class="product-body">'
+    + '<div class="product-name">' + p.name + '</div>'
+    + '<div class="product-desc">' + (p.description || '') + '</div>'
+    + '<div class="product-price">' + price + '</div>'
+    + '<div class="customise-section">' + optHTML + textHTML + '</div>'
+    + '<button class="btn-atc" onclick="addToCartFromCard(this,&quot;' + safeName + '&quot;,&quot;' + safeEmoji + '&quot;)">🛒 Add to Cart</button>'
+    + '</div>';
+}
+
 
 /* ═══════════════════════════════════════
    NAVIGATION
