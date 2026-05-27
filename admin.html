@@ -396,7 +396,8 @@ html,body{height:100%;font-family:var(--font-body);background:#f4f1ec;color:var(
 
       <!-- Filters -->
       <div class="orders-toolbar">
-        <input class="search-box" type="text" id="orderSearch" placeholder="Search by name, phone or order ID…" oninput="renderOrders()" style="max-width:280px">
+        <input class="search-box" type="text" id="orderSearch" placeholder="Search by name, phone or order ID…" oninput="renderOrders()" style="max-width:240px">
+        <select class="filter-select" id="orderFYFilter" onchange="renderOrders()"></select>
         <select class="filter-select" id="orderStatusFilter" onchange="renderOrders()">
           <option value="">All Statuses</option>
           <option value="Pending">Pending</option>
@@ -863,11 +864,44 @@ function showPanel(name, el) {
 let _orders = [];
 let _currentOrderId = null;
 
+/* ── Financial Year helpers ── */
+function getFY(date) {
+  const d = date ? new Date(date) : new Date();
+  const y = d.getFullYear();
+  const m = d.getMonth(); // 0=Jan
+  // FY starts April (month 3)
+  const fyStart = m >= 3 ? y : y - 1;
+  const s = String(fyStart).slice(2);
+  const e = String(fyStart + 1).slice(2);
+  return s + e; // e.g. "2627"
+}
+
+function currentFY() { return getFY(new Date()); }
+
+function buildFYOptions() {
+  const sel = document.getElementById('orderFYFilter');
+  if (!sel) return;
+  // Collect all FYs from orders + always include current
+  const fys = new Set([currentFY()]);
+  _orders.forEach(o => { if (o.created_at) fys.add(getFY(o.created_at)); });
+  const sorted = Array.from(fys).sort((a,b) => b.localeCompare(a));
+  sel.innerHTML = sorted.map(fy =>
+    `<option value="${fy}" ${fy === currentFY() ? 'selected' : ''}>FY 20${fy.slice(0,2)}–${fy.slice(2)}</option>`
+  ).join('');
+}
+
+/* Generate YGS order number — uses order_number stored in DB if present, else derive from sequence */
+function getOrderLabel(o) {
+  if (o.order_number) return o.order_number;
+  return '#YGS' + getFY(o.created_at) + '-???';
+}
+
 async function loadOrders() {
   const body = document.getElementById('orderTableBody');
   body.innerHTML = '<div class="empty-state"><div class="spinner" style="margin:0 auto 1rem"></div><div>Loading orders…</div></div>';
   try {
     _orders = await sb.query('orders', '?order=created_at.desc');
+    buildFYOptions();
     renderOrders();
   } catch(e) {
     body.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><div style="color:#dc2626">Failed to load orders.<br><small>' + e.message + '</small></div></div>';
@@ -882,16 +916,19 @@ function statusBadge(status) {
 
 function renderOrders() {
   const body = document.getElementById('orderTableBody');
-  const search = document.getElementById('orderSearch')?.value.toLowerCase() || '';
+  const search = (document.getElementById('orderSearch')?.value || '').toLowerCase();
   const statusF = document.getElementById('orderStatusFilter')?.value || '';
+  const fyF = document.getElementById('orderFYFilter')?.value || currentFY();
 
   let filtered = _orders.filter(o => {
+    const oFY = getFY(o.created_at);
+    const matchFY = oFY === fyF;
     const matchSearch = !search ||
       (o.customer_name||'').toLowerCase().includes(search) ||
       (o.customer_phone||'').toLowerCase().includes(search) ||
-      (o.id||'').toLowerCase().includes(search);
+      (o.order_number||'').toLowerCase().includes(search);
     const matchStatus = !statusF || o.status === statusF;
-    return matchSearch && matchStatus;
+    return matchFY && matchSearch && matchStatus;
   });
 
   if (!filtered.length) {
@@ -904,9 +941,9 @@ function renderOrders() {
     const itemsPreview = items.map(i => i.name).join(', ') || '—';
     const subtotal = items.reduce((s,i) => s + (Number(i.price)||0), 0);
     const date = o.created_at ? new Date(o.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : '—';
-    const shortId = (o.id||'').substring(0,8).toUpperCase();
+    const label = getOrderLabel(o);
     return `<div class="order-row" onclick="openOrderDetail('${o.id}')">
-      <div class="order-id">#${shortId}</div>
+      <div class="order-id">${label}</div>
       <div class="order-customer"><div class="order-customer-name">${o.customer_name||'—'}</div><div class="order-customer-phone">${o.customer_phone||''}</div></div>
       <div class="order-items-preview" title="${itemsPreview}">${itemsPreview}</div>
       <div class="order-date">${date}</div>
@@ -923,15 +960,20 @@ function openOrderDetail(id) {
   const items = Array.isArray(o.items) ? o.items : (typeof o.items === 'string' ? JSON.parse(o.items||'[]') : []);
   const subtotal = items.reduce((s,i) => s + (Number(i.price)||0), 0);
   const date = o.created_at ? new Date(o.created_at).toLocaleString('en-IN',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
-  const shortId = (o.id||'').substring(0,8).toUpperCase();
-  document.getElementById('orderDetailTitle').textContent = 'Order #' + shortId;
+  const label = getOrderLabel(o);
+  document.getElementById('orderDetailTitle').textContent = label;
+
+  const addressLine = [o.customer_address, o.customer_city, o.customer_pincode].filter(Boolean).join(', ') || '—';
+
   document.getElementById('orderDetailBody').innerHTML = `
     <div class="order-detail-section">
       <div class="order-detail-label">Customer</div>
-      <div style="background:#f9f7f4;border-radius:12px;padding:1rem;display:flex;gap:2rem">
+      <div style="background:#f9f7f4;border-radius:12px;padding:1rem;display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
         <div><div style="font-size:11px;color:var(--gray);margin-bottom:3px">Name</div><div style="font-size:14px;font-weight:500">${o.customer_name||'—'}</div></div>
         <div><div style="font-size:11px;color:var(--gray);margin-bottom:3px">Phone</div><div style="font-size:14px;font-weight:500">${o.customer_phone||'—'}</div></div>
-        <div><div style="font-size:11px;color:var(--gray);margin-bottom:3px">Date</div><div style="font-size:14px;font-weight:500">${date}</div></div>
+        <div style="grid-column:1/-1"><div style="font-size:11px;color:var(--gray);margin-bottom:3px">Delivery Address</div><div style="font-size:13px;font-weight:500">${addressLine}</div></div>
+        <div><div style="font-size:11px;color:var(--gray);margin-bottom:3px">Date & Time</div><div style="font-size:13px">${date}</div></div>
+        <div><div style="font-size:11px;color:var(--gray);margin-bottom:3px">Source</div><div style="font-size:13px;text-transform:capitalize">${o.source||'website'}</div></div>
       </div>
     </div>
     <div class="order-detail-section">
@@ -942,10 +984,10 @@ function openOrderDetail(id) {
           <div class="order-item-price">₹${Number(i.price).toLocaleString('en-IN')}</div>
         </div>`).join('')}
         <div style="text-align:right;padding:.5rem 1rem 0;font-size:13px;color:var(--gray)">Subtotal: <strong style="color:var(--teal);font-family:var(--font-display);font-size:16px">₹${subtotal.toLocaleString('en-IN')}</strong></div>
-        <div style="text-align:right;padding:0 1rem;font-size:11px;color:var(--gray)">+ delivery charges (confirmed separately)</div>
+        <div style="text-align:right;padding:0 1rem;font-size:11px;color:var(--gray)">+ delivery charges confirmed separately</div>
       </div>
     </div>
-    ${o.notes ? `<div class="order-detail-section"><div class="order-detail-label">Notes</div><div style="background:#f9f7f4;border-radius:10px;padding:.75rem 1rem;font-size:13px;color:var(--char)">${o.notes}</div></div>` : ''}
+    ${o.notes ? `<div class="order-detail-section"><div class="order-detail-label">Notes</div><div style="background:#f9f7f4;border-radius:10px;padding:.75rem 1rem;font-size:13px">${o.notes}</div></div>` : ''}
     <div class="order-detail-section">
       <div class="order-detail-label">Update Status</div>
       <select class="status-select" id="orderStatusSelect">
@@ -1012,30 +1054,48 @@ function renderManualItems() {
   if (!_manualItems.length) { list.innerHTML = '<div style="font-size:12px;color:var(--gray);padding:.5rem 0">No items yet. Click "+ Add Item" below.</div>'; return; }
   list.innerHTML = _manualItems.map((item, i) => `
     <div class="manual-item-row">
-      <input placeholder="Item name (e.g. Resin frame · pink · Priya)" value="${item.name}" oninput="_manualItems[${i}].name=this.value">
+      <input placeholder="Item name · customisation" value="${item.name}" oninput="_manualItems[${i}].name=this.value">
       <input type="number" placeholder="Price ₹" value="${item.price||''}" oninput="_manualItems[${i}].price=Number(this.value)||0">
       <button class="variant-row-del" onclick="_manualItems.splice(${i},1);renderManualItems()">✕</button>
     </div>`).join('');
+}
+
+/* Generate next order number for a given FY */
+async function generateOrderNumber(fy) {
+  try {
+    // Count orders in this FY from DB
+    const fyStart = '20' + fy.slice(0,2) + '-04-01';
+    const fyEnd   = '20' + fy.slice(2)   + '-03-31';
+    const existing = await sb.query('orders', '?created_at=gte.' + fyStart + '&created_at=lte.' + fyEnd + 'T23:59:59&select=order_number&order=created_at.asc');
+    const seq = (existing||[]).length + 1;
+    return '#YGS' + fy + '-' + String(seq).padStart(3, '0');
+  } catch(e) {
+    return '#YGS' + fy + '-' + String(Date.now()).slice(-3);
+  }
 }
 
 async function saveManualOrder() {
   const name = document.getElementById('mo-name').value.trim();
   if (!name) { showToast('Customer name is required.', 'error'); return; }
   if (!_manualItems.length || !_manualItems[0].name) { showToast('Add at least one item.', 'error'); return; }
+  const fy = currentFY();
+  const orderNumber = await generateOrderNumber(fy);
   const order = {
-    customer_name: name,
+    order_number:   orderNumber,
+    customer_name:  name,
     customer_phone: document.getElementById('mo-phone').value.trim(),
-    items: _manualItems,
-    status: document.getElementById('mo-status').value,
-    notes: document.getElementById('mo-notes').value.trim(),
-    source: 'manual'
+    items:          _manualItems,
+    status:         document.getElementById('mo-status').value,
+    notes:          document.getElementById('mo-notes').value.trim(),
+    source:         'manual'
   };
   try {
     const saved = await sb.insert('orders', order);
     _orders.unshift(saved[0]);
+    buildFYOptions();
     renderOrders();
     closeManualOrderModal();
-    showToast('✓ Order saved successfully!');
+    showToast('✓ Order ' + orderNumber + ' saved!');
   } catch(e) { showToast('Failed to save order: ' + e.message, 'error'); }
 }
 
