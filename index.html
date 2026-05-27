@@ -324,6 +324,42 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
 .shipping-select{width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;font-family:var(--font-body);font-size:13px;background:var(--white);color:var(--charcoal);margin-bottom:1rem;outline:none}
 .btn-checkout{width:100%;padding:14px;background:var(--teal);color:var(--cream);border:none;border-radius:12px;font-size:14px;font-weight:500;cursor:pointer;font-family:var(--font-body);transition:background .2s}
 .btn-checkout:hover{background:var(--teal-dark)}
+
+/* ── CHECKOUT FORM POPUP ── */
+.co-overlay{position:fixed;inset:0;background:rgba(26,26,26,0.6);z-index:450;opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(6px)}
+.co-overlay.open{opacity:1;pointer-events:all}
+.co-box{position:fixed;top:50%;left:50%;transform:translate(-50%,-48%) scale(.97);z-index:451;background:var(--cream);border-radius:24px;width:min(520px,94vw);max-height:90vh;overflow-y:auto;opacity:0;pointer-events:none;transition:transform .3s cubic-bezier(.4,0,.2,1),opacity .3s;box-shadow:0 32px 80px rgba(31,78,74,0.2)}
+.co-box.open{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:all}
+.co-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.co-title{font-family:var(--font-display);font-size:20px;font-weight:500;color:var(--teal)}
+.co-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--gray);width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.co-close:hover{background:var(--border)}
+.co-body{padding:1.5rem}
+.co-step{display:none}.co-step.active{display:block}
+.co-field-label{font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;margin-top:12px;display:block}
+.co-field-label:first-child{margin-top:0}
+.co-input{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:var(--font-body);background:var(--white);color:var(--charcoal);outline:none;transition:border .2s}
+.co-input:focus{border-color:var(--teal)}
+.co-input.error{border-color:#E24B4A}
+.co-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.co-section-title{font-size:11px;font-weight:600;color:var(--teal);letter-spacing:.1em;text-transform:uppercase;margin:1.25rem 0 .75rem;padding-top:1rem;border-top:1px solid var(--border)}
+/* Review step */
+.co-review-customer{background:var(--teal-light);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem}
+.co-review-label{font-size:10px;font-weight:600;color:var(--teal);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.co-review-value{font-size:13px;color:var(--charcoal);line-height:1.6}
+.co-review-items{display:flex;flex-direction:column;gap:8px;margin-bottom:1rem}
+.co-review-item{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:.75rem 1rem;display:flex;justify-content:space-between;align-items:flex-start;gap:1rem}
+.co-review-item-name{font-size:13px;font-weight:500;color:var(--charcoal);margin-bottom:2px}
+.co-review-item-custom{font-size:11px;color:var(--gray)}
+.co-review-item-price{font-size:14px;font-weight:600;color:var(--teal);font-family:var(--font-display);white-space:nowrap}
+.co-total-row{display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;font-size:13px;color:var(--gray)}
+.co-total-row.main{font-size:16px;font-weight:600;color:var(--charcoal);border-top:1px solid var(--border);padding-top:.75rem;margin-top:.25rem}
+.co-delivery-note{background:var(--gold-light);border:1px solid rgba(201,166,104,0.3);border-radius:10px;padding:10px 12px;font-size:11px;color:#8a6830;line-height:1.5;margin:1rem 0}
+.co-footer{padding:1.25rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:.75rem}
+.co-btn-back{flex:1;padding:12px;background:transparent;color:var(--teal);border:1.5px solid var(--teal);border-radius:12px;font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font-body);transition:all .2s}
+.co-btn-back:hover{background:var(--teal-light)}
+.co-btn-next{flex:2;padding:12px;background:var(--teal);color:var(--cream);border:none;border-radius:12px;font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font-body);transition:background .2s}
+.co-btn-next:hover{background:var(--teal-dark)}
 .btn-whatsapp{width:100%;padding:12px;background:#25D366;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font-body);margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .2s}
 .btn-whatsapp:hover{background:#1ebe5d}
 .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(80px);background:var(--teal);color:var(--cream);padding:12px 24px;border-radius:40px;font-size:13px;font-weight:500;z-index:300;transition:transform .4s cubic-bezier(.4,0,.2,1);white-space:nowrap;pointer-events:none}
@@ -702,6 +738,64 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
       </div>
     </div>
   </footer>
+</div>
+
+<!-- CHECKOUT FORM POPUP -->
+<div class="co-overlay" id="coOverlay" onclick="closeCheckoutForm()"></div>
+<div class="co-box" id="coBox">
+  <div class="co-header">
+    <div class="co-title" id="coTitle">Your Details</div>
+    <button class="co-close" onclick="closeCheckoutForm()">✕</button>
+  </div>
+
+  <!-- STEP 1: Customer Details -->
+  <div class="co-step active" id="coStep1">
+    <div class="co-body">
+      <label class="co-field-label">Full Name *</label>
+      <input class="co-input" id="co-name" placeholder="e.g. Priya Sharma" autocomplete="name">
+
+      <label class="co-field-label">Phone Number *</label>
+      <input class="co-input" id="co-phone" placeholder="e.g. +91 98765 43210" type="tel" autocomplete="tel">
+
+      <div class="co-section-title">Delivery Address</div>
+
+      <label class="co-field-label">Full Address *</label>
+      <input class="co-input" id="co-address" placeholder="House / Flat no., Street, Area…" autocomplete="street-address">
+
+      <div class="co-row" style="margin-top:10px">
+        <div>
+          <label class="co-field-label" style="margin-top:0">City *</label>
+          <input class="co-input" id="co-city" placeholder="e.g. Coimbatore" autocomplete="address-level2">
+        </div>
+        <div>
+          <label class="co-field-label" style="margin-top:0">Pincode *</label>
+          <input class="co-input" id="co-pincode" placeholder="e.g. 641001" type="number" autocomplete="postal-code">
+        </div>
+      </div>
+    </div>
+    <div class="co-footer">
+      <button class="co-btn-back" onclick="closeCheckoutForm()">Cancel</button>
+      <button class="co-btn-next" onclick="coGoReview()">Review Order →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: Review -->
+  <div class="co-step" id="coStep2">
+    <div class="co-body">
+      <div class="co-review-customer">
+        <div class="co-review-label">Delivering to</div>
+        <div class="co-review-value" id="coReviewCustomer"></div>
+      </div>
+      <div class="co-review-label" style="font-size:10px;font-weight:600;color:var(--teal);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">Your Order</div>
+      <div class="co-review-items" id="coReviewItems"></div>
+      <div class="co-total-row"><span>Subtotal</span><span id="coReviewSubtotal"></span></div>
+      <div class="co-delivery-note">🚚 Delivery charges are extra and will be confirmed by our team before dispatch.</div>
+    </div>
+    <div class="co-footer">
+      <button class="co-btn-back" onclick="coGoBack()">← Edit Details</button>
+      <button class="co-btn-next" onclick="coConfirm()">✓ Confirm & Order</button>
+    </div>
+  </div>
 </div>
 
 <!-- IMAGE LIGHTBOX -->
@@ -1435,50 +1529,142 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
+/* ═══════════════════════════════════════
+   CHECKOUT FLOW
+═══════════════════════════════════════ */
 function checkout() {
   if (!cart.length) { showToast('Your cart is empty!'); return; }
-  // Auto-save order to Supabase before WhatsApp
-  saveOrderToSupabase().finally(() => whatsappOrder());
+  closeCart();
+  // Reset to step 1
+  document.getElementById('coStep1').classList.add('active');
+  document.getElementById('coStep2').classList.remove('active');
+  document.getElementById('coTitle').textContent = 'Your Details';
+  document.getElementById('coOverlay').classList.add('open');
+  document.getElementById('coBox').classList.add('open');
+  document.body.style.overflow = 'hidden';
 }
 
-async function saveOrderToSupabase() {
-  try {
-    const items = cart.map(i => ({ name: i.name, price: i.price, custom: i.custom }));
-    await fetch(_SB.u + '/rest/v1/orders', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': _SB.k,
-        'Authorization': 'Bearer ' + _SB.k,
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify({
-        customer_name: 'WhatsApp Customer',
-        customer_phone: '',
-        items: items,
-        status: 'Pending',
-        source: 'website',
-        notes: ''
-      })
-    });
-  } catch(e) {
-    console.log('Order save failed (non-critical):', e.message);
-  }
+function closeCheckoutForm() {
+  document.getElementById('coOverlay').classList.remove('open');
+  document.getElementById('coBox').classList.remove('open');
+  document.body.style.overflow = '';
 }
 
-function whatsappOrder() {
-  if (!cart.length) { showToast('Your cart is empty!'); return; }
-  const sub = cart.reduce((s,i) => s + i.price, 0);
-  const items = cart.map(i => '• ' + i.name + ' \u2014 \u20b9' + Number(i.price).toLocaleString('en-IN') + '\n  Customisation: ' + i.custom).join('\n');
+function coGoReview() {
+  // Validate
+  const name = document.getElementById('co-name').value.trim();
+  const phone = document.getElementById('co-phone').value.trim();
+  const address = document.getElementById('co-address').value.trim();
+  const city = document.getElementById('co-city').value.trim();
+  const pincode = document.getElementById('co-pincode').value.trim();
+  let valid = true;
+  [['co-name', name], ['co-phone', phone], ['co-address', address], ['co-city', city], ['co-pincode', pincode]].forEach(function([id, val]) {
+    const el = document.getElementById(id);
+    if (!val) { el.classList.add('error'); valid = false; } else { el.classList.remove('error'); }
+  });
+  if (!valid) { showToast('Please fill in all required fields.'); return; }
+
+  // Populate review step
+  document.getElementById('coReviewCustomer').innerHTML =
+    '<strong>' + name + '</strong> · ' + phone + '<br>' + address + ', ' + city + ' – ' + pincode;
+
+  const sub = cart.reduce(function(s,i){ return s + i.price; }, 0);
+  document.getElementById('coReviewItems').innerHTML = cart.map(function(i) {
+    return '<div class="co-review-item">'
+      + '<div><div class="co-review-item-name">' + i.name + '</div><div class="co-review-item-custom">' + (i.custom || '') + '</div></div>'
+      + '<div class="co-review-item-price">₹' + Number(i.price).toLocaleString('en-IN') + '</div>'
+      + '</div>';
+  }).join('');
+  document.getElementById('coReviewSubtotal').textContent = '₹' + sub.toLocaleString('en-IN');
+
+  // Switch to step 2
+  document.getElementById('coStep1').classList.remove('active');
+  document.getElementById('coStep2').classList.add('active');
+  document.getElementById('coTitle').textContent = 'Review Order';
+}
+
+function coGoBack() {
+  document.getElementById('coStep2').classList.remove('active');
+  document.getElementById('coStep1').classList.add('active');
+  document.getElementById('coTitle').textContent = 'Your Details';
+}
+
+async function coConfirm() {
+  const name    = document.getElementById('co-name').value.trim();
+  const phone   = document.getElementById('co-phone').value.trim();
+  const address = document.getElementById('co-address').value.trim();
+  const city    = document.getElementById('co-city').value.trim();
+  const pincode = document.getElementById('co-pincode').value.trim();
+  const items   = cart.map(function(i){ return { name: i.name, price: i.price, custom: i.custom }; });
+  const sub     = cart.reduce(function(s,i){ return s + i.price; }, 0);
+
+  // Save to Supabase
+  await saveOrderToSupabase({ name, phone, address, city, pincode, items });
+
+  // Build WhatsApp message with full details
+  const itemLines = cart.map(function(i){
+    return '• ' + i.name + ' — ₹' + Number(i.price).toLocaleString('en-IN') + '\n  Customisation: ' + (i.custom || 'Standard');
+  }).join('\n');
   const msg = encodeURIComponent(
-    'Hi! I would like to place an order from Your Gift Story \ud83c\udf81\n\n' +
-    '*Order Summary:*\n' + items + '\n\n' +
-    '*Subtotal:* \u20b9' + sub.toLocaleString('en-IN') + '\n' +
+    'Hi! I would like to place an order from Your Gift Story 🎁\n\n' +
+    '*Customer Details:*\n' +
+    'Name: ' + name + '\n' +
+    'Phone: ' + phone + '\n' +
+    'Address: ' + address + ', ' + city + ' – ' + pincode + '\n\n' +
+    '*Order Summary:*\n' + itemLines + '\n\n' +
+    '*Subtotal:* ₹' + sub.toLocaleString('en-IN') + '\n' +
     '*Delivery charges:* To be confirmed based on location & gift\n\n' +
     'Please confirm availability and delivery charges. Thank you!'
   );
-  window.open('https://wa.me/' + WHATSAPP_NUMBER + '?text=' + msg, '_blank');
+
+  closeCheckoutForm();
+  cart = [];
+  updateCartUI();
+  showToast('✓ Order placed! Redirecting to WhatsApp…');
+  setTimeout(function(){ window.open('https://wa.me/' + WHATSAPP_NUMBER + '?text=' + msg, '_blank'); }, 600);
 }
+
+async function saveOrderToSupabase(details) {
+  try {
+    // Generate FY and order number
+    const now = new Date();
+    const m = now.getMonth();
+    const y = now.getFullYear();
+    const fyStart = m >= 3 ? y : y - 1;
+    const fy = String(fyStart).slice(2) + String(fyStart+1).slice(2);
+    // Count existing orders this FY to get sequence
+    const fyStartDate = '20' + fy.slice(0,2) + '-04-01';
+    const fyEndDate   = '20' + fy.slice(2)   + '-03-31T23:59:59';
+    let seq = 1;
+    try {
+      const existing = await fetch(_SB.u + '/rest/v1/orders?created_at=gte.' + fyStartDate + '&created_at=lte.' + fyEndDate + '&select=id', {
+        headers: { 'apikey': _SB.k, 'Authorization': 'Bearer ' + _SB.k }
+      });
+      const exData = await existing.json();
+      seq = (exData||[]).length + 1;
+    } catch(e) {}
+    const orderNumber = '#YGS' + fy + '-' + String(seq).padStart(3,'0');
+
+    await fetch(_SB.u + '/rest/v1/orders', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'apikey':_SB.k, 'Authorization':'Bearer '+_SB.k, 'Prefer':'return=minimal' },
+      body: JSON.stringify({
+        order_number:     orderNumber,
+        customer_name:    details.name,
+        customer_phone:   details.phone,
+        customer_address: details.address,
+        customer_city:    details.city,
+        customer_pincode: details.pincode,
+        items:            details.items,
+        status:           'Pending',
+        source:           'website',
+        notes:            ''
+      })
+    });
+  } catch(e) { console.log('Order save failed (non-critical):', e.message); }
+}
+
+function whatsappOrder() {}  // kept for compatibility
 
 function bulkOrderWhatsapp() {
   const msg = encodeURIComponent(
