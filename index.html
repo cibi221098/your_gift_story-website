@@ -787,7 +787,7 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
       <input class="co-input" id="co-name" placeholder="e.g. Priya Sharma" autocomplete="name">
 
       <label class="co-field-label">Phone Number *</label>
-      <input class="co-input" id="co-phone" placeholder="e.g. +91 98765 43210" type="tel" autocomplete="tel">
+      <input class="co-input" id="co-phone" placeholder="e.g. 9876543210" type="tel" autocomplete="tel" maxlength="10" inputmode="numeric">
 
       <div class="co-section-title">Delivery Address</div>
 
@@ -801,7 +801,7 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
         </div>
         <div>
           <label class="co-field-label" style="margin-top:0">Pincode *</label>
-          <input class="co-input" id="co-pincode" placeholder="e.g. 641001" type="number" autocomplete="postal-code">
+          <input class="co-input" id="co-pincode" placeholder="e.g. 641001" type="tel" autocomplete="postal-code" maxlength="6" inputmode="numeric">
         </div>
       </div>
     </div>
@@ -1595,6 +1595,22 @@ function coGoReview() {
     if (!val) { el.classList.add('error'); valid = false; } else { el.classList.remove('error'); }
   });
   if (!valid) { showToast('Please fill in all required fields.'); return; }
+
+  // Phone: exactly 10 digits
+  const phoneDigits = phone.replace(/\D/g, '');
+  if (phoneDigits.length !== 10) {
+    document.getElementById('co-phone').classList.add('error');
+    showToast('Phone number must be exactly 10 digits.');
+    return;
+  }
+
+  // Pincode: exactly 6 digits
+  const pincodeDigits = pincode.replace(/\D/g, '');
+  if (pincodeDigits.length !== 6) {
+    document.getElementById('co-pincode').classList.add('error');
+    showToast('Pincode must be exactly 6 digits.');
+    return;
+  }
 
   // Populate review step
   document.getElementById('coReviewCustomer').innerHTML =
