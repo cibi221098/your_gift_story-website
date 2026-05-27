@@ -1437,7 +1437,33 @@ function showToast(msg) {
 
 function checkout() {
   if (!cart.length) { showToast('Your cart is empty!'); return; }
-  whatsappOrder();
+  // Auto-save order to Supabase before WhatsApp
+  saveOrderToSupabase().finally(() => whatsappOrder());
+}
+
+async function saveOrderToSupabase() {
+  try {
+    const items = cart.map(i => ({ name: i.name, price: i.price, custom: i.custom }));
+    await fetch(_SB.u + '/rest/v1/orders', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': _SB.k,
+        'Authorization': 'Bearer ' + _SB.k,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        customer_name: 'WhatsApp Customer',
+        customer_phone: '',
+        items: items,
+        status: 'Pending',
+        source: 'website',
+        notes: ''
+      })
+    });
+  } catch(e) {
+    console.log('Order save failed (non-critical):', e.message);
+  }
 }
 
 function whatsappOrder() {
