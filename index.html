@@ -1638,6 +1638,24 @@ async function coConfirm() {
   if (btn) { btn.disabled = false; btn.textContent = '✓ Confirm & Order'; }
 
   closeCheckoutForm();
+
+  // Build WhatsApp message with full order details
+  const sub = items.reduce(function(s, i){ return s + i.price; }, 0);
+  const itemLines = items.map(function(i) {
+    return '• ' + i.name + (i.custom ? ' (' + i.custom + ')' : '') + ' — ₹' + Number(i.price).toLocaleString('en-IN');
+  }).join('\n');
+  const waMsg = encodeURIComponent(
+    'Hi! I just placed an order on Your Gift Story 🎁\n\n' +
+    '*Order:* ' + (orderNumber || 'New Order') + '\n' +
+    '*Name:* ' + name + '\n' +
+    '*Phone:* ' + phone + '\n' +
+    '*Address:* ' + address + ', ' + city + ' – ' + pincode + '\n\n' +
+    '*Items:*\n' + itemLines + '\n\n' +
+    '*Subtotal:* ₹' + Number(sub).toLocaleString('en-IN') + '\n\n' +
+    'Please confirm my order. Thank you!'
+  );
+  window.open('https://wa.me/' + WHATSAPP_NUMBER + '?text=' + waMsg, '_blank');
+
   cart = [];
   updateCartUI();
   showSuccessPopup(orderNumber);
