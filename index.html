@@ -325,6 +325,23 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
 .btn-checkout{width:100%;padding:14px;background:var(--teal);color:var(--cream);border:none;border-radius:12px;font-size:14px;font-weight:500;cursor:pointer;font-family:var(--font-body);transition:background .2s}
 .btn-checkout:hover{background:var(--teal-dark)}
 
+/* ── ORDER SUCCESS POPUP ── */
+.success-overlay{position:fixed;inset:0;background:rgba(26,26,26,0.65);z-index:500;opacity:0;pointer-events:none;transition:opacity .35s;backdrop-filter:blur(8px)}
+.success-overlay.open{opacity:1;pointer-events:all}
+.success-box{position:fixed;top:50%;left:50%;transform:translate(-50%,-46%) scale(.95);z-index:501;background:var(--cream);border-radius:28px;width:min(440px,92vw);opacity:0;pointer-events:none;transition:transform .35s cubic-bezier(.4,0,.2,1),opacity .35s;box-shadow:0 40px 100px rgba(31,78,74,0.22);text-align:center;overflow:hidden}
+.success-box.open{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:all}
+.success-top{background:var(--teal);padding:2.5rem 2rem 2rem}
+.success-icon{font-size:52px;display:block;margin-bottom:.75rem;animation:successPop .5s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes successPop{from{transform:scale(0)}to{transform:scale(1)}}
+.success-title{font-family:var(--font-display);font-size:26px;font-weight:400;color:var(--cream);margin-bottom:.4rem}
+.success-order-num{font-size:13px;color:var(--gold);font-weight:600;letter-spacing:.06em}
+.success-body{padding:1.75rem 2rem 2rem}
+.success-msg{font-size:14px;color:var(--gray);line-height:1.75;margin-bottom:1.5rem}
+.success-msg strong{color:var(--charcoal)}
+.success-divider{border:none;border-top:1px solid var(--border);margin:0 0 1.5rem}
+.btn-shop-more{width:100%;padding:14px;background:var(--teal);color:var(--cream);border:none;border-radius:12px;font-size:14px;font-weight:500;cursor:pointer;font-family:var(--font-body);transition:background .2s;display:block}
+.btn-shop-more:hover{background:var(--teal-dark)}
+
 /* ── CHECKOUT FORM POPUP ── */
 .co-overlay{position:fixed;inset:0;background:rgba(26,26,26,0.6);z-index:450;opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(6px)}
 .co-overlay.open{opacity:1;pointer-events:all}
@@ -738,6 +755,21 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
       </div>
     </div>
   </footer>
+</div>
+
+<!-- ORDER SUCCESS POPUP -->
+<div class="success-overlay" id="successOverlay"></div>
+<div class="success-box" id="successBox">
+  <div class="success-top">
+    <span class="success-icon">🎁</span>
+    <div class="success-title">Order Placed!</div>
+    <div class="success-order-num" id="successOrderNum"></div>
+  </div>
+  <div class="success-body">
+    <p class="success-msg">Thank you! Your order has been received.<br><strong>Our team will reach out to you on WhatsApp within 24 hours</strong> to confirm your order and delivery details.</p>
+    <hr class="success-divider">
+    <button class="btn-shop-more" onclick="closeSuccessPopup()">🛍️ Shop More</button>
+  </div>
 </div>
 
 <!-- CHECKOUT FORM POPUP -->
@@ -1596,58 +1628,67 @@ async function coConfirm() {
   const city    = document.getElementById('co-city').value.trim();
   const pincode = document.getElementById('co-pincode').value.trim();
   const items   = cart.map(function(i){ return { name: i.name, price: i.price, custom: i.custom }; });
-  const sub     = cart.reduce(function(s,i){ return s + i.price; }, 0);
 
-  // Save to Supabase
-  await saveOrderToSupabase({ name, phone, address, city, pincode, items });
+  // Disable button to prevent double submit
+  const btn = document.querySelector('#coStep2 .co-btn-next');
+  if (btn) { btn.disabled = true; btn.textContent = 'Placing order…'; }
 
-  // Build WhatsApp message with full details
-  const itemLines = cart.map(function(i){
-    return '• ' + i.name + ' — ₹' + Number(i.price).toLocaleString('en-IN') + '\n  Customisation: ' + (i.custom || 'Standard');
-  }).join('\n');
-  const msg = encodeURIComponent(
-    'Hi! I would like to place an order from Your Gift Story 🎁\n\n' +
-    '*Customer Details:*\n' +
-    'Name: ' + name + '\n' +
-    'Phone: ' + phone + '\n' +
-    'Address: ' + address + ', ' + city + ' – ' + pincode + '\n\n' +
-    '*Order Summary:*\n' + itemLines + '\n\n' +
-    '*Subtotal:* ₹' + sub.toLocaleString('en-IN') + '\n' +
-    '*Delivery charges:* To be confirmed based on location & gift\n\n' +
-    'Please confirm availability and delivery charges. Thank you!'
-  );
+  const orderNumber = await saveOrderToSupabase({ name, phone, address, city, pincode, items });
+
+  if (btn) { btn.disabled = false; btn.textContent = '✓ Confirm & Order'; }
 
   closeCheckoutForm();
   cart = [];
   updateCartUI();
-  showToast('✓ Order placed! Redirecting to WhatsApp…');
-  setTimeout(function(){ window.open('https://wa.me/' + WHATSAPP_NUMBER + '?text=' + msg, '_blank'); }, 600);
+  showSuccessPopup(orderNumber);
+}
+
+function showSuccessPopup(orderNumber) {
+  const numEl = document.getElementById('successOrderNum');
+  if (numEl) numEl.textContent = orderNumber || '';
+  document.getElementById('successOverlay').classList.add('open');
+  document.getElementById('successBox').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSuccessPopup() {
+  document.getElementById('successOverlay').classList.remove('open');
+  document.getElementById('successBox').classList.remove('open');
+  document.body.style.overflow = '';
+  // Go to shop page so they can browse more
+  showPage('shop');
 }
 
 async function saveOrderToSupabase(details) {
   try {
-    // Generate FY and order number
     const now = new Date();
     const m = now.getMonth();
     const y = now.getFullYear();
     const fyStart = m >= 3 ? y : y - 1;
     const fy = String(fyStart).slice(2) + String(fyStart+1).slice(2);
-    // Count existing orders this FY to get sequence
     const fyStartDate = '20' + fy.slice(0,2) + '-04-01';
     const fyEndDate   = '20' + fy.slice(2)   + '-03-31T23:59:59';
+
+    // Count existing FY orders for sequence number
     let seq = 1;
     try {
-      const existing = await fetch(_SB.u + '/rest/v1/orders?created_at=gte.' + fyStartDate + '&created_at=lte.' + fyEndDate + '&select=id', {
-        headers: { 'apikey': _SB.k, 'Authorization': 'Bearer ' + _SB.k }
-      });
-      const exData = await existing.json();
-      seq = (exData||[]).length + 1;
+      const countRes = await fetch(
+        _SB.u + '/rest/v1/orders?select=id&created_at=gte.' + fyStartDate + '&created_at=lte.' + fyEndDate,
+        { headers: { 'apikey': _SB.k, 'Authorization': 'Bearer ' + _SB.k } }
+      );
+      if (countRes.ok) { const d = await countRes.json(); seq = (d||[]).length + 1; }
     } catch(e) {}
+
     const orderNumber = '#YGS' + fy + '-' + String(seq).padStart(3,'0');
 
-    await fetch(_SB.u + '/rest/v1/orders', {
+    const res = await fetch(_SB.u + '/rest/v1/orders', {
       method: 'POST',
-      headers: { 'Content-Type':'application/json', 'apikey':_SB.k, 'Authorization':'Bearer '+_SB.k, 'Prefer':'return=minimal' },
+      headers: {
+        'Content-Type':  'application/json',
+        'apikey':        _SB.k,
+        'Authorization': 'Bearer ' + _SB.k,
+        'Prefer':        'return=representation'
+      },
       body: JSON.stringify({
         order_number:     orderNumber,
         customer_name:    details.name,
@@ -1661,7 +1702,18 @@ async function saveOrderToSupabase(details) {
         notes:            ''
       })
     });
-  } catch(e) { console.log('Order save failed (non-critical):', e.message); }
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error('Order insert failed:', res.status, errText);
+      return orderNumber; // still show success to customer
+    }
+
+    return orderNumber;
+  } catch(e) {
+    console.error('saveOrderToSupabase error:', e.message);
+    return '';
+  }
 }
 
 function whatsappOrder() {}  // kept for compatibility
