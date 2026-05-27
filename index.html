@@ -213,12 +213,12 @@ section{padding:5rem 2rem}
 .product-card.hidden{display:none}
 .product-badge{position:absolute;top:10px;left:10px;background:var(--teal);color:var(--cream);font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;letter-spacing:0.05em;text-transform:uppercase;z-index:1}
 .product-badge.new{background:var(--gold);color:var(--charcoal)}
-.product-img{height:180px;display:flex;align-items:center;justify-content:center;font-size:52px}
+.product-img{height:220px;display:flex;align-items:center;justify-content:center;font-size:52px}
 /* Photo gallery carousel */
-.product-gallery{height:180px;position:relative;overflow:hidden;background:var(--teal-light)}
+.product-gallery{height:220px;position:relative;overflow:hidden;background:var(--teal-light)}
 .gallery-slides{display:flex;height:100%;transition:transform .35s cubic-bezier(.4,0,.2,1)}
 .gallery-slide{min-width:100%;height:100%;flex-shrink:0}
-.gallery-slide img{width:100%;height:100%;object-fit:cover;display:block}
+.gallery-slide img{width:100%;height:100%;object-fit:cover;object-position:center;display:block}
 .gallery-prev,.gallery-next{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.85);border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;z-index:2;opacity:0;transition:opacity .2s;box-shadow:0 2px 6px rgba(0,0,0,0.15)}
 .gallery-prev{left:7px}
 .gallery-next{right:7px}
@@ -226,20 +226,52 @@ section{padding:5rem 2rem}
 .gallery-dots{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);display:flex;gap:5px;z-index:2}
 .gallery-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.5);border:none;cursor:pointer;padding:0;transition:background .2s,transform .2s}
 .gallery-dot.active{background:#fff;transform:scale(1.2)}
+
+/* ── IMAGE LIGHTBOX ── */
+.lightbox-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:500;opacity:0;pointer-events:none;transition:opacity .3s;display:flex;align-items:center;justify-content:center;padding:1rem}
+.lightbox-overlay.open{opacity:1;pointer-events:all}
+.lightbox-inner{position:relative;max-width:90vw;max-height:90vh;display:flex;align-items:center;justify-content:center}
+.lightbox-inner img{max-width:90vw;max-height:88vh;width:auto;height:auto;object-fit:contain;border-radius:12px;display:block;box-shadow:0 24px 80px rgba(0,0,0,0.6)}
+.lightbox-close{position:fixed;top:18px;right:18px;background:rgba(255,255,255,0.15);border:none;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;cursor:pointer;z-index:501;transition:background .2s;backdrop-filter:blur(4px)}
+.lightbox-close:hover{background:rgba(255,255,255,0.3)}
+.lightbox-prev,.lightbox-next{position:fixed;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.12);border:none;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;cursor:pointer;z-index:501;transition:background .2s;backdrop-filter:blur(4px)}
+.lightbox-prev:hover,.lightbox-next:hover{background:rgba(255,255,255,0.25)}
+.lightbox-prev{left:16px}
+.lightbox-next{right:16px}
+.lightbox-counter{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,0.6);font-size:12px;font-family:var(--font-body);letter-spacing:.06em;z-index:501}
+.gallery-slide img,.product-img img{cursor:zoom-in}
+.gallery-slide img:hover,.product-img img:hover{opacity:.92;transition:opacity .2s}
 .p-img-1{background:#e8f2f1}.p-img-2{background:#fdf0ee}.p-img-3{background:#fdf8f0}.p-img-4{background:#f0edf5}.p-img-5{background:#e8f2f1}.p-img-6{background:#fdf8f0}.p-img-7{background:#fdf0ee}.p-img-8{background:#e8f2f1}.p-img-9{background:#f5ece8}.p-img-10{background:#f0edf5}.p-img-11{background:#fdf8f0}.p-img-12{background:#e8f2f1}
 .product-body{padding:14px}
-.product-name{font-size:14px;font-weight:500;color:var(--charcoal);margin-bottom:3px}
-.product-desc{font-size:11px;color:var(--gray);margin-bottom:10px;line-height:1.5}
-.product-price{font-size:17px;font-weight:600;color:var(--teal);margin-bottom:10px;font-family:var(--font-display)}
-.customise-section{border-top:1px solid var(--border);padding-top:10px;margin-bottom:10px}
-.ctrl-label{font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:5px}
-.chips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
-.chip{font-size:11px;padding:3px 10px;border:1px solid var(--border);border-radius:20px;cursor:pointer;color:var(--charcoal);background:var(--cream);transition:all .15s}
-.chip.active,.chip:hover{border-color:var(--gold);background:var(--gold-light);color:#8a6830}
-.gift-input{width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:9px;font-size:11px;font-family:var(--font-body);background:var(--cream);color:var(--charcoal);outline:none;transition:border .2s;margin-bottom:7px}
-.gift-input:focus{border-color:var(--teal)}
-.btn-atc{width:100%;padding:10px;background:var(--teal);color:var(--cream);border:none;border-radius:11px;font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:background .2s;font-family:var(--font-body)}
-.btn-atc:hover{background:var(--teal-dark)}
+.product-name{font-size:14px;font-weight:500;color:var(--charcoal);margin-bottom:4px}
+.product-desc{font-size:12px;color:var(--gray);margin-bottom:10px;line-height:1.55;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.product-price{font-size:17px;font-weight:600;color:var(--teal);margin-bottom:12px;font-family:var(--font-display)}
+.btn-buynow{width:100%;padding:10px;background:var(--teal);color:var(--cream);border:none;border-radius:11px;font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:background .2s;font-family:var(--font-body)}
+.btn-buynow:hover{background:var(--teal-dark)}
+
+/* ── BUY NOW POPUP ── */
+.popup-overlay{position:fixed;inset:0;background:rgba(26,26,26,0.55);z-index:400;opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(6px)}
+.popup-overlay.open{opacity:1;pointer-events:all}
+.popup-box{position:fixed;top:50%;left:50%;transform:translate(-50%,-48%) scale(.97);z-index:401;background:var(--cream);border-radius:24px;width:min(560px,94vw);max-height:88vh;overflow-y:auto;padding:0;transition:transform .3s cubic-bezier(.4,0,.2,1),opacity .3s;opacity:0;pointer-events:none;box-shadow:0 32px 80px rgba(31,78,74,0.18)}
+.popup-box.open{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:all}
+.popup-img-wrap{width:100%;height:240px;overflow:hidden;border-radius:24px 24px 0 0;background:var(--teal-light);position:relative;flex-shrink:0}
+.popup-img-wrap img{width:100%;height:100%;object-fit:cover;object-position:center;display:block}
+.popup-img-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:64px}
+.popup-body{padding:1.5rem 1.75rem 1.75rem}
+.popup-close{position:absolute;top:14px;right:14px;background:rgba(26,26,26,0.45);border:none;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;cursor:pointer;z-index:5;transition:background .2s}
+.popup-close:hover{background:rgba(26,26,26,0.7)}
+.popup-badge{display:inline-block;background:var(--teal);color:var(--cream);font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px}
+.popup-name{font-family:var(--font-display);font-size:22px;font-weight:500;color:var(--teal);margin-bottom:4px}
+.popup-price{font-family:var(--font-display);font-size:20px;color:var(--teal);font-weight:600;margin-bottom:10px}
+.popup-desc{font-size:13px;color:var(--gray);line-height:1.7;margin-bottom:1.25rem;border-bottom:1px solid var(--border);padding-bottom:1.25rem}
+.popup-ctrl-label{font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;margin-top:10px}
+.popup-chips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px}
+.popup-chip{font-size:12px;padding:5px 13px;border:1px solid var(--border);border-radius:20px;cursor:pointer;color:var(--charcoal);background:var(--white);transition:all .15s}
+.popup-chip.active,.popup-chip:hover{border-color:var(--gold);background:var(--gold-light);color:#8a6830}
+.popup-input{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:10px;font-size:13px;font-family:var(--font-body);background:var(--white);color:var(--charcoal);outline:none;transition:border .2s;margin-top:4px}
+.popup-input:focus{border-color:var(--teal)}
+.popup-atc{width:100%;padding:13px;background:var(--teal);color:var(--cream);border:none;border-radius:12px;font-size:14px;font-weight:500;cursor:pointer;font-family:var(--font-body);transition:background .2s;margin-top:1.25rem;display:flex;align-items:center;justify-content:center;gap:8px}
+.popup-atc:hover{background:var(--teal-dark)}
 .cat-section-heading{grid-column:1/-1;display:flex;align-items:center;gap:12px;margin-top:1rem;margin-bottom:0.25rem}
 .cat-section-heading h3{font-family:var(--font-display);font-size:24px;font-weight:400;color:var(--teal)}
 .cat-section-heading em{font-style:italic}
@@ -361,6 +393,7 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
   .table-row>div:nth-child(3),
   .table-row>div:nth-child(4){display:none}
   .shop-grid{grid-template-columns:1fr 1fr;gap:12px}
+  .product-gallery,.product-img{height:160px}
   .cat-section-heading{margin-top:.5rem}
 
   /* FOOTER */
@@ -376,6 +409,8 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
   .bestsellers-grid{grid-template-columns:1fr}
   .categories-grid{grid-template-columns:repeat(3,1fr)}
   .shop-grid{grid-template-columns:1fr}
+  .product-gallery,.product-img{height:200px}
+  .popup-img-wrap{height:200px}
   .hero-ghost{font-size:clamp(50px,18vw,80px)}
   .section-title{font-size:clamp(24px,8vw,32px)}
   .about-emoji-grid{grid-template-columns:1fr 1fr}
@@ -601,18 +636,6 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
         </div>
       </div>
       <hr class="sidebar-divider">
-      <div>
-        <div class="sidebar-section-title">Occasion</div>
-        <div class="sidebar-occasions">
-          <span class="occ-chip" onclick="toggleOcc(this)">🎂 Birthday</span>
-          <span class="occ-chip" onclick="toggleOcc(this)">💍 Anniversary</span>
-          <span class="occ-chip" onclick="toggleOcc(this)">🤝 Friendship</span>
-          <span class="occ-chip" onclick="toggleOcc(this)">🎓 Graduation</span>
-          <span class="occ-chip" onclick="toggleOcc(this)">🪢 Rakhi</span>
-          <span class="occ-chip" onclick="toggleOcc(this)">💒 Wedding</span>
-        </div>
-      </div>
-      <hr class="sidebar-divider">
       <div class="sidebar-sort">
         <div class="sidebar-section-title">Sort By</div>
         <select onchange="applyFilters()">
@@ -679,6 +702,26 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
       </div>
     </div>
   </footer>
+</div>
+
+<!-- IMAGE LIGHTBOX -->
+<div class="lightbox-overlay" id="lightboxOverlay" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <button class="lightbox-prev" id="lightboxPrev" onclick="event.stopPropagation();lightboxNav(-1)">&#8249;</button>
+  <button class="lightbox-next" id="lightboxNext" onclick="event.stopPropagation();lightboxNav(1)">&#8250;</button>
+  <div class="lightbox-inner" onclick="event.stopPropagation()">
+    <img id="lightboxImg" src="" alt="">
+  </div>
+  <div class="lightbox-counter" id="lightboxCounter"></div>
+</div>
+
+<!-- BUY NOW POPUP -->
+<div class="popup-overlay" id="popupOverlay" onclick="closePopup()"></div>
+<div class="popup-box" id="popupBox">
+  <div class="popup-img-wrap" id="popupImgWrap">
+    <button class="popup-close" onclick="closePopup()">✕</button>
+  </div>
+  <div class="popup-body" id="popupBody"></div>
 </div>
 
 <!-- CART DRAWER -->
@@ -873,7 +916,7 @@ function renderSidebar() {
 /* ═══════════════════════════════════════
    RENDER SHOP GRID (products page)
 ═══════════════════════════════════════ */
-function renderShopGrid(filterCat, minP, maxP) {
+function renderShopGrid(filterCat, minP, maxP, sortBy) {
   const grid = document.getElementById('shopGrid');
   const emptyEl = document.getElementById('emptyState');
   const rc = document.getElementById('resultCount');
@@ -882,6 +925,12 @@ function renderShopGrid(filterCat, minP, maxP) {
   if (filterCat && filterCat !== 'all') prods = prods.filter(p => p.category === filterCat);
   if (minP) prods = prods.filter(p => p.price >= minP);
   if (maxP) prods = prods.filter(p => p.price <= maxP);
+
+  // Apply sort
+  if (sortBy === 'low') prods.sort((a, b) => Number(a.price) - Number(b.price));
+  else if (sortBy === 'high') prods.sort((a, b) => Number(b.price) - Number(a.price));
+  else if (sortBy === 'new') prods.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  // 'default' keeps original order
 
   if (rc) rc.textContent = prods.length;
 
@@ -893,20 +942,33 @@ function renderShopGrid(filterCat, minP, maxP) {
   }
   emptyEl.style.display = 'none';
 
-  // Group by category
+  // Remove old cards/headings
+  grid.querySelectorAll('.product-card,.cat-section-heading').forEach(el => el.remove());
+
+  // When sorted (not default), show flat list — no category headings (headings would break sort order)
+  if (sortBy && sortBy !== 'default') {
+    prods.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'product-card';
+      card.dataset.cat = p.category;
+      card.dataset.price = p.price;
+      card.dataset.productId = p.id;
+      card.innerHTML = productCardHTML(p);
+      grid.insertBefore(card, emptyEl);
+    });
+    return;
+  }
+
+  // Default: group by category with headings
   const cats = filterCat && filterCat !== 'all'
     ? [filterCat]
     : [...new Set(prods.map(p => p.category))];
-
-  // Remove old cards/headings
-  grid.querySelectorAll('.product-card,.cat-section-heading').forEach(el => el.remove());
 
   cats.forEach(cat => {
     const catProds = prods.filter(p => p.category === cat);
     if (!catProds.length) return;
 
     // Section heading
-    const catObj = ALL_CATEGORIES.find(c => c.name === cat);
     const heading = document.createElement('div');
     heading.className = 'cat-section-heading';
     heading.dataset.cat = cat;
@@ -947,12 +1009,19 @@ function setGallerySlide(btn, idx) {
   card.querySelectorAll('.gallery-dot').forEach(function(d, i) { d.classList.toggle('active', i === idx); });
 }
 
+function trimDesc(text, maxWords) {
+  if (!text) return '';
+  var words = text.trim().split(/\s+/);
+  if (words.length <= maxWords) return text;
+  return words.slice(0, maxWords).join(' ') + '…';
+}
+
 function productCardHTML(p) {
   var photos = (p.photos || []).filter(Boolean);
   var imgSection;
   if (photos.length > 1) {
-    var slidesHTML = photos.map(function(src) {
-      return '<div class="gallery-slide"><img src="' + src + '" alt="" loading="lazy"></div>';
+    var slidesHTML = photos.map(function(src, si) {
+      return '<div class="gallery-slide"><img src="' + src + '" alt="" loading="lazy" onclick="event.stopPropagation();openLightbox(' + JSON.stringify(photos) + ',' + si + ')"></div>';
     }).join('');
     var dotsHTML = photos.map(function(_, i) {
       return '<button class="gallery-dot' + (i === 0 ? ' active' : '') + '" onclick="event.stopPropagation();setGallerySlide(this,' + i + ')"></button>';
@@ -964,37 +1033,21 @@ function productCardHTML(p) {
       + '<div class="gallery-dots">' + dotsHTML + '</div>'
       + '</div>';
   } else if (photos.length === 1) {
-    imgSection = '<div class="product-img" style="padding:0;overflow:hidden"><img src="' + photos[0] + '" style="width:100%;height:100%;object-fit:cover" alt="" loading="lazy"></div>';
+    imgSection = '<div class="product-img" style="padding:0;overflow:hidden"><img src="' + photos[0] + '" style="width:100%;height:100%;object-fit:cover;object-position:center" alt="" loading="lazy" onclick="event.stopPropagation();openLightbox(' + JSON.stringify(photos) + ',0)"></div>';
   } else {
     imgSection = '<div class="product-img">' + (p.emoji || '🎁') + '</div>';
   }
 
-  var opts = p.customisation_options || [];
-  var optHTML = opts.map(function(g) {
-    var chips = (g.options || []).map(function(o, i) {
-      return '<span class="chip' + (i === 0 ? ' active' : '') + '" onclick="selectChip(this)">' + o + '</span>';
-    }).join('');
-    return '<div class="ctrl-label">' + g.label + '</div><div class="chips">' + chips + '</div>';
-  }).join('');
-
-  var tc = p.text_customisation;
-  var textHTML = tc && tc.enabled
-    ? '<div class="ctrl-label">' + (tc.label || 'Custom message') + (tc.required ? ' <span style="color:#E24B4A">*</span>' : '') + '</div>'
-      + '<input class="gift-input" placeholder="' + (tc.placeholder || 'Type here\u2026') + '" ' + (tc.required ? 'required data-tc-required="1"' : '') + '>'
-    : '';
-
   var badge = p.is_bestseller ? '<span class="product-badge">Bestseller</span>' : '';
   var price = getPriceDisplay(p);
-  var safeName = p.name.replace(/\\/g, '\\\\').replace(/"/g, '&quot;');
-  var safeEmoji = (p.emoji || '🎁');
+  var shortDesc = trimDesc(p.description, 20);
 
   return badge + imgSection
     + '<div class="product-body">'
     + '<div class="product-name">' + p.name + '</div>'
-    + '<div class="product-desc">' + (p.description || '') + '</div>'
+    + '<div class="product-desc">' + shortDesc + '</div>'
     + '<div class="product-price">' + price + '</div>'
-    + '<div class="customise-section">' + optHTML + textHTML + '</div>'
-    + '<button class="btn-atc" onclick="addToCartFromCard(this,&quot;' + safeName + '&quot;,&quot;' + safeEmoji + '&quot;)">🛒 Add to Cart</button>'
+    + '<button class="btn-buynow" onclick="event.stopPropagation();openPopup(\'' + p.id + '\')">Buy Now →</button>'
     + '</div>';
 }
 
@@ -1022,7 +1075,8 @@ function filterShop(cat) {
 function applyFilters() {
   const minP = parseInt(document.getElementById('priceMin')?.value) || 0;
   const maxP = parseInt(document.getElementById('priceMax')?.value) || 999999;
-  renderShopGrid(activeCategory, minP || null, maxP >= 999999 ? null : maxP);
+  const sortVal = document.querySelector('.sidebar-sort select')?.value || 'default';
+  renderShopGrid(activeCategory, minP || null, maxP >= 999999 ? null : maxP, sortVal);
 }
 
 function toggleOcc(el) { el.classList.toggle('active'); }
@@ -1032,7 +1086,8 @@ function resetFilters() {
   const pMax = document.getElementById('priceMax');
   if (pMin) pMin.value = '';
   if (pMax) pMax.value = '';
-  document.querySelectorAll('.occ-chip').forEach(c => c.classList.remove('active'));
+  const sortSel = document.querySelector('.sidebar-sort select');
+  if (sortSel) sortSel.value = 'default';
   filterShop('all');
 }
 
@@ -1094,6 +1149,186 @@ function spGo(idx) {
   spCur = idx;
   clearInterval(spTimer);
   spTimer = setInterval(() => spGo(spCur + 1), 4500);
+}
+
+/* ═══════════════════════════════════════
+   IMAGE LIGHTBOX
+═══════════════════════════════════════ */
+var lbPhotos = [], lbCur = 0;
+
+function openLightbox(photos, idx) {
+  lbPhotos = photos;
+  lbCur = idx || 0;
+  var overlay = document.getElementById('lightboxOverlay');
+  var prevBtn = document.getElementById('lightboxPrev');
+  var nextBtn = document.getElementById('lightboxNext');
+  lbSetSlide(lbCur);
+  prevBtn.style.display = photos.length > 1 ? 'flex' : 'none';
+  nextBtn.style.display = photos.length > 1 ? 'flex' : 'none';
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+  document.getElementById('lightboxOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function lightboxNav(dir) {
+  lbCur = (lbCur + dir + lbPhotos.length) % lbPhotos.length;
+  lbSetSlide(lbCur);
+}
+
+function lbSetSlide(idx) {
+  var img = document.getElementById('lightboxImg');
+  var counter = document.getElementById('lightboxCounter');
+  img.src = lbPhotos[idx];
+  counter.textContent = lbPhotos.length > 1 ? (idx + 1) + ' / ' + lbPhotos.length : '';
+}
+
+document.addEventListener('keydown', function(e) {
+  var lb = document.getElementById('lightboxOverlay');
+  if (!lb.classList.contains('open')) return;
+  if (e.key === 'Escape') closeLightbox();
+  if (e.key === 'ArrowLeft') lightboxNav(-1);
+  if (e.key === 'ArrowRight') lightboxNav(1);
+});
+
+/* ═══════════════════════════════════════
+   BUY NOW POPUP
+═══════════════════════════════════════ */
+var popupProduct = null;
+
+function openPopup(productId) {
+  var p = ALL_PRODUCTS.find(function(x){ return x.id === productId; });
+  if (!p) return;
+  popupProduct = p;
+
+  // Image area
+  var imgWrap = document.getElementById('popupImgWrap');
+  var photos = (p.photos || []).filter(Boolean);
+  var existingClose = imgWrap.querySelector('.popup-close');
+  imgWrap.innerHTML = '';
+  if (existingClose) imgWrap.appendChild(existingClose);
+  var closeBtn = document.createElement('button');
+  closeBtn.className = 'popup-close';
+  closeBtn.innerHTML = '✕';
+  closeBtn.onclick = closePopup;
+
+  if (photos.length) {
+    var img = document.createElement('img');
+    img.src = photos[0];
+    img.alt = p.name;
+    img.style.cursor = 'zoom-in';
+    img.title = 'Click to view full image';
+    img.onclick = function(e) { e.stopPropagation(); openLightbox(photos, 0); };
+    imgWrap.appendChild(img);
+  } else {
+    var ph = document.createElement('div');
+    ph.className = 'popup-img-placeholder';
+    ph.textContent = p.emoji || '🎁';
+    imgWrap.appendChild(ph);
+  }
+  imgWrap.appendChild(closeBtn);
+
+  // Body
+  var opts = p.customisation_options || [];
+  var tc = p.text_customisation;
+  var price = getPriceDisplay(p);
+
+  var optHTML = opts.map(function(g, gi) {
+    var chips = (g.options || []).map(function(o, i) {
+      return '<span class="popup-chip' + (i === 0 ? ' active' : '') + '" onclick="popupSelectChip(this,' + gi + ')">' + o + '</span>';
+    }).join('');
+    return '<div class="popup-ctrl-label">' + g.label + '</div><div class="popup-chips" data-group="' + gi + '">' + chips + '</div>';
+  }).join('');
+
+  var textHTML = tc && tc.enabled
+    ? '<div class="popup-ctrl-label">' + (tc.label || 'Custom message') + (tc.required ? ' <span style="color:#E24B4A">*</span>' : '') + '</div>'
+      + '<input id="popupTextInput" class="popup-input" placeholder="' + (tc.placeholder || 'Type here…') + '" ' + (tc.required ? 'data-required="1"' : '') + '>'
+    : '';
+
+  var badgeHTML = p.is_bestseller ? '<span class="popup-badge">Bestseller</span><br>' : '';
+
+  document.getElementById('popupBody').innerHTML =
+    badgeHTML
+    + '<div class="popup-name">' + p.name + '</div>'
+    + '<div class="popup-price" id="popupPrice">' + price + '</div>'
+    + '<div class="popup-desc">' + (p.description || '') + '</div>'
+    + optHTML
+    + textHTML
+    + '<button class="popup-atc" onclick="popupAddToCart()">🛒 Add to Cart</button>';
+
+  document.getElementById('popupOverlay').classList.add('open');
+  document.getElementById('popupBox').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closePopup() {
+  document.getElementById('popupOverlay').classList.remove('open');
+  document.getElementById('popupBox').classList.remove('open');
+  document.body.style.overflow = '';
+  popupProduct = null;
+}
+
+function popupSelectChip(el, groupIdx) {
+  var container = el.closest('.popup-chips');
+  container.querySelectorAll('.popup-chip').forEach(function(c){ c.classList.remove('active'); });
+  el.classList.add('active');
+  // Update price
+  if (!popupProduct) return;
+  var opts = popupProduct.customisation_options || [];
+  var basePrice = Number(popupProduct.price) || 0;
+  var finalPrice = basePrice;
+  var allGroups = document.querySelectorAll('#popupBody .popup-chips');
+  opts.forEach(function(g, gi) {
+    var grp = allGroups[gi];
+    if (!grp) return;
+    var active = grp.querySelector('.popup-chip.active');
+    var sel = active ? active.textContent.trim() : (g.options ? g.options[0] : '');
+    if (g.priceType === 'per_variant' && g.variantPrices && g.variantPrices[sel]) {
+      finalPrice = Number(g.variantPrices[sel]);
+    } else if (g.priceType === 'addon' && g.variantPrices && g.variantPrices[sel]) {
+      finalPrice = basePrice + Number(g.variantPrices[sel]);
+    }
+  });
+  var priceEl = document.getElementById('popupPrice');
+  if (priceEl) priceEl.textContent = '₹' + finalPrice.toLocaleString('en-IN');
+}
+
+function popupAddToCart() {
+  if (!popupProduct) return;
+  var p = popupProduct;
+
+  // Validate required text input
+  var textInput = document.getElementById('popupTextInput');
+  if (textInput && textInput.dataset.required === '1' && !textInput.value.trim()) {
+    textInput.style.borderColor = '#E24B4A';
+    textInput.focus();
+    showToast('Please fill in the required field.');
+    setTimeout(function(){ textInput.style.borderColor = ''; }, 2000);
+    return;
+  }
+
+  // Gather customisation
+  var parts = [];
+  document.querySelectorAll('#popupBody .popup-chips').forEach(function(grp) {
+    var active = grp.querySelector('.popup-chip.active');
+    if (active) parts.push(active.textContent.trim());
+  });
+  if (textInput && textInput.value.trim()) parts.push(textInput.value.trim());
+  var custom = parts.join(' · ') || 'Standard';
+
+  // Get displayed price
+  var priceEl = document.getElementById('popupPrice');
+  var priceText = priceEl ? priceEl.textContent.replace(/[₹,\s]/g,'').split('–')[0].trim() : String(p.price);
+  var price = Number(priceText) || Number(p.price) || 0;
+
+  cart.push({ name: p.name, price: price, icon: p.emoji || '🎁', imgClass: '', custom: custom, id: Date.now() });
+  updateCartUI();
+  closePopup();
+  showToast('✓ ' + p.name + ' added to cart!');
+  openCart();
 }
 
 /* ═══════════════════════════════════════
