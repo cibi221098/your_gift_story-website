@@ -203,6 +203,41 @@ html,body{height:100%;font-family:var(--font-body);background:#f4f1ec;color:var(
 .loading-text{font-size:14px;color:var(--gray)}
 .loader-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);animation:dotPulse 1.2s ease-in-out infinite}
 @keyframes dotPulse{0%,80%,100%{transform:scale(0.6);opacity:0.4}40%{transform:scale(1);opacity:1}}
+/* ORDERS */
+.orders-toolbar{display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap}
+.order-table{background:var(--white);border-radius:16px;border:1px solid var(--border);overflow:hidden}
+.order-table-header{display:grid;grid-template-columns:140px 1fr 130px 120px 110px 100px;gap:1rem;padding:.85rem 1.25rem;background:#f9f7f4;border-bottom:1px solid var(--border);font-size:11px;font-weight:600;color:var(--gray);letter-spacing:.08em;text-transform:uppercase}
+.order-row{display:grid;grid-template-columns:140px 1fr 130px 120px 110px 100px;gap:1rem;padding:.9rem 1.25rem;border-bottom:1px solid var(--border);align-items:center;transition:background .15s;cursor:pointer}
+.order-row:last-child{border-bottom:none}
+.order-row:hover{background:#faf8f5}
+.order-id{font-size:12px;font-weight:600;color:var(--teal);font-family:monospace}
+.order-customer{display:flex;flex-direction:column;gap:2px}
+.order-customer-name{font-size:13px;font-weight:500;color:var(--char)}
+.order-customer-phone{font-size:11px;color:var(--gray)}
+.order-items-preview{font-size:12px;color:var(--gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.order-date{font-size:12px;color:var(--gray)}
+.order-total{font-size:14px;font-weight:600;color:var(--teal);font-family:var(--font-display)}
+.status-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;white-space:nowrap}
+.status-pending{background:#fef3c7;color:#92400e}
+.status-confirmed{background:#dbeafe;color:#1e40af}
+.status-shipped{background:#ede9fe;color:#5b21b6}
+.status-delivered{background:#dcfce7;color:#166534}
+.status-cancelled{background:#fee2e2;color:#991b1b}
+/* Order detail modal */
+.order-detail-section{margin-bottom:1.5rem}
+.order-detail-label{font-size:10px;font-weight:600;color:var(--gray);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.6rem}
+.order-items-list{display:flex;flex-direction:column;gap:.6rem}
+.order-item-row{background:#f9f7f4;border-radius:10px;padding:.75rem 1rem;display:flex;justify-content:space-between;align-items:flex-start;gap:1rem}
+.order-item-name{font-size:13px;font-weight:500;color:var(--char);margin-bottom:2px}
+.order-item-custom{font-size:11px;color:var(--gray)}
+.order-item-price{font-size:14px;font-weight:600;color:var(--teal);font-family:var(--font-display);white-space:nowrap}
+.status-select{padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:var(--font-body);background:var(--white);color:var(--char);outline:none;cursor:pointer;transition:border .2s}
+.status-select:focus{border-color:var(--teal)}
+/* Manual order form */
+.manual-order-wrap{background:var(--white);border-radius:16px;border:1px solid var(--border);padding:1.5rem;margin-bottom:1.5rem}
+.manual-item-row{display:grid;grid-template-columns:1fr 140px 28px;gap:8px;align-items:center;margin-bottom:6px}
+.manual-item-row input{padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:var(--font-body);background:var(--cream);outline:none;width:100%}
+.manual-item-row input:focus{border-color:var(--teal)}
 @keyframes adminFadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
 </style>
 </head>
@@ -254,6 +289,7 @@ html,body{height:100%;font-family:var(--font-body);background:#f4f1ec;color:var(
     <nav class="sidebar-nav">
       <div class="nav-section-label">Main</div>
       <div class="nav-item active" data-panel="dashboard" onclick="showPanel('dashboard',this)"><span class="nav-icon">📊</span> Dashboard</div>
+      <div class="nav-item" data-panel="orders" onclick="showPanel('orders',this)"><span class="nav-icon">📦</span> Orders</div>
       <div class="nav-item" data-panel="products" onclick="showPanel('products',this)"><span class="nav-icon">🎁</span> Products</div>
       <div class="nav-item" data-panel="categories" onclick="showPanel('categories',this)"><span class="nav-icon">🗂️</span> Categories</div>
       <div class="nav-item" data-panel="testimonials" onclick="showPanel('testimonials',this)"><span class="nav-icon">💬</span> Testimonials</div>
@@ -344,6 +380,40 @@ html,body{height:100%;font-family:var(--font-body);background:#f4f1ec;color:var(
         </div>
         <div id="testiTableBody">
           <div class="empty-state"><div class="empty-icon">💬</div><div>No testimonials yet.<br>Add your first customer review!</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ORDERS -->
+    <div class="panel" id="panel-orders">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem">
+        <div>
+          <h2 style="font-family:var(--font-display);font-size:24px;font-weight:400;color:var(--teal)">Orders</h2>
+          <p style="font-size:13px;color:var(--gray);margin-top:4px">Auto-saved from checkout + manually entered WhatsApp orders.</p>
+        </div>
+        <button class="btn-sm btn-primary" onclick="openManualOrderModal()">+ Add Manual Order</button>
+      </div>
+
+      <!-- Filters -->
+      <div class="orders-toolbar">
+        <input class="search-box" type="text" id="orderSearch" placeholder="Search by name, phone or order ID…" oninput="renderOrders()" style="max-width:280px">
+        <select class="filter-select" id="orderStatusFilter" onchange="renderOrders()">
+          <option value="">All Statuses</option>
+          <option value="Pending">Pending</option>
+          <option value="Confirmed">Confirmed</option>
+          <option value="Shipped">Shipped</option>
+          <option value="Delivered">Delivered</option>
+          <option value="Cancelled">Cancelled</option>
+        </select>
+        <button class="btn-sm btn-outline" onclick="loadOrders()">↻ Refresh</button>
+      </div>
+
+      <div class="order-table">
+        <div class="order-table-header">
+          <div>Order ID</div><div>Customer</div><div>Items</div><div>Date</div><div>Subtotal</div><div>Status</div>
+        </div>
+        <div id="orderTableBody">
+          <div class="empty-state"><div class="spinner" style="margin:0 auto 1rem"></div><div>Loading orders…</div></div>
         </div>
       </div>
     </div>
@@ -498,6 +568,59 @@ html,body{height:100%;font-family:var(--font-body);background:#f4f1ec;color:var(
     <div class="modal-footer">
       <button class="btn-sm btn-outline" onclick="closeProductModal()">Cancel</button>
       <button class="btn-sm btn-primary" id="saveBtn" onclick="saveProduct()">Save Product</button>
+    </div>
+  </div>
+</div>
+
+<!-- ORDER DETAIL MODAL -->
+<div class="modal-overlay" id="orderDetailModal">
+  <div class="modal" style="max-width:580px">
+    <div class="modal-header">
+      <div class="modal-title" id="orderDetailTitle">Order Details</div>
+      <button class="modal-close" onclick="closeOrderDetail()">✕</button>
+    </div>
+    <div class="modal-body" id="orderDetailBody"></div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-danger" onclick="deleteCurrentOrder()">Delete Order</button>
+      <button class="btn-sm btn-outline" onclick="closeOrderDetail()">Close</button>
+      <button class="btn-sm btn-primary" onclick="saveOrderStatus()">Save Status</button>
+    </div>
+  </div>
+</div>
+
+<!-- MANUAL ORDER MODAL -->
+<div class="modal-overlay" id="manualOrderModal">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <div class="modal-title">Add Manual Order</div>
+      <button class="modal-close" onclick="closeManualOrderModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section-title">Customer Details</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Customer Name *</label><input class="form-input" id="mo-name" placeholder="e.g. Priya S."></div>
+        <div class="form-group"><label class="form-label">Phone Number</label><input class="form-input" id="mo-phone" placeholder="e.g. +91 98765 43210"></div>
+      </div>
+      <div class="form-section-title">Items Ordered</div>
+      <div id="mo-items-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:.75rem"></div>
+      <button class="btn-sm btn-outline" style="font-size:11px" onclick="addManualItem()">+ Add Item</button>
+      <div class="form-section-title">Order Info</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-select" id="mo-status">
+            <option value="Pending">Pending</option>
+            <option value="Confirmed">Confirmed</option>
+            <option value="Shipped">Shipped</option>
+            <option value="Delivered">Delivered</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Notes</label><input class="form-input" id="mo-notes" placeholder="Any notes…"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline" onclick="closeManualOrderModal()">Cancel</button>
+      <button class="btn-sm btn-primary" onclick="saveManualOrder()">Save Order</button>
     </div>
   </div>
 </div>
@@ -725,12 +848,195 @@ function showPanel(name, el) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('panel-' + name).classList.add('active');
   if (el) el.classList.add('active');
-  const titles = {dashboard:'Dashboard',products:'Products',categories:'Categories',testimonials:'Testimonials',settings:'Site Settings'};
+  const titles = {dashboard:'Dashboard',orders:'Orders',products:'Products',categories:'Categories',testimonials:'Testimonials',settings:'Site Settings'};
   document.getElementById('topbarTitle').textContent = titles[name] || name;
   if (name === 'products') renderProducts();
   if (name === 'categories') renderCategoryGrid();
   if (name === 'testimonials') renderTestiTable();
   if (name === 'dashboard') renderDashboard();
+  if (name === 'orders') loadOrders();
+}
+
+/* ═══════════════════════════════════════
+   ORDERS
+═══════════════════════════════════════ */
+let _orders = [];
+let _currentOrderId = null;
+
+async function loadOrders() {
+  const body = document.getElementById('orderTableBody');
+  body.innerHTML = '<div class="empty-state"><div class="spinner" style="margin:0 auto 1rem"></div><div>Loading orders…</div></div>';
+  try {
+    _orders = await sb.query('orders', '?order=created_at.desc');
+    renderOrders();
+  } catch(e) {
+    body.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><div style="color:#dc2626">Failed to load orders.<br><small>' + e.message + '</small></div></div>';
+  }
+}
+
+function statusBadge(status) {
+  const cls = {Pending:'status-pending',Confirmed:'status-confirmed',Shipped:'status-shipped',Delivered:'status-delivered',Cancelled:'status-cancelled'}[status] || 'status-pending';
+  const icons = {Pending:'🕐',Confirmed:'✓',Shipped:'🚚',Delivered:'✅',Cancelled:'✕'};
+  return '<span class="status-badge ' + cls + '">' + (icons[status]||'') + ' ' + (status||'Pending') + '</span>';
+}
+
+function renderOrders() {
+  const body = document.getElementById('orderTableBody');
+  const search = document.getElementById('orderSearch')?.value.toLowerCase() || '';
+  const statusF = document.getElementById('orderStatusFilter')?.value || '';
+
+  let filtered = _orders.filter(o => {
+    const matchSearch = !search ||
+      (o.customer_name||'').toLowerCase().includes(search) ||
+      (o.customer_phone||'').toLowerCase().includes(search) ||
+      (o.id||'').toLowerCase().includes(search);
+    const matchStatus = !statusF || o.status === statusF;
+    return matchSearch && matchStatus;
+  });
+
+  if (!filtered.length) {
+    body.innerHTML = '<div class="empty-state"><div class="empty-icon">📦</div><div>' + (_orders.length ? 'No orders match your filters.' : 'No orders yet. They\'ll appear here when customers checkout.') + '</div></div>';
+    return;
+  }
+
+  body.innerHTML = filtered.map(o => {
+    const items = Array.isArray(o.items) ? o.items : (typeof o.items === 'string' ? JSON.parse(o.items||'[]') : []);
+    const itemsPreview = items.map(i => i.name).join(', ') || '—';
+    const subtotal = items.reduce((s,i) => s + (Number(i.price)||0), 0);
+    const date = o.created_at ? new Date(o.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : '—';
+    const shortId = (o.id||'').substring(0,8).toUpperCase();
+    return `<div class="order-row" onclick="openOrderDetail('${o.id}')">
+      <div class="order-id">#${shortId}</div>
+      <div class="order-customer"><div class="order-customer-name">${o.customer_name||'—'}</div><div class="order-customer-phone">${o.customer_phone||''}</div></div>
+      <div class="order-items-preview" title="${itemsPreview}">${itemsPreview}</div>
+      <div class="order-date">${date}</div>
+      <div class="order-total">₹${subtotal.toLocaleString('en-IN')}</div>
+      <div>${statusBadge(o.status)}</div>
+    </div>`;
+  }).join('');
+}
+
+function openOrderDetail(id) {
+  const o = _orders.find(x => x.id === id);
+  if (!o) return;
+  _currentOrderId = id;
+  const items = Array.isArray(o.items) ? o.items : (typeof o.items === 'string' ? JSON.parse(o.items||'[]') : []);
+  const subtotal = items.reduce((s,i) => s + (Number(i.price)||0), 0);
+  const date = o.created_at ? new Date(o.created_at).toLocaleString('en-IN',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+  const shortId = (o.id||'').substring(0,8).toUpperCase();
+  document.getElementById('orderDetailTitle').textContent = 'Order #' + shortId;
+  document.getElementById('orderDetailBody').innerHTML = `
+    <div class="order-detail-section">
+      <div class="order-detail-label">Customer</div>
+      <div style="background:#f9f7f4;border-radius:12px;padding:1rem;display:flex;gap:2rem">
+        <div><div style="font-size:11px;color:var(--gray);margin-bottom:3px">Name</div><div style="font-size:14px;font-weight:500">${o.customer_name||'—'}</div></div>
+        <div><div style="font-size:11px;color:var(--gray);margin-bottom:3px">Phone</div><div style="font-size:14px;font-weight:500">${o.customer_phone||'—'}</div></div>
+        <div><div style="font-size:11px;color:var(--gray);margin-bottom:3px">Date</div><div style="font-size:14px;font-weight:500">${date}</div></div>
+      </div>
+    </div>
+    <div class="order-detail-section">
+      <div class="order-detail-label">Items Ordered</div>
+      <div class="order-items-list">${items.map(i => `
+        <div class="order-item-row">
+          <div><div class="order-item-name">${i.name}</div><div class="order-item-custom">${i.custom||''}</div></div>
+          <div class="order-item-price">₹${Number(i.price).toLocaleString('en-IN')}</div>
+        </div>`).join('')}
+        <div style="text-align:right;padding:.5rem 1rem 0;font-size:13px;color:var(--gray)">Subtotal: <strong style="color:var(--teal);font-family:var(--font-display);font-size:16px">₹${subtotal.toLocaleString('en-IN')}</strong></div>
+        <div style="text-align:right;padding:0 1rem;font-size:11px;color:var(--gray)">+ delivery charges (confirmed separately)</div>
+      </div>
+    </div>
+    ${o.notes ? `<div class="order-detail-section"><div class="order-detail-label">Notes</div><div style="background:#f9f7f4;border-radius:10px;padding:.75rem 1rem;font-size:13px;color:var(--char)">${o.notes}</div></div>` : ''}
+    <div class="order-detail-section">
+      <div class="order-detail-label">Update Status</div>
+      <select class="status-select" id="orderStatusSelect">
+        ${['Pending','Confirmed','Shipped','Delivered','Cancelled'].map(s => `<option value="${s}" ${o.status===s?'selected':''}>${s}</option>`).join('')}
+      </select>
+    </div>`;
+  document.getElementById('orderDetailModal').classList.add('open');
+}
+
+function closeOrderDetail() {
+  document.getElementById('orderDetailModal').classList.remove('open');
+  _currentOrderId = null;
+}
+
+async function saveOrderStatus() {
+  if (!_currentOrderId) return;
+  const status = document.getElementById('orderStatusSelect').value;
+  try {
+    await sb.update('orders', _currentOrderId, { status });
+    const o = _orders.find(x => x.id === _currentOrderId);
+    if (o) o.status = status;
+    renderOrders();
+    closeOrderDetail();
+    showToast('Order status updated to ' + status);
+  } catch(e) { showToast('Failed to update: ' + e.message, 'error'); }
+}
+
+async function deleteCurrentOrder() {
+  if (!_currentOrderId) return;
+  if (!confirm('Delete this order permanently? This cannot be undone.')) return;
+  try {
+    await sb.delete('orders', _currentOrderId);
+    _orders = _orders.filter(o => o.id !== _currentOrderId);
+    renderOrders();
+    closeOrderDetail();
+    showToast('Order deleted.');
+  } catch(e) { showToast('Failed to delete: ' + e.message, 'error'); }
+}
+
+/* ── Manual Order Entry ── */
+let _manualItems = [];
+
+function openManualOrderModal() {
+  _manualItems = [];
+  document.getElementById('mo-name').value = '';
+  document.getElementById('mo-phone').value = '';
+  document.getElementById('mo-notes').value = '';
+  document.getElementById('mo-status').value = 'Pending';
+  renderManualItems();
+  document.getElementById('manualOrderModal').classList.add('open');
+}
+
+function closeManualOrderModal() {
+  document.getElementById('manualOrderModal').classList.remove('open');
+}
+
+function addManualItem() {
+  _manualItems.push({ name: '', price: 0, custom: '' });
+  renderManualItems();
+}
+
+function renderManualItems() {
+  const list = document.getElementById('mo-items-list');
+  if (!_manualItems.length) { list.innerHTML = '<div style="font-size:12px;color:var(--gray);padding:.5rem 0">No items yet. Click "+ Add Item" below.</div>'; return; }
+  list.innerHTML = _manualItems.map((item, i) => `
+    <div class="manual-item-row">
+      <input placeholder="Item name (e.g. Resin frame · pink · Priya)" value="${item.name}" oninput="_manualItems[${i}].name=this.value">
+      <input type="number" placeholder="Price ₹" value="${item.price||''}" oninput="_manualItems[${i}].price=Number(this.value)||0">
+      <button class="variant-row-del" onclick="_manualItems.splice(${i},1);renderManualItems()">✕</button>
+    </div>`).join('');
+}
+
+async function saveManualOrder() {
+  const name = document.getElementById('mo-name').value.trim();
+  if (!name) { showToast('Customer name is required.', 'error'); return; }
+  if (!_manualItems.length || !_manualItems[0].name) { showToast('Add at least one item.', 'error'); return; }
+  const order = {
+    customer_name: name,
+    customer_phone: document.getElementById('mo-phone').value.trim(),
+    items: _manualItems,
+    status: document.getElementById('mo-status').value,
+    notes: document.getElementById('mo-notes').value.trim(),
+    source: 'manual'
+  };
+  try {
+    const saved = await sb.insert('orders', order);
+    _orders.unshift(saved[0]);
+    renderOrders();
+    closeManualOrderModal();
+    showToast('✓ Order saved successfully!');
+  } catch(e) { showToast('Failed to save order: ' + e.message, 'error'); }
 }
 
 function renderDashboard() {
