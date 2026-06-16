@@ -130,8 +130,8 @@ section{padding:5rem 2rem}
 .testimonials-section .section-eyebrow{color:var(--gold)}
 .testimonials-section .section-title{color:var(--cream)}
 .spotlight-outer{max-width:780px;margin:0 auto;position:relative}
-.spotlight-stage{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:28px;padding:3.5rem 3rem;text-align:center;min-height:320px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
-.sp-card{position:absolute;top:0;left:0;right:0;bottom:0;padding:2rem 2.5rem;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transform:translateY(14px);transition:opacity .55s ease,transform .55s ease;pointer-events:none}
+.spotlight-stage{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:28px;padding:3.5rem 3rem;text-align:center;min-height:380px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.sp-card{position:absolute;top:0;left:0;right:0;bottom:0;padding:2.5rem 3rem;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transform:translateY(14px);transition:opacity .55s ease,transform .55s ease;pointer-events:none;overflow-y:auto}
 .sp-card.active{opacity:1;transform:none;pointer-events:all}
 .sp-mark{font-family:var(--font-display);font-size:80px;color:rgba(201,166,104,0.2);line-height:0.6;margin-bottom:1rem;display:block}
 .sp-stars{color:var(--gold);font-size:15px;letter-spacing:4px;margin-bottom:1.25rem}
@@ -292,7 +292,9 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
 .footer-links a:hover{color:var(--cream)}
 .footer-contact-item{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:rgba(250,246,239,0.55);margin-bottom:0.75rem;line-height:1.5}
 .footer-contact-icon{color:var(--gold);flex-shrink:0}
-.footer-bottom{border-top:1px solid rgba(250,246,239,0.1);padding-top:1.5rem;display:flex;justify-content:space-between;align-items:center}
+.footer-contact-link{color:rgba(250,246,239,0.55);text-decoration:none;transition:color .2s}
+.footer-contact-link:hover{color:var(--gold);text-decoration:underline}
+.footer-bottom{border-top:1px solid rgba(250,246,239,0.1);padding-top:1.5rem;display:flex;justify-content:center;align-items:center}
 .footer-copy{font-size:12px;color:rgba(250,246,239,0.3)}
 .footer-pay{display:flex;gap:8px}
 .pay-badge{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:4px 10px;font-size:11px;color:rgba(250,246,239,0.45)}
@@ -427,7 +429,7 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
   .sp-arrow-next{right:-8px}
   .sp-text{font-size:clamp(16px,4.5vw,20px)}
   .sp-thumbs{display:none}
-  .spotlight-stage{min-height:260px;border-radius:16px}
+  .spotlight-stage{min-height:320px;border-radius:16px}
 
   /* ABOUT SECTION */
   .about-inner{grid-template-columns:1fr;gap:2.5rem}
@@ -649,14 +651,13 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
         <div>
           <div class="footer-col-title">Contact</div>
           <div class="footer-contact-item"><span class="footer-contact-icon">📍</span><span id="footerLocation">Coimbatore, Tamil Nadu, India</span></div>
-          <div class="footer-contact-item"><span class="footer-contact-icon">📱</span><span id="footerPhone">+91 98765 43210</span></div>
-          <div class="footer-contact-item"><span class="footer-contact-icon">📧</span><span id="footerEmail">hello@yourgiftstory.in</span></div>
+          <div class="footer-contact-item"><span class="footer-contact-icon">📱</span><a id="footerPhone" href="tel:+919025305650" class="footer-contact-link">+91 90253 05650</a></div>
+          <div class="footer-contact-item"><span class="footer-contact-icon">📧</span><a id="footerEmail" href="mailto:contact.yourgiftstory@gmail.com" class="footer-contact-link">contact.yourgiftstory@gmail.com</a></div>
           <div class="footer-contact-item"><span class="footer-contact-icon">🕐</span><span>Mon–Sat, 10am – 7pm IST</span></div>
         </div>
       </div>
       <div class="footer-bottom">
         <div class="footer-copy">© 2025 Your Gift Story. Made with ♥ in Coimbatore.</div>
-        <div class="footer-pay"><span class="pay-badge">UPI</span><span class="pay-badge">Cards</span><span class="pay-badge">Net Banking</span><span class="pay-badge">COD</span></div>
       </div>
     </div>
   </footer>
@@ -744,14 +745,13 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
         <div>
           <div class="footer-col-title">Contact</div>
           <div class="footer-contact-item"><span class="footer-contact-icon">📍</span><span id="footerLocation2">Coimbatore, Tamil Nadu, India</span></div>
-          <div class="footer-contact-item"><span class="footer-contact-icon">📱</span><span id="footerPhone2">+91 98765 43210</span></div>
-          <div class="footer-contact-item"><span class="footer-contact-icon">📧</span><span id="footerEmail2">hello@yourgiftstory.in</span></div>
+          <div class="footer-contact-item"><span class="footer-contact-icon">📱</span><a id="footerPhone2" href="tel:+919025305650" class="footer-contact-link">+91 90253 05650</a></div>
+          <div class="footer-contact-item"><span class="footer-contact-icon">📧</span><a id="footerEmail2" href="mailto:contact.yourgiftstory@gmail.com" class="footer-contact-link">contact.yourgiftstory@gmail.com</a></div>
           <div class="footer-contact-item"><span class="footer-contact-icon">🕐</span><span>Mon–Sat, 10am – 7pm IST</span></div>
         </div>
       </div>
       <div class="footer-bottom">
         <div class="footer-copy">© 2025 Your Gift Story. Made with ♥ in Coimbatore.</div>
-        <div class="footer-pay"><span class="pay-badge">UPI</span><span class="pay-badge">Cards</span><span class="pay-badge">Net Banking</span><span class="pay-badge">COD</span></div>
       </div>
     </div>
   </footer>
@@ -945,9 +945,11 @@ async function initSite() {
     if (settings && settings.length) {
       const s = {};
       settings.forEach(r => { s[r.key] = r.value; });
-      const setEl = (id, val) => { const el = document.getElementById(id); if (el && val) el.textContent = val; };
-      setEl('footerPhone', s.whatsapp); setEl('footerPhone2', s.whatsapp);
-      setEl('footerEmail', s.email); setEl('footerEmail2', s.email);
+      const setEl = (id, val) => { const el = document.getElementById(id); if (el && val) { el.textContent = val; } };
+      const setPhone = (id, val) => { const el = document.getElementById(id); if (el && val) { el.textContent = val; el.href = 'tel:+' + val.replace(/\D/g,''); } };
+      const setEmail = (id, val) => { const el = document.getElementById(id); if (el && val) { el.textContent = val; el.href = 'mailto:' + val; } };
+      setPhone('footerPhone', s.whatsapp); setPhone('footerPhone2', s.whatsapp);
+      setEmail('footerEmail', s.email); setEmail('footerEmail2', s.email);
       setEl('footerLocation', s.location); setEl('footerLocation2', s.location);
       // Store number for wa.me links — strip non-digits, add country code if missing
       if (s.whatsapp) {
