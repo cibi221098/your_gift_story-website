@@ -130,17 +130,22 @@ section{padding:5rem 2rem}
 .testimonials-section .section-eyebrow{color:var(--gold)}
 .testimonials-section .section-title{color:var(--cream)}
 .spotlight-outer{max-width:780px;margin:0 auto;position:relative}
-.spotlight-stage{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:28px;padding:3.5rem 3rem;text-align:center;min-height:380px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
-.sp-card{position:absolute;top:0;left:0;right:0;bottom:0;padding:2.5rem 3rem;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transform:translateY(14px);transition:opacity .55s ease,transform .55s ease;pointer-events:none;overflow-y:auto}
+.spotlight-stage{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:28px;min-height:300px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.sp-card{position:absolute;top:0;left:0;right:0;bottom:0;padding:2.25rem 2.5rem 2.25rem 0;display:flex;gap:0;align-items:stretch;opacity:0;transform:translateY(14px);transition:opacity .55s ease,transform .55s ease;pointer-events:none}
 .sp-card.active{opacity:1;transform:none;pointer-events:all}
-.sp-mark{font-family:var(--font-display);font-size:80px;color:rgba(201,166,104,0.2);line-height:0.6;margin-bottom:1rem;display:block}
+.sp-mark{display:none}
 .sp-stars{color:var(--gold);font-size:15px;letter-spacing:4px;margin-bottom:1.25rem}
-.sp-text{font-family:var(--font-display);font-size:clamp(18px,2.5vw,24px);font-style:italic;color:rgba(250,246,239,0.92);line-height:1.5;margin-bottom:1.75rem;max-width:560px}
-.sp-author{display:flex;align-items:center;gap:12px;justify-content:center}
-.sp-avatar{width:44px;height:44px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--charcoal);flex-shrink:0}
+.sp-text{font-family:var(--font-display);font-size:clamp(15px,2vw,21px);font-style:italic;color:rgba(250,246,239,0.92);line-height:1.7;margin-bottom:1.1rem;max-width:560px}
+.sp-author{display:flex;flex-direction:column;gap:3px}
+.sp-avatar{display:none}
 .sp-info{text-align:left}
 .sp-name{font-size:14px;font-weight:500;color:var(--cream)}
 .sp-occ{font-size:12px;color:rgba(250,246,239,0.45)}
+.sp-bar{width:4px;background:var(--gold);border-radius:2px;flex-shrink:0;margin:0.25rem 2rem 0.25rem 2.5rem}
+.sp-inner{flex:1;display:flex;flex-direction:column;justify-content:center}
+.sp-text.truncated{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.sp-readmore{background:none;border:none;color:var(--gold);font-size:13px;font-family:var(--font-body);cursor:pointer;padding:0;margin-top:6px;text-decoration:underline;text-underline-offset:3px;opacity:0.85}
+.sp-readmore:hover{opacity:1}
 /* nav arrows */
 .sp-arrow{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s;font-size:16px;color:rgba(250,246,239,0.7);z-index:5}
 .sp-arrow:hover{background:rgba(255,255,255,0.16);color:var(--cream)}
@@ -429,7 +434,7 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
   .sp-arrow-next{right:-8px}
   .sp-text{font-size:clamp(16px,4.5vw,20px)}
   .sp-thumbs{display:none}
-  .spotlight-stage{min-height:320px;border-radius:16px}
+  .spotlight-stage{min-height:260px;border-radius:16px}
 
   /* ABOUT SECTION */
   .about-inner{grid-template-columns:1fr;gap:2.5rem}
@@ -1263,7 +1268,13 @@ function buildSpotlight() {
   const thumbsEl = document.getElementById('spThumbs');
   if (!stage) return;
   const testiData = ALL_TESTIMONIALS.length ? ALL_TESTIMONIALS.map(t => ({stars:"★".repeat(t.rating||5),text:t.review_text,name:t.customer_name,occasion:(t.occasion||"")+(t.location?(" · "+t.location):""),initials:t.customer_name.split(" ").map(w=>w[0]).join("").substring(0,2).toUpperCase()})) : [{stars:"★★★★★",text:"Wonderful handcrafted gifts, made with so much love and care!",name:"Happy Customer",occasion:"Coimbatore",initials:"HC"}];
-  stage.innerHTML = testiData.map((t,i) => `   <div class="sp-card${i===0?' active':''}" id="sp-card-${i}">    <span class="sp-mark">&#8220;</span>    <div class="sp-stars">${t.stars}</div>    <p class="sp-text">${t.text}</p>    <div class="sp-author">     <div class="sp-avatar">${t.initials}</div>     <div class="sp-info">      <div class="sp-name">${t.name}</div>      <div class="sp-occ">${t.occasion}</div>     </div>    </div>   </div>`).join('');
+  const CHAR_LIMIT = 180;
+  stage.innerHTML = testiData.map((t,i) => {
+    const long = t.text.length > CHAR_LIMIT;
+    const textEl = `<p class="sp-text${long?' truncated':''}" id="sp-text-${i}">${t.text}</p>`;
+    const btn = long ? `<button class="sp-readmore" id="sp-rm-${i}" onclick="spToggleRead(${i})">Read more</button>` : '';
+    return `<div class="sp-card${i===0?' active':''}" id="sp-card-${i}"><div class="sp-bar"></div><div class="sp-inner"><div class="sp-stars">${t.stars}</div>${textEl}${btn}<div class="sp-author"><div class="sp-info"><div class="sp-name">${t.name}</div><div class="sp-occ">${t.occasion}</div></div></div></div></div>`;
+  }).join('');
   dotsEl.innerHTML = ALL_TESTIMONIALS.map((_,i) =>
     `<button class="sp-dot${i===0?' active':''}" onclick="spGo(${i})" aria-label="Review ${i+1}"></button>`
   ).join('');
@@ -1282,6 +1293,14 @@ function spGo(idx) {
   spCur = idx;
   clearInterval(spTimer);
   spTimer = setInterval(() => spGo(spCur + 1), 4500);
+}
+
+function spToggleRead(i) {
+  const txt = document.getElementById('sp-text-'+i);
+  const btn = document.getElementById('sp-rm-'+i);
+  if (!txt || !btn) return;
+  const isTruncated = txt.classList.toggle('truncated');
+  btn.textContent = isTruncated ? 'Read more' : 'Read less';
 }
 
 /* ═══════════════════════════════════════
