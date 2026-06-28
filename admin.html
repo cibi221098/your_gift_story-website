@@ -1313,7 +1313,7 @@ async function saveProduct() {
     if (_photoFiles.length) {
       document.getElementById('uploadProgress').style.display = 'block';
       // SEO slug builder
-      // Formula: [prefix]-[product-name]-gift-india[-number].jpg
+      // Formula: [prefix]-[product-name]-gift-coimbatore[-number].jpg
       // prefix = personalised/custom/handmade based on name keywords
       const toSlug = function(s) {
         return s.toLowerCase().trim()
@@ -1328,7 +1328,7 @@ async function saveProduct() {
           : 'personalised';
         var nameClean = toSlug(productName);
         var suffix    = photoTotal > 1 ? '-' + (photoIdx + 1) : '';
-        return prefix + '-' + nameClean + '-gift-india' + suffix + '.jpg';
+        return prefix + '-' + nameClean + '-gift-coimbatore' + suffix + '.jpg';
       };
 
       for (let i = 0; i < _photoFiles.length; i++) {
@@ -2081,7 +2081,7 @@ async function optRun() {
           : 'personalised';
         var nameClean = toSlug(productName);
         var suffix    = photoTotal > 1 ? '-' + (photoIdx + 1) : '';
-        return prefix + '-' + nameClean + '-gift-india' + suffix + '.jpg';
+        return prefix + '-' + nameClean + '-gift-coimbatore' + suffix + '.jpg';
       };
       const seoFile   = buildSeoSlug(img.productName, img.urlIdx, img.photoTotal);
       const seoPath   = 'products/' + seoFile;
@@ -2089,7 +2089,7 @@ async function optRun() {
 
       // Check if already SEO-named — skip if already has gift-india pattern
       const oldFile    = img.url.split('/').pop();
-      const alreadySEO = oldFile.includes('-gift-india');
+      const alreadySEO = oldFile.includes('-gift-coimbatore') || oldFile.includes('-gift-india');
 
       if (alreadySmall && alreadySEO) {
         img.status         = 'skipped';
