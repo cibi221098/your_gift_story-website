@@ -1059,6 +1059,9 @@ const _SB = {
    width=600 covers all card sizes; quality=70
    keeps it sharp while cutting file size ~85%
 ═══════════════════════════════════════ */
+// Cache map: productId → exact img src string already loaded in browser
+const _imgCache = {};
+
 function imgUrl(src, width, quality) {
   if (!src) return src;
   width   = width   || 600;
@@ -1287,7 +1290,7 @@ function getPriceDisplay(p) {
 function bsCardHTML(p) {
   const imgSrc = p.photos && p.photos[0] ? p.photos[0] : null;
   const img = imgSrc
-    ? `<img src="${imgUrl(imgSrc,400,70)}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover" onload="this.style.opacity=1;this.closest('.bs-img').style.background='none'" alt="${p.name}">`
+    ? `<img src="${imgUrl(imgSrc,400,70)}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover" onload="this.style.opacity=1;this.closest('.bs-img').style.background='none';_imgCache['${p.id}']=this.src" alt="${p.name}">`
     : (p.emoji || '🎁');
   const imgClass = imgSrc ? 'bs-img' : 'bs-img bs-i1';
   const imgStyle = imgSrc ? 'background:#dceae9;overflow:hidden' : '';
@@ -1451,6 +1454,8 @@ function trimDesc(text, maxWords) {
 function productCardHTML(p) {
   var photos = (p.photos || []).filter(Boolean);
   var imgSection;
+  // Use consistent quality=72 everywhere so popup can reuse exact cached URL
+  var firstImgUrl = photos.length ? imgUrl(photos[0], 600, 72) : null;
   if (photos.length > 1) {
     var slidesHTML = photos.map(function(src, si) {
       var altText = p.name + ' - handmade gift - Your Gift Story' + (si > 0 ? ' ' + (si+1) : '');
@@ -1466,7 +1471,8 @@ function productCardHTML(p) {
       + '<div class="gallery-dots">' + dotsHTML + '</div>'
       + '</div>';
   } else if (photos.length === 1) {
-    imgSection = '<div class="product-img" style="padding:0;overflow:hidden"><img src="' + imgUrl(photos[0],600,72) + '" style="width:100%;height:100%;object-fit:cover;object-position:center" alt="' + p.name + ' - handmade personalised gift - Your Gift Story" loading="lazy" onclick="event.stopPropagation();openLightbox(' + JSON.stringify(photos) + ',0)"></div>';
+    var cachedUrl = imgUrl(photos[0], 600, 72);
+    imgSection = '<div class="product-img" style="padding:0;overflow:hidden"><img src="' + cachedUrl + '" style="width:100%;height:100%;object-fit:cover;object-position:center" alt="' + p.name + ' - handmade personalised gift - Your Gift Story" loading="lazy" onload="_imgCache[\'' + p.id + '\']=this.src" onclick="event.stopPropagation();openLightbox(' + JSON.stringify(photos) + ',0)"></div>';
   } else {
     imgSection = '<div class="product-img">' + (p.emoji || '🎁') + '</div>';
   }
@@ -1670,18 +1676,27 @@ function openPopup(productId) {
 
   if (photos.length) {
     var img = document.createElement('img');
-    // Start opacity:0, no transition yet — add transition only after src is set
     img.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:center;opacity:0';
     img.alt = p.name;
     img.title = 'Click to view full image';
     img.onclick = function(e) { e.stopPropagation(); openLightbox(photos, 0); };
-    // Set src BEFORE appending — browser starts fetching from cache immediately
-    img.src = imgUrl(photos[0], 600, 75);
-    img.onload = function() {
-      img.style.transition = 'opacity .25s ease';
+
+    // Use exact src from cache (already in browser memory) — zero network request
+    var finalSrc = _imgCache[p.id] || imgUrl(photos[0], 600, 72);
+
+    img.src = finalSrc;
+
+    // If already cached, browser fires onload synchronously — show instantly
+    if (img.complete && img.naturalWidth) {
       img.style.opacity = '1';
       imgWrap.style.cssText = '';
-    };
+    } else {
+      img.onload = function() {
+        img.style.transition = 'opacity .2s ease';
+        img.style.opacity = '1';
+        imgWrap.style.cssText = '';
+      };
+    }
     imgWrap.appendChild(img);
   } else {
     var ph = document.createElement('div');
