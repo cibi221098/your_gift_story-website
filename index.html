@@ -459,6 +459,24 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
 .footer-pay{display:flex;gap:8px}
 .pay-badge{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:4px 10px;font-size:11px;color:rgba(250,246,239,0.45)}
 
+/* ── POLICY MODAL ── */
+.policy-overlay{position:fixed;inset:0;background:rgba(10,25,23,0.55);z-index:1100;display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;pointer-events:none;transition:opacity .25s ease;backdrop-filter:blur(3px)}
+.policy-overlay.open{opacity:1;pointer-events:all}
+.policy-modal{background:var(--white);border-radius:24px;width:100%;max-width:680px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;transform:translateY(24px);transition:transform .28s ease;box-shadow:0 24px 64px rgba(0,0,0,0.18)}
+.policy-overlay.open .policy-modal{transform:translateY(0)}
+.policy-modal-header{display:flex;align-items:center;justify-content:space-between;padding:1.4rem 1.6rem 1rem;border-bottom:1px solid var(--border);flex-shrink:0}
+.policy-modal-title{font-family:var(--font-display);font-size:22px;font-weight:400;color:var(--teal)}
+.policy-modal-close{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:none;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:var(--gray);transition:all .2s}
+.policy-modal-close:hover{background:var(--teal);color:#fff;border-color:var(--teal)}
+.policy-modal-body{overflow-y:auto;padding:1.5rem 1.6rem 2rem;flex:1;-webkit-overflow-scrolling:touch}
+.policy-modal-body h3{font-family:var(--font-display);font-size:16px;font-weight:400;color:var(--teal);margin:1.4rem 0 .4rem;border-bottom:1px solid var(--border);padding-bottom:.4rem}
+.policy-modal-body h3:first-child{margin-top:0}
+.policy-modal-body p{font-size:13px;color:var(--gray);line-height:1.75;margin-bottom:.75rem}
+.policy-modal-body ul{margin:.4rem 0 .75rem 1.1rem;padding:0}
+.policy-modal-body ul li{font-size:13px;color:var(--gray);line-height:1.7;margin-bottom:.3rem}
+.policy-modal-body strong{color:var(--charcoal);font-weight:600}
+.policy-tag{display:inline-block;background:var(--teal-light);color:var(--teal);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:3px 10px;border-radius:20px;margin-bottom:1rem}
+
 /* ── CART ── */
 .overlay{position:fixed;inset:0;background:rgba(26,26,26,0.4);z-index:200;opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(4px)}
 .overlay.open{opacity:1;pointer-events:all}
@@ -795,12 +813,12 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
         <div>
           <div class="footer-col-title">Info</div>
           <ul class="footer-links">
-            <li><a onclick="scrollToAbout()">About Us</a></li>
-            <li><a onclick="bulkOrderWhatsapp()">Custom Orders</a></li>
-            <li><a onclick="bulkOrderWhatsapp()">Bulk Gifting</a></li>
-            <li><a onclick="scrollToContact()">Shipping Policy</a></li>
-            <li><a onclick="scrollToContact()">Returns & Refunds</a></li>
-            <li><a onclick="scrollToContact()">FAQs</a></li>
+            <li><a onclick="scrollToAbout()" style="cursor:pointer">About Us</a></li>
+            <li><a onclick="bulkOrderWhatsapp()" style="cursor:pointer">Custom Orders</a></li>
+            <li><a onclick="bulkOrderWhatsapp()" style="cursor:pointer">Bulk Gifting</a></li>
+            <li><a onclick="openPolicy('shipping')" style="cursor:pointer">Shipping Policy</a></li>
+            <li><a onclick="openPolicy('returns')" style="cursor:pointer">Returns & Refunds</a></li>
+            <li><a onclick="openPolicy('faqs')" style="cursor:pointer">FAQs</a></li>
           </ul>
         </div>
         <div>
@@ -849,6 +867,7 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
         <div class="sidebar-section-title">Sort By</div>
         <select onchange="applyFilters()">
           <option value="default">Featured</option>
+          <option value="bestseller">Bestsellers First</option>
           <option value="low">Price: Low to High</option>
           <option value="high">Price: High to Low</option>
           <option value="new">Newest First</option>
@@ -882,12 +901,12 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
         <div>
           <div class="footer-col-title">Info</div>
           <ul class="footer-links">
-            <li><a onclick="scrollToAbout()">About Us</a></li>
-            <li><a onclick="bulkOrderWhatsapp()">Custom Orders</a></li>
-            <li><a onclick="bulkOrderWhatsapp()">Bulk Gifting</a></li>
-            <li><a onclick="scrollToContact()">Shipping Policy</a></li>
-            <li><a onclick="scrollToContact()">Returns & Refunds</a></li>
-            <li><a onclick="scrollToContact()">FAQs</a></li>
+            <li><a onclick="scrollToAbout()" style="cursor:pointer">About Us</a></li>
+            <li><a onclick="bulkOrderWhatsapp()" style="cursor:pointer">Custom Orders</a></li>
+            <li><a onclick="bulkOrderWhatsapp()" style="cursor:pointer">Bulk Gifting</a></li>
+            <li><a onclick="openPolicy('shipping')" style="cursor:pointer">Shipping Policy</a></li>
+            <li><a onclick="openPolicy('returns')" style="cursor:pointer">Returns & Refunds</a></li>
+            <li><a onclick="openPolicy('faqs')" style="cursor:pointer">FAQs</a></li>
           </ul>
         </div>
         <div>
@@ -990,6 +1009,17 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
 </div>
 
 <!-- BUY NOW POPUP -->
+<!-- ═══ POLICY MODALS ═══ -->
+<div class="policy-overlay" id="policyOverlay" onclick="if(event.target===this)closePolicy()">
+  <div class="policy-modal">
+    <div class="policy-modal-header">
+      <div class="policy-modal-title" id="policyTitle">Policy</div>
+      <button class="policy-modal-close" onclick="closePolicy()">✕</button>
+    </div>
+    <div class="policy-modal-body" id="policyBody"></div>
+  </div>
+</div>
+
 <div class="popup-overlay" id="popupOverlay" onclick="closePopup()"></div>
 <div class="popup-box" id="popupBox">
   <div class="popup-img-wrap" id="popupImgWrap">
@@ -1176,18 +1206,18 @@ function injectProductSchema() {
    Top 4 categories by product count + All Gifts
 ═══════════════════════════════════════ */
 function renderFooterCategories() {
-  // Sort categories by number of products descending, take top 4
+  // Top 5 categories by product count, excluding 'Others', + All Gifts
   const sorted = (ALL_CATEGORIES || [])
     .map(c => ({ name: c.name, count: ALL_PRODUCTS.filter(p => p.category === c.name).length }))
-    .filter(c => c.count > 0)
+    .filter(c => c.count > 0 && c.name.toLowerCase() !== 'others')
     .sort((a, b) => b.count - a.count)
-    .slice(0, 4);
+    .slice(0, 5);
 
   const liHTML = sorted.map(c =>
     `<li><a onclick="showPage('shop','${c.name}')" style="cursor:pointer">${c.name}</a></li>`
   ).join('') + `<li><a onclick="showPage('shop','all')" style="cursor:pointer">All Gifts</a></li>`;
 
-  // Also update schema offerCatalog dynamically with real categories
+  // Update schema offerCatalog dynamically
   const schemaEl = document.querySelector('script[type="application/ld+json"]');
   if (schemaEl) {
     try {
@@ -1195,8 +1225,7 @@ function renderFooterCategories() {
       const biz  = (data['@graph'] || []).find(n => n['@type'] && n['@type'].includes('LocalBusiness'));
       if (biz && biz.hasOfferCatalog) {
         biz.hasOfferCatalog.itemListElement = sorted.map(c => ({
-          '@type': 'Offer',
-          'itemOffered': { '@type': 'Product', 'name': c.name + ' Gifts' }
+          '@type': 'Offer', 'itemOffered': { '@type': 'Product', 'name': c.name + ' Gifts' }
         }));
         schemaEl.textContent = JSON.stringify(data);
       }
@@ -1320,9 +1349,10 @@ function renderShopGrid(filterCat, minP, maxP, sortBy) {
   if (maxP) prods = prods.filter(p => p.price <= maxP);
 
   // Apply sort
-  if (sortBy === 'low') prods.sort((a, b) => Number(a.price) - Number(b.price));
+  if (sortBy === 'bestseller') prods.sort((a, b) => (b.is_bestseller ? 1 : 0) - (a.is_bestseller ? 1 : 0));
+  else if (sortBy === 'low')  prods.sort((a, b) => Number(a.price) - Number(b.price));
   else if (sortBy === 'high') prods.sort((a, b) => Number(b.price) - Number(a.price));
-  else if (sortBy === 'new') prods.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  else if (sortBy === 'new')  prods.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   // 'default' keeps original order
 
   if (rc) rc.textContent = prods.length;
@@ -2040,6 +2070,105 @@ function bulkOrderWhatsapp() {
   );
   window.open('https://wa.me/' + WHATSAPP_NUMBER + '?text=' + msg, '_blank');
 }
+
+/* ═══════════════════════════════════════
+   POLICY PAGES
+═══════════════════════════════════════ */
+const POLICIES = {
+  shipping: {
+    title: 'Shipping Policy',
+    body: `
+      <div class="policy-tag">Last updated · June 2026</div>
+      <h3>Delivery Timeline</h3>
+      <p>Delivery timelines vary depending on the gift you choose. Once your order is confirmed, we'll reach out on WhatsApp and let you know the <strong>exact delivery timeline</strong> based on the complexity and crafting time of your specific gift. Typically, most orders are delivered within <strong>5 to 7 working days</strong> — but we'll always keep you informed every step of the way.</p>
+      <h3>Where We Deliver</h3>
+      <p>We deliver <strong>pan India</strong> — from Kashmir to Kanyakumari. No matter where your loved one is, we'll make sure your gift reaches them safely.</p>
+      <h3>How It Works</h3>
+      <ul>
+        <li><strong>Order Confirmation</strong> — You'll receive a confirmation on WhatsApp within a few hours.</li>
+        <li><strong>Personalisation Details</strong> — We collect your customisation details (names, photos, messages etc.).</li>
+        <li><strong>Crafting</strong> — Our artisans handcraft your gift with love.</li>
+        <li><strong>Quality Check</strong> — Every gift is carefully checked before packing.</li>
+        <li><strong>Dispatched & Delivered</strong> — Packed securely and shipped to your door.</li>
+      </ul>
+      <h3>Tracking Your Order</h3>
+      <p>Once dispatched, we'll share tracking details via WhatsApp so you can follow your gift every step of the way.</p>
+      <h3>Urgent Orders</h3>
+      <p>Need a gift in a hurry? Reach out on WhatsApp <strong>before placing your order</strong> — we'll do our best to accommodate based on availability.</p>
+      <h3>Damaged or Lost Shipments</h3>
+      <p>In the rare case your gift arrives damaged or is lost in transit, contact us within <strong>48 hours of delivery</strong> with photos. A replacement or refund will be arranged after review.</p>
+      <h3>Important Notes</h3>
+      <ul>
+        <li>Working days are Monday to Saturday, excluding public holidays.</li>
+        <li>Delivery may be slightly longer during peak seasons — order early.</li>
+        <li>We are not responsible for delays due to incorrect addresses.</li>
+        <li>International shipping is not available at the moment.</li>
+      </ul>
+      <h3>Contact Us</h3>
+      <p>For shipping queries, reach us on WhatsApp at <strong>+91 90253 05650</strong> or email <strong>contact.yourgiftstory@gmail.com</strong>.</p>`
+  },
+  returns: {
+    title: 'Returns & Refunds',
+    body: `
+      <div class="policy-tag">Last updated · June 2026</div>
+      <h3>Our Promise</h3>
+      <p>Every gift at Your Gift Story is handcrafted and personalised just for you. We follow a <strong>no return, no exchange</strong> policy on personalised items — however, we always stand by the quality of our work and will make it right if something goes wrong on our end.</p>
+      <h3>When We Offer a Refund or Replacement</h3>
+      <ul>
+        <li><strong>Damaged in transit</strong> — Gift arrives broken or unusable.</li>
+        <li><strong>Wrong item sent</strong> — You receive a different product from what you ordered.</li>
+        <li><strong>Manufacturing defect</strong> — A quality issue with the product itself.</li>
+        <li><strong>Error on our part</strong> — Personalisation details incorrectly applied due to our mistake.</li>
+      </ul>
+      <p>Please contact us within <strong>48 hours of delivery</strong> via WhatsApp or email with your order details and clear photos.</p>
+      <h3>When We Cannot Accept Returns</h3>
+      <ul>
+        <li>Personalisation details were provided incorrectly by the customer.</li>
+        <li>Change of mind after crafting has begun.</li>
+        <li>Minor natural variations in handmade products — these are part of the handmade charm.</li>
+        <li>Request raised after 48 hours of delivery.</li>
+        <li>Damage caused by improper handling after delivery.</li>
+      </ul>
+      <h3>Cancellation Policy</h3>
+      <p>Orders can be cancelled within <strong>2 hours</strong> of placing them, before personalisation begins. Once crafting has started, cancellations are not possible. To cancel, contact us immediately on WhatsApp.</p>
+      <h3>Refund Process</h3>
+      <p>Approved refunds are processed within <strong>5 to 7 working days</strong> back to your original payment method. You'll receive a WhatsApp confirmation once initiated.</p>
+      <h3>Contact Us</h3>
+      <p>Reach us on WhatsApp at <strong>+91 90253 05650</strong> or email <strong>contact.yourgiftstory@gmail.com</strong>. We put our heart into every gift — if something isn't right, please reach out.</p>`
+  },
+  faqs: {
+    title: 'FAQs',
+    body: `
+      <div class="policy-tag">Frequently Asked Questions</div>
+      <h3>1. How long does delivery take?</h3>
+      <p>Delivery timelines vary depending on the gift you choose. Once your order is confirmed, we'll reach out on WhatsApp and let you know the exact timeline based on your specific gift. Most orders are delivered within <strong>5 to 7 working days</strong> — we'll keep you informed every step of the way.</p>
+      <h3>2. Can I fully customise my gift?</h3>
+      <p>Absolutely! Every product at Your Gift Story is <strong>100% customisable</strong> — names, photos, messages, colours, and more. After you place your order, we'll reach out on WhatsApp to collect all your personalisation details.</p>
+      <h3>3. What if my gift arrives damaged?</h3>
+      <p>In the rare case your gift arrives damaged, contact us within <strong>48 hours of delivery</strong> with photos via WhatsApp or email. We'll review and arrange a replacement or refund as quickly as possible.</p>
+      <h3>4. Can I cancel my order?</h3>
+      <p>Orders can be cancelled within <strong>2 hours</strong> of placing them, before personalisation work begins. Once our artisans have started crafting, cancellations are not possible as materials and time have already been invested.</p>
+      <h3>5. Do you deliver across India?</h3>
+      <p>Yes! We are based in <strong>Coimbatore, Tamil Nadu</strong> and deliver pan India — no matter which city or town your loved one is in. All orders are placed and managed <strong>100% online</strong>.</p>`
+  }
+};
+
+function openPolicy(type) {
+  const p = POLICIES[type];
+  if (!p) return;
+  document.getElementById('policyTitle').textContent = p.title;
+  document.getElementById('policyBody').innerHTML = p.body;
+  document.getElementById('policyOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closePolicy() {
+  document.getElementById('policyOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// Close on Escape key
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closePolicy(); });
 
 function scrollToAbout() { if (currentPage !== 'home') showPage('home'); setTimeout(() => document.getElementById('about-section').scrollIntoView({behavior:'smooth'}), 100); }
 function scrollToContact() { if (currentPage !== 'home') showPage('home'); setTimeout(() => document.getElementById('contact-section').scrollIntoView({behavior:'smooth'}), 100); }
