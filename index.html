@@ -954,7 +954,7 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
       <input class="co-input" id="co-name" placeholder="e.g. Priya Sharma" autocomplete="name">
 
       <label class="co-field-label">Phone Number *</label>
-      <input class="co-input" id="co-phone" placeholder="e.g. 9876543210" type="tel" autocomplete="tel" maxlength="10" inputmode="numeric">
+      <input class="co-input" id="co-phone" placeholder="e.g. 9876543210" type="tel" autocomplete="tel" maxlength="10" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
 
       <div class="co-section-title">Delivery Address</div>
 
@@ -968,7 +968,7 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
         </div>
         <div>
           <label class="co-field-label" style="margin-top:0">Pincode *</label>
-          <input class="co-input" id="co-pincode" placeholder="e.g. 641001" type="tel" autocomplete="postal-code" maxlength="6" inputmode="numeric">
+          <input class="co-input" id="co-pincode" placeholder="e.g. 641001" type="tel" autocomplete="postal-code" maxlength="6" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,6)">
         </div>
       </div>
     </div>
@@ -1294,7 +1294,7 @@ function bsCardHTML(p) {
     : (p.emoji || '🎁');
   const imgClass = imgSrc ? 'bs-img' : 'bs-img bs-i1';
   const imgStyle = imgSrc ? 'background:#dceae9;overflow:hidden' : '';
-  return `<div class="bs-card" onclick="openPopup('${p.id}')">   <span class="bs-badge${p.is_bestseller ? '' : ' new'}">${p.is_bestseller ? 'Bestseller' : 'New'}</span>   <div class="${imgClass}" style="${imgStyle}">${img}</div>   <div class="bs-body">    <div class="bs-name">${p.name}</div>    <div class="bs-desc">${p.description||''}</div>    <div class="bs-footer"><span class="bs-price">₹${Number(p.price).toLocaleString('en-IN')}</span><button class="bs-btn">Shop Now</button></div>   </div>  </div>`;
+  return `<div class="bs-card" onclick="openPopup('${p.id}')">   <span class="bs-badge${p.is_bestseller ? '' : ' new'}">${p.is_bestseller ? 'Bestseller' : 'New'}</span>   <div class="${imgClass}" style="${imgStyle}">${img}</div>   <div class="bs-body">    <div class="bs-name">${p.name}</div>    <div class="bs-footer"><span class="bs-price">₹${Number(p.price).toLocaleString('en-IN')}</span><button class="bs-btn">Shop Now</button></div>   </div>  </div>`;
 }
 
 /* ═══════════════════════════════════════
@@ -1380,7 +1380,6 @@ function renderShopGrid(filterCat, minP, maxP, sortBy) {
   // Remove old cards/headings
   grid.querySelectorAll('.product-card,.cat-section-heading').forEach(el => el.remove());
 
-  // When sorted (not default), show flat list — no category headings (headings would break sort order)
   if (sortBy && sortBy !== 'default') {
     prods.forEach(p => {
       const card = document.createElement('div');
@@ -1388,6 +1387,8 @@ function renderShopGrid(filterCat, minP, maxP, sortBy) {
       card.dataset.cat = p.category;
       card.dataset.price = p.price;
       card.dataset.productId = p.id;
+      card.style.cursor = 'pointer';
+      card.onclick = function(e) { if (!e.target.closest('.gallery-prev,.gallery-next,.gallery-dot,.btn-buynow')) openPopup(p.id); };
       card.innerHTML = productCardHTML(p);
       grid.insertBefore(card, emptyEl);
     });
@@ -1419,6 +1420,8 @@ function renderShopGrid(filterCat, minP, maxP, sortBy) {
       card.dataset.cat = cat;
       card.dataset.price = p.price;
       card.dataset.productId = p.id;
+      card.style.cursor = 'pointer';
+      card.onclick = function(e) { if (!e.target.closest('.gallery-prev,.gallery-next,.gallery-dot,.btn-buynow')) openPopup(p.id); };
       card.innerHTML = productCardHTML(p);
       grid.insertBefore(card, emptyEl);
     });
