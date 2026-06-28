@@ -107,11 +107,9 @@ section{padding:5rem 2rem}
 .bs-badge{position:absolute;top:10px;left:10px;background:var(--teal);color:var(--cream);font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:0.05em;z-index:1}
 .bs-badge.new{background:var(--gold);color:var(--charcoal)}
 .bs-img{height:160px;display:flex;align-items:center;justify-content:center;font-size:48px;position:relative;overflow:hidden}
-.bs-img img{opacity:0;transition:opacity .35s ease;position:relative;z-index:1}
-.bs-img img.loaded{opacity:1}
-.bs-img.has-photo::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,#e8f2f1 25%,#d4e8e5 50%,#e8f2f1 75%);background-size:800px 100%;animation:shimmer 1.4s infinite linear;z-index:0}
-.bs-img.photo-done::before{display:none}
-@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+.bs-img img{opacity:0;width:100%;height:100%;object-fit:cover;transition:opacity .35s ease}
+@keyframes bsShimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
+.bs-img:not(.bs-i1){background:linear-gradient(90deg,#dceae9 25%,#c9dedd 50%,#dceae9 75%);background-size:1200px 100%;animation:bsShimmer 1.5s infinite linear}
 .bs-i1{background:#e8f2f1}.bs-i2{background:#fdf0ee}.bs-i3{background:#fdf8f0}.bs-i4{background:#f0edf5}
 .bs-body{padding:14px}
 .bs-name{font-size:14px;font-weight:500;color:var(--charcoal);margin-bottom:3px}
@@ -911,64 +909,60 @@ let spCur = 0, spTimer = null;
 let WHATSAPP_NUMBER = '919876543210'; // fallback, overridden by site settings
 
 /* ═══════════════════════════════════════
-   INIT — load everything from Supabase
+   INIT — All fetches run in PARALLEL
+   Images start loading while loader plays
 ═══════════════════════════════════════ */
 async function initSite() {
   const bar = document.getElementById('loaderBar');
   const setBar = (pct) => { if (bar) bar.style.width = pct + '%'; };
 
-  setBar(10);
-  try {
-    ALL_PRODUCTS = await sbGet('products', 'is_active=eq.true&order=created_at.desc');
-    // Fetch option groups and values, merge into products
-    try {
-      const optGroups = await sbGet('product_option_groups', 'order=display_order.asc');
-      const optValues = await sbGet('product_option_values', 'order=display_order.asc');
-      ALL_PRODUCTS = ALL_PRODUCTS.map(function(p) {
-        var groups = (optGroups||[]).filter(function(g){return g.product_id===p.id;});
-        var customisation_options = groups.map(function(g) {
-          var vals = (optValues||[]).filter(function(v){return v.group_id===g.id;});
-          var options = vals.map(function(v){return v.value;});
-          var variantPrices = {};
-          vals.forEach(function(v){if(v.price) variantPrices[v.value]=v.price;});
-          return {label:g.label, options:options, priceType:g.price_type, variantPrices:variantPrices};
-        });
-        return Object.assign({}, p, {customisation_options: customisation_options});
-      });
-    } catch(e) { console.log('Options load:', e.message); }
-    setBar(40);
-  } catch(e) { console.error('Products:', e.message); ALL_PRODUCTS = []; }
+  setBar(15);
+  const barAnim = setTimeout(() => setBar(60), 300);
 
-  try {
-    ALL_CATEGORIES = await sbGet('categories', 'is_active=eq.true&order=display_order.asc');
-    setBar(65);
-  } catch(e) { console.error('Categories:', e.message); ALL_CATEGORIES = []; }
+  // Fire all 6 Supabase requests at the same time
+  const [rawProducts, optGroups, optValues, cats, testimonials, settings] = await Promise.all([
+    sbGet('products',              'is_active=eq.true&order=created_at.desc').catch(e => { console.error('Products:', e.message); return []; }),
+    sbGet('product_option_groups', 'order=display_order.asc').catch(() => []),
+    sbGet('product_option_values', 'order=display_order.asc').catch(() => []),
+    sbGet('categories',            'is_active=eq.true&order=display_order.asc').catch(e => { console.error('Categories:', e.message); return []; }),
+    sbGet('testimonials',          'is_active=eq.true&order=created_at.asc').catch(e => { console.error('Testimonials:', e.message); return []; }),
+    sbGet('site_settings',         'select=key,value').catch(() => [])
+  ]);
 
-  try {
-    ALL_TESTIMONIALS = await sbGet('testimonials', 'is_active=eq.true&order=created_at.asc');
-    setBar(85);
-  } catch(e) { console.error('Testimonials:', e.message); ALL_TESTIMONIALS = []; }
+  ALL_PRODUCTS = (rawProducts || []).map(function(p) {
+    var groups = (optGroups||[]).filter(function(g){ return g.product_id === p.id; });
+    var customisation_options = groups.map(function(g) {
+      var vals = (optValues||[]).filter(function(v){ return v.group_id === g.id; });
+      var variantPrices = {};
+      vals.forEach(function(v){ if (v.price) variantPrices[v.value] = v.price; });
+      return { label: g.label, options: vals.map(function(v){ return v.value; }), priceType: g.price_type, variantPrices: variantPrices };
+    });
+    return Object.assign({}, p, { customisation_options: customisation_options });
+  });
 
-  // Load site settings for contact details
-  try {
-    const settings = await sbGet('site_settings', 'select=key,value');
-    if (settings && settings.length) {
-      const s = {};
-      settings.forEach(r => { s[r.key] = r.value; });
-      const setEl = (id, val) => { const el = document.getElementById(id); if (el && val) { el.textContent = val; } };
-      const setPhone = (id, val) => { const el = document.getElementById(id); if (el && val) { el.textContent = val; el.href = 'tel:+' + val.replace(/\D/g,''); } };
-      const setEmail = (id, val) => { const el = document.getElementById(id); if (el && val) { el.textContent = val; el.href = 'mailto:' + val; } };
-      setPhone('footerPhone', s.whatsapp); setPhone('footerPhone2', s.whatsapp);
-      setEmail('footerEmail', s.email); setEmail('footerEmail2', s.email);
-      setEl('footerLocation', s.location); setEl('footerLocation2', s.location);
-      // Store number for wa.me links — strip non-digits, add country code if missing
-      if (s.whatsapp) {
-        let num = s.whatsapp.replace(/\D/g, '');
-        if (num.length === 10) num = '91' + num;
-        WHATSAPP_NUMBER = num;
-      }
+  ALL_CATEGORIES   = cats        || [];
+  ALL_TESTIMONIALS = testimonials || [];
+
+  if (settings && settings.length) {
+    const s = {};
+    settings.forEach(r => { s[r.key] = r.value; });
+    const setEl    = (id, val) => { const el = document.getElementById(id); if (el && val) el.textContent = val; };
+    const setPhone = (id, val) => { const el = document.getElementById(id); if (el && val) { el.textContent = val; el.href = 'tel:+' + val.replace(/\D/g,''); } };
+    const setEmail = (id, val) => { const el = document.getElementById(id); if (el && val) { el.textContent = val; el.href = 'mailto:' + val; } };
+    setPhone('footerPhone', s.whatsapp); setPhone('footerPhone2', s.whatsapp);
+    setEmail('footerEmail', s.email);   setEmail('footerEmail2', s.email);
+    setEl('footerLocation', s.location); setEl('footerLocation2', s.location);
+    if (s.whatsapp) {
+      let num = s.whatsapp.replace(/\D/g, '');
+      if (num.length === 10) num = '91' + num;
+      WHATSAPP_NUMBER = num;
     }
-  } catch(e) { console.log('Settings not loaded:', e.message); }
+  }
+
+  // Pre-warm bestseller images — browser starts downloading while loader is still visible
+  ALL_PRODUCTS.filter(p => p.is_bestseller).slice(0, 8)
+    .map(p => p.photos && p.photos[0]).filter(Boolean)
+    .forEach(src => { const i = new Image(); i.src = src; });
 
   renderBestsellers();
   renderCategoriesGrid();
@@ -977,13 +971,13 @@ async function initSite() {
   buildMarquee();
   buildSpotlight();
 
+  clearTimeout(barAnim);
   setBar(100);
   setTimeout(() => {
     const loader = document.getElementById('siteLoader');
     if (loader) loader.classList.add('hidden');
-  }, 400);
+  }, 350);
 }
-
 /* ═══════════════════════════════════════
    RENDER BESTSELLERS
 ═══════════════════════════════════════ */
@@ -1024,12 +1018,11 @@ function getPriceDisplay(p) {
 function bsCardHTML(p) {
   const imgSrc = p.photos && p.photos[0] ? p.photos[0] : null;
   const img = imgSrc
-    ? `<img src="${imgSrc}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover" onload="this.classList.add('loaded');this.closest('.bs-img').classList.add('photo-done')" alt="${p.name}">`
+    ? `<img src="${imgSrc}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover" onload="this.style.opacity=1;this.closest('.bs-img').style.background='none'" alt="${p.name}">`
     : (p.emoji || '🎁');
-  const imgBg = imgSrc ? '' : 'bs-i1';
-  const imgStyle = imgSrc ? 'background:#e8f2f1' : '';
-  const imgClass = imgSrc ? 'bs-img has-photo' : 'bs-img bs-i1';
-  return `<div class="bs-card" onclick="openPopup('${p.id}')">   <span class="bs-badge${p.is_bestseller ? '' : ' new'}">${p.is_bestseller ? 'Bestseller' : 'New'}</span>   <div class="${imgClass}" style="${imgStyle}">${img}</div>   <div class="bs-body">    <div class="bs-name">${p.name}</div>    <div class="bs-desc">${p.description||''}</div>    <div class="bs-footer"><span class="bs-price">₹${Number(p.price).toLocaleString('en-IN')}</span><button class="bs-btn" onclick="event.stopPropagation();openPopup('${p.id}')">Shop Now</button></div>   </div>  </div>`;
+  const imgClass = imgSrc ? 'bs-img' : 'bs-img bs-i1';
+  const imgStyle = imgSrc ? 'background:#dceae9;overflow:hidden' : '';
+  return `<div class="bs-card" onclick="openPopup('${p.id}')">   <span class="bs-badge${p.is_bestseller ? '' : ' new'}">${p.is_bestseller ? 'Bestseller' : 'New'}</span>   <div class="${imgClass}" style="${imgStyle}">${img}</div>   <div class="bs-body">    <div class="bs-name">${p.name}</div>    <div class="bs-desc">${p.description||''}</div>    <div class="bs-footer"><span class="bs-price">₹${Number(p.price).toLocaleString('en-IN')}</span><button class="bs-btn">Shop Now</button></div>   </div>  </div>`;
 }
 
 /* ═══════════════════════════════════════
