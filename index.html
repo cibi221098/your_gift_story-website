@@ -121,12 +121,50 @@ section{padding:5rem 2rem}
 
 /* ── CATEGORIES ── */
 .categories-section{background:var(--cream)}
-.categories-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
-.cat-card{background:var(--white);border-radius:18px;padding:1.5rem 1rem;text-align:center;cursor:pointer;transition:all .25s;border:1px solid var(--border)}
-.cat-card:hover{border-color:var(--gold);background:var(--gold-light);transform:translateY(-3px)}
-.cat-icon{font-size:34px;margin-bottom:0.75rem;display:block}
-.cat-name{font-size:13px;font-weight:500;color:var(--charcoal);margin-bottom:3px}
-.cat-count{font-size:11px;color:var(--gray)}
+.categories-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px}
+
+/* card = positioned container; everything stacks inside it */
+.cat-card{position:relative;border-radius:20px;overflow:hidden;cursor:pointer;
+  transition:transform .28s ease,box-shadow .28s ease;
+  border:1px solid var(--border);aspect-ratio:3/4;background:var(--teal-light);
+  min-height:200px}
+.cat-card:hover{transform:translateY(-5px);box-shadow:0 18px 40px rgba(31,78,74,0.14)}
+
+/* shimmer wrap sits at layer 1, fills the card */
+.cat-img-wrap{position:absolute;inset:0;z-index:1}
+@keyframes catShimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
+.cat-img-wrap::before{content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,#dceae9 25%,#c9dedd 50%,#dceae9 75%);
+  background-size:1200px 100%;animation:catShimmer 1.5s infinite linear;z-index:0}
+.cat-img-wrap.loaded::before{display:none}
+
+/* actual image: absolute inside wrap, starts invisible, fades in */
+.cat-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  opacity:0;transition:opacity .35s ease, transform .4s ease;z-index:1;display:block}
+.cat-img.loaded{opacity:1}
+.cat-card:hover .cat-img{transform:scale(1.06)}
+
+/* strong gradient — always readable over any photo colour — layer 2 */
+.cat-overlay{position:absolute;inset:0;z-index:2;
+  background:linear-gradient(
+    to top,
+    rgba(5,20,18,0.96) 0%,
+    rgba(5,20,18,0.72) 30%,
+    rgba(5,20,18,0.18) 60%,
+    transparent 100%
+  )}
+
+
+/* name + count text at bottom — layer 3 */
+.cat-card-body{position:absolute;bottom:0;left:0;right:0;z-index:3;padding:16px 14px 18px;text-align:left}
+.cat-name{font-size:15px;font-weight:700;color:#fff;margin-bottom:4px;letter-spacing:0.01em;
+  text-shadow:0 1px 6px rgba(0,0,0,0.5)}
+.cat-count{font-size:11px;color:rgba(255,255,255,0.78);letter-spacing:0.03em;
+  text-shadow:0 1px 4px rgba(0,0,0,0.5)}
+
+/* no-image fallback */
+.cat-card.no-img{background:var(--teal-light)}
+.cat-card.no-img .cat-overlay{background:linear-gradient(to top,rgba(5,20,18,0.88) 0%,rgba(5,20,18,0.1) 65%,transparent 100%)}
 
 /* ── TESTIMONIALS — Rotating Spotlight ── */
 .testimonials-section{background:var(--teal);padding:5rem 2rem}
@@ -424,8 +462,8 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
 
   /* CATEGORIES */
   .categories-grid{grid-template-columns:repeat(2,1fr);gap:10px}
-  .cat-icon{font-size:28px;margin-bottom:.5rem}
-  .cat-name{font-size:12px}
+  .cat-card{aspect-ratio:4/5}
+  .cat-name{font-size:13px}
 
   /* SECTION HEADERS */
   .section-title{font-size:clamp(28px,7vw,38px)}
@@ -470,7 +508,8 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
 @media (max-width: 480px) {
   /* Very small screens */
   .bestsellers-grid{grid-template-columns:1fr}
-  .categories-grid{grid-template-columns:repeat(3,1fr)}
+  .categories-grid{grid-template-columns:repeat(2,1fr)}
+  .cat-card{aspect-ratio:1/1}
   .shop-grid{grid-template-columns:1fr}
   .product-gallery,.product-img{height:200px}
   .popup-img-wrap{height:200px}
@@ -1033,7 +1072,30 @@ function renderCategoriesGrid() {
   if (!ALL_CATEGORIES.length) { grid.innerHTML = ''; return; }
   grid.innerHTML = ALL_CATEGORIES.map(c => {
     const count = ALL_PRODUCTS.filter(p => p.category === c.name).length;
-    return `<div class="cat-card" onclick="showPage('shop','${c.name}')">    <span class="cat-icon">${c.icon||'🎁'}</span>    <div class="cat-name">${c.name}</div>    <div class="cat-count">${count} item${count!==1?'s':''}</div>   </div>`;
+    // Pick first available product photo in this category as cover image
+    const coverProduct = ALL_PRODUCTS.find(p => p.category === c.name && p.photos && p.photos[0]);
+    const coverImg = coverProduct ? coverProduct.photos[0] : null;
+    if (coverImg) {
+      return `<div class="cat-card" onclick="showPage('shop','${c.name}')">
+        <div class="cat-img-wrap" id="catwrap-${c.name.replace(/\s+/g,'')}">
+          <img class="cat-img" src="${coverImg}" loading="lazy" decoding="async" alt="${c.name}"
+            onload="this.classList.add('loaded');this.closest('.cat-img-wrap').classList.add('loaded')">
+        </div>
+        <div class="cat-overlay"></div>
+        <div class="cat-card-body">
+          <div class="cat-name">${c.name}</div>
+          <div class="cat-count">${count} item${count!==1?'s':''}</div>
+        </div>
+      </div>`;
+    } else {
+      return `<div class="cat-card no-img" onclick="showPage('shop','${c.name}')">
+        <div class="cat-overlay"></div>
+        <div class="cat-card-body">
+          <div class="cat-name">${c.name}</div>
+          <div class="cat-count">${count} item${count!==1?'s':''}</div>
+        </div>
+      </div>`;
+    }
   }).join('');
 }
 
