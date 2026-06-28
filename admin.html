@@ -1312,16 +1312,28 @@ async function saveProduct() {
     // Upload new photo files to Supabase Storage
     if (_photoFiles.length) {
       document.getElementById('uploadProgress').style.display = 'block';
-      // SEO slug helper: "handmade-resin-keychain-resin-art-your-gift-story-1.jpg"
-      const toSlug = s => s.toLowerCase().trim()
-        .replace(/[^\w\s-]/g,'').replace(/[\s_]+/g,'-').replace(/-+/g,'-').slice(0,50);
-      const nameSlug = toSlug(name);
-      const catSlug  = toSlug(cat);
+      // SEO slug builder
+      // Formula: [prefix]-[product-name]-gift-india[-number].jpg
+      // prefix = personalised/custom/handmade based on name keywords
+      const toSlug = function(s) {
+        return s.toLowerCase().trim()
+          .replace(/[^\w\s-]/g,'').replace(/[\s_]+/g,'-').replace(/-+/g,'-').slice(0,55);
+      };
+      const buildSeoSlug = function(productName, photoIdx, photoTotal) {
+        var n = productName.toLowerCase();
+        var prefix = n.includes('custom') || n.includes('personalised') || n.includes('personalized')
+          ? 'custom'
+          : n.includes('handmade') || n.includes('resin') || n.includes('embroidery') || n.includes('crochet') || n.includes('quilling') || n.includes('string')
+          ? 'handmade'
+          : 'personalised';
+        var nameClean = toSlug(productName);
+        var suffix    = photoTotal > 1 ? '-' + (photoIdx + 1) : '';
+        return prefix + '-' + nameClean + '-gift-india' + suffix + '.jpg';
+      };
 
       for (let i = 0; i < _photoFiles.length; i++) {
         const { file, insertIdx } = _photoFiles[i];
-        const suffix  = _photoFiles.length > 1 ? '-' + (i + 1) : '';
-        const seoName = nameSlug + '-' + catSlug + '-your-gift-story' + suffix + '.jpg';
+        const seoName = buildSeoSlug(name, i, _photoFiles.length);
         const path    = 'products/' + seoName;
         const url = await sb.uploadImage(file, path);
         _photoUrls[insertIdx] = url; // replace the base64 preview with the real URL
@@ -2055,21 +2067,29 @@ async function optRun() {
       const result = await compressImage(origFile, 1200, 0.82);
       const alreadySmall = result.compressedSize >= result.originalSize * 0.95;
 
-      // 3. Build SEO filename regardless — we always rename
+      // 3. Build SEO filename — Formula: [prefix]-[product-name]-gift-india[-number].jpg
       const toSlug = function(s) {
         return s.toLowerCase().trim()
-          .replace(/[^\w\s-]/g,'').replace(/[\s_]+/g,'-').replace(/-+/g,'-').slice(0,45);
+          .replace(/[^\w\s-]/g,'').replace(/[\s_]+/g,'-').replace(/-+/g,'-').slice(0,55);
       };
-      const nameSlug  = toSlug(img.productName);
-      const catSlug   = toSlug(img.productCat || 'gift');
-      const suffix    = img.photoTotal > 1 ? '-' + (img.urlIdx + 1) : '';
-      const seoFile   = nameSlug + '-' + catSlug + '-your-gift-story' + suffix + '.jpg';
+      const buildSeoSlug = function(productName, photoIdx, photoTotal) {
+        var n = productName.toLowerCase();
+        var prefix = n.includes('custom') || n.includes('personalised') || n.includes('personalized')
+          ? 'custom'
+          : n.includes('handmade') || n.includes('resin') || n.includes('embroidery') || n.includes('crochet') || n.includes('quilling') || n.includes('string')
+          ? 'handmade'
+          : 'personalised';
+        var nameClean = toSlug(productName);
+        var suffix    = photoTotal > 1 ? '-' + (photoIdx + 1) : '';
+        return prefix + '-' + nameClean + '-gift-india' + suffix + '.jpg';
+      };
+      const seoFile   = buildSeoSlug(img.productName, img.urlIdx, img.photoTotal);
       const seoPath   = 'products/' + seoFile;
       img.newFilename = seoFile;
 
-      // Check if already SEO-named (contains brand slug) — skip compress+rename if so
-      const oldFile = img.url.split('/').pop();
-      const alreadySEO = oldFile.includes('your-gift-story');
+      // Check if already SEO-named — skip if already has gift-india pattern
+      const oldFile    = img.url.split('/').pop();
+      const alreadySEO = oldFile.includes('-gift-india');
 
       if (alreadySmall && alreadySEO) {
         img.status         = 'skipped';
