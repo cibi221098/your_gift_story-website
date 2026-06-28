@@ -101,12 +101,17 @@ section{padding:5rem 2rem}
 
 /* ── BESTSELLERS ── */
 .bestsellers-section{background:var(--white)}
-.bestsellers-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.bestsellers-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;row-gap:24px}
 .bs-card{background:var(--cream);border-radius:20px;overflow:hidden;border:1px solid var(--border);transition:all .3s;position:relative;cursor:pointer}
 .bs-card:hover{transform:translateY(-5px);box-shadow:0 16px 36px rgba(31,78,74,0.1)}
 .bs-badge{position:absolute;top:10px;left:10px;background:var(--teal);color:var(--cream);font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:0.05em;z-index:1}
 .bs-badge.new{background:var(--gold);color:var(--charcoal)}
-.bs-img{height:160px;display:flex;align-items:center;justify-content:center;font-size:48px}
+.bs-img{height:160px;display:flex;align-items:center;justify-content:center;font-size:48px;position:relative;overflow:hidden}
+.bs-img img{opacity:0;transition:opacity .35s ease;position:relative;z-index:1}
+.bs-img img.loaded{opacity:1}
+.bs-img.has-photo::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,#e8f2f1 25%,#d4e8e5 50%,#e8f2f1 75%);background-size:800px 100%;animation:shimmer 1.4s infinite linear;z-index:0}
+.bs-img.photo-done::before{display:none}
+@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
 .bs-i1{background:#e8f2f1}.bs-i2{background:#fdf0ee}.bs-i3{background:#fdf8f0}.bs-i4{background:#f0edf5}
 .bs-body{padding:14px}
 .bs-name{font-size:14px;font-weight:500;color:var(--charcoal);margin-bottom:3px}
@@ -984,10 +989,10 @@ async function initSite() {
 ═══════════════════════════════════════ */
 function renderBestsellers() {
   const grid = document.getElementById('bestsellersGrid');
-  const best = ALL_PRODUCTS.filter(p => p.is_bestseller).slice(0, 4);
+  const best = ALL_PRODUCTS.filter(p => p.is_bestseller).slice(0, 8);
   if (!best.length) {
-    // fallback: show first 4 active products
-    const fallback = ALL_PRODUCTS.slice(0, 4);
+    // fallback: show first 8 active products
+    const fallback = ALL_PRODUCTS.slice(0, 8);
     if (!fallback.length) { grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--gray)">Products coming soon!</div>'; return; }
     grid.innerHTML = fallback.map(p => bsCardHTML(p)).join('');
     return;
@@ -1017,11 +1022,14 @@ function getPriceDisplay(p) {
 }
 
 function bsCardHTML(p) {
-  const img = p.photos && p.photos[0]
-    ? `<img src="${p.photos[0]}" style="width:100%;height:100%;object-fit:cover" alt="${p.name}">`
+  const imgSrc = p.photos && p.photos[0] ? p.photos[0] : null;
+  const img = imgSrc
+    ? `<img src="${imgSrc}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover" onload="this.classList.add('loaded');this.closest('.bs-img').classList.add('photo-done')" alt="${p.name}">`
     : (p.emoji || '🎁');
-  const imgBg = p.photos && p.photos[0] ? '' : 'bs-i1';
-  return `<div class="bs-card" onclick="showPage('shop')">   <span class="bs-badge${p.is_bestseller ? '' : ' new'}">${p.is_bestseller ? 'Bestseller' : 'New'}</span>   <div class="bs-img ${imgBg}" style="${p.photos&&p.photos[0]?'padding:0;overflow:hidden':''}">${img}</div>   <div class="bs-body">    <div class="bs-name">${p.name}</div>    <div class="bs-desc">${p.description||''}</div>    <div class="bs-footer"><span class="bs-price">₹${Number(p.price).toLocaleString('en-IN')}</span><button class="bs-btn">Shop Now</button></div>   </div>  </div>`;
+  const imgBg = imgSrc ? '' : 'bs-i1';
+  const imgStyle = imgSrc ? 'background:#e8f2f1' : '';
+  const imgClass = imgSrc ? 'bs-img has-photo' : 'bs-img bs-i1';
+  return `<div class="bs-card" onclick="openPopup('${p.id}')">   <span class="bs-badge${p.is_bestseller ? '' : ' new'}">${p.is_bestseller ? 'Bestseller' : 'New'}</span>   <div class="${imgClass}" style="${imgStyle}">${img}</div>   <div class="bs-body">    <div class="bs-name">${p.name}</div>    <div class="bs-desc">${p.description||''}</div>    <div class="bs-footer"><span class="bs-price">₹${Number(p.price).toLocaleString('en-IN')}</span><button class="bs-btn" onclick="event.stopPropagation();openPopup('${p.id}')">Shop Now</button></div>   </div>  </div>`;
 }
 
 /* ═══════════════════════════════════════
