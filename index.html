@@ -1153,6 +1153,15 @@ async function initSite() {
     .map(p => p.photos && p.photos[0]).filter(Boolean)
     .forEach(src => { const i = new Image(); i.src = imgUrl(src, 400, 70); });
 
+  // Pre-warm ALL product first images at 600px (popup size) in background
+  // Staggered with small delay so it doesn't compete with visible content
+  setTimeout(function() {
+    ALL_PRODUCTS.map(p => p.photos && p.photos[0]).filter(Boolean)
+      .forEach(function(src, idx) {
+        setTimeout(function() { var i = new Image(); i.src = imgUrl(src, 600, 75); }, idx * 80);
+      });
+  }, 2000);
+
   renderBestsellers();
   renderCategoriesGrid();
   renderFooterCategories();
@@ -1654,12 +1663,24 @@ function openPopup(productId) {
   closeBtn.onclick = closePopup;
 
   if (photos.length) {
+    // Use same 600px size as shop grid — likely already in browser cache
+    // Show shimmer instantly, fade image in when ready
+    imgWrap.style.background = 'linear-gradient(90deg,#dceae9 25%,#c9dedd 50%,#dceae9 75%)';
+    imgWrap.style.backgroundSize = '800px 100%';
+    imgWrap.style.animation = 'bsShimmer 1.5s infinite linear';
     var img = document.createElement('img');
-    img.src = imgUrl(photos[0], 800, 80);
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:center;opacity:0;transition:opacity .3s ease';
     img.alt = p.name;
-    img.style.cursor = 'zoom-in';
+    img.cursor = 'zoom-in';
     img.title = 'Click to view full image';
     img.onclick = function(e) { e.stopPropagation(); openLightbox(photos, 0); };
+    img.onload = function() {
+      img.style.opacity = '1';
+      imgWrap.style.background = 'none';
+      imgWrap.style.animation = 'none';
+    };
+    // Use 600px — same as shop card, already cached by browser
+    img.src = imgUrl(photos[0], 600, 75);
     imgWrap.appendChild(img);
   } else {
     var ph = document.createElement('div');
