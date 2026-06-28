@@ -1651,36 +1651,37 @@ function openPopup(productId) {
   if (!p) return;
   popupProduct = p;
 
-  // Image area
+  // Image area — clear immediately so old image never shows through
   var imgWrap = document.getElementById('popupImgWrap');
   var photos = (p.photos || []).filter(Boolean);
-  var existingClose = imgWrap.querySelector('.popup-close');
+
+  // Blank out any existing image src instantly (stops old image showing)
+  var oldImg = imgWrap.querySelector('img');
+  if (oldImg) { oldImg.src = ''; oldImg.style.opacity = '0'; }
+
+  // Apply shimmer BEFORE clearing innerHTML so there's no flash
+  imgWrap.style.cssText = 'background:linear-gradient(90deg,#dceae9 25%,#c9dedd 50%,#dceae9 75%);background-size:800px 100%;animation:bsShimmer 1.5s infinite linear';
   imgWrap.innerHTML = '';
-  if (existingClose) imgWrap.appendChild(existingClose);
+
   var closeBtn = document.createElement('button');
   closeBtn.className = 'popup-close';
   closeBtn.innerHTML = '✕';
   closeBtn.onclick = closePopup;
 
   if (photos.length) {
-    // Use same 600px size as shop grid — likely already in browser cache
-    // Show shimmer instantly, fade image in when ready
-    imgWrap.style.background = 'linear-gradient(90deg,#dceae9 25%,#c9dedd 50%,#dceae9 75%)';
-    imgWrap.style.backgroundSize = '800px 100%';
-    imgWrap.style.animation = 'bsShimmer 1.5s infinite linear';
     var img = document.createElement('img');
-    img.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:center;opacity:0;transition:opacity .3s ease';
+    // Start opacity:0, no transition yet — add transition only after src is set
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:center;opacity:0';
     img.alt = p.name;
-    img.cursor = 'zoom-in';
     img.title = 'Click to view full image';
     img.onclick = function(e) { e.stopPropagation(); openLightbox(photos, 0); };
-    img.onload = function() {
-      img.style.opacity = '1';
-      imgWrap.style.background = 'none';
-      imgWrap.style.animation = 'none';
-    };
-    // Use 600px — same as shop card, already cached by browser
+    // Set src BEFORE appending — browser starts fetching from cache immediately
     img.src = imgUrl(photos[0], 600, 75);
+    img.onload = function() {
+      img.style.transition = 'opacity .25s ease';
+      img.style.opacity = '1';
+      imgWrap.style.cssText = '';
+    };
     imgWrap.appendChild(img);
   } else {
     var ph = document.createElement('div');
@@ -1690,7 +1691,10 @@ function openPopup(productId) {
   }
   imgWrap.appendChild(closeBtn);
 
-  // Body
+  // Clear body immediately — old name/price must not flash even for one frame
+  document.getElementById('popupBody').innerHTML = '';
+
+  // Body content
   var opts = p.customisation_options || [];
   var tc = p.text_customisation;
   var price = getPriceDisplay(p);
