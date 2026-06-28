@@ -154,10 +154,6 @@ html,body{height:100%;font-family:var(--font-body);background:#f4f1ec;color:var(
 .photo-preview-wrap{position:relative;width:72px;height:72px}
 .photo-preview-wrap img{width:72px;height:72px;border-radius:10px;object-fit:cover;border:1px solid var(--border)}
 .photo-preview-del{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--red);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;line-height:1}
-.photo-compress-badge{position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);background:#1F4E4A;color:#fff;font-size:9px;font-weight:600;padding:2px 6px;border-radius:8px;white-space:nowrap;letter-spacing:0.02em;pointer-events:none}
-.photo-compress-badge.compressing{background:#C9A668}
-.photo-preview-wrap.compressing img{opacity:0.5}
-.photo-preview-wrap.compressing::after{content:'⏳';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:20px}
 .chips-editor{display:flex;flex-wrap:wrap;gap:6px;padding:.5rem;border:1px solid var(--border);border-radius:10px;background:var(--white);min-height:44px;cursor:text}
 .chip-tag{display:inline-flex;align-items:center;gap:5px;background:var(--teal-l);border:1px solid rgba(31,78,74,.2);border-radius:20px;padding:4px 10px;font-size:12px;color:var(--teal)}
 .chip-tag-del{background:none;border:none;cursor:pointer;color:var(--teal);font-size:14px;line-height:1;padding:0}
@@ -299,7 +295,6 @@ html,body{height:100%;font-family:var(--font-body);background:#f4f1ec;color:var(
       <div class="nav-item" data-panel="testimonials" onclick="showPanel('testimonials',this)"><span class="nav-icon">💬</span> Testimonials</div>
       <div class="nav-section-label">Settings</div>
       <div class="nav-item" data-panel="settings" onclick="showPanel('settings',this)"><span class="nav-icon">⚙️</span> Site Settings</div>
-      <div class="nav-item" data-panel="optimise" onclick="showPanel('optimise',this)"><span class="nav-icon">🗜️</span> Optimise Images</div>
     </nav>
     <div class="sidebar-bottom">
       <div class="supabase-status"><div class="status-dot"></div><span>Supabase connected</span></div>
@@ -444,55 +439,6 @@ html,body{height:100%;font-family:var(--font-body);background:#f4f1ec;color:var(
       </div>
     </div>
 
-    <!-- ═══ IMAGE OPTIMISER PANEL ═══ -->
-    <div class="panel" id="panel-optimise">
-      <div style="max-width:860px">
-        <div style="background:var(--white);border-radius:20px;border:1px solid var(--border);padding:2rem;margin-bottom:1.5rem">
-          <h2 style="font-family:var(--font-display);font-size:28px;font-weight:400;color:var(--teal);margin-bottom:.4rem">Bulk Image Optimiser</h2>
-          <p style="font-size:13px;color:var(--gray);margin-bottom:1.5rem;line-height:1.6">Fetches every product photo from Supabase, compresses it in your browser (max 1200px · JPEG 82%), then re-uploads it — replacing the original. Typically reduces each image by <strong>85–95%</strong>.</p>
-
-          <!-- Stats bar -->
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem" id="optStats">
-            <div style="background:var(--cream);border-radius:12px;padding:1rem;text-align:center">
-              <div style="font-size:22px;font-weight:700;color:var(--teal)" id="optTotal">—</div>
-              <div style="font-size:11px;color:var(--gray);margin-top:2px">Total Images</div>
-            </div>
-            <div style="background:var(--cream);border-radius:12px;padding:1rem;text-align:center">
-              <div style="font-size:22px;font-weight:700;color:#C9A668" id="optDone">0</div>
-              <div style="font-size:11px;color:var(--gray);margin-top:2px">Optimised</div>
-            </div>
-            <div style="background:var(--cream);border-radius:12px;padding:1rem;text-align:center">
-              <div style="font-size:22px;font-weight:700;color:#c0392b" id="optFailed">0</div>
-              <div style="font-size:11px;color:var(--gray);margin-top:2px">Failed</div>
-            </div>
-            <div style="background:var(--cream);border-radius:12px;padding:1rem;text-align:center">
-              <div style="font-size:22px;font-weight:700;color:var(--teal)" id="optSaved">—</div>
-              <div style="font-size:11px;color:var(--gray);margin-top:2px">Space Saved</div>
-            </div>
-          </div>
-
-          <!-- Progress bar -->
-          <div style="height:6px;background:var(--border);border-radius:6px;overflow:hidden;margin-bottom:1rem;display:none" id="optProgressWrap">
-            <div style="height:100%;background:var(--teal);border-radius:6px;width:0;transition:width .3s" id="optProgressBar"></div>
-          </div>
-
-          <!-- Action buttons -->
-          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-            <button class="btn-sm btn-primary" style="padding:10px 24px;font-size:13px" id="optScanBtn" onclick="optScan()">🔍 Scan All Images</button>
-            <button class="btn-sm btn-primary" style="padding:10px 24px;font-size:13px;display:none;background:#1F4E4A" id="optRunBtn" onclick="optRun()">🗜️ Compress &amp; Re-upload All</button>
-            <button class="btn-sm btn-outline" style="padding:10px 24px;font-size:13px;display:none" id="optStopBtn" onclick="optStop()">⏹ Stop</button>
-            <span style="font-size:12px;color:var(--gray)" id="optStatus"></span>
-          </div>
-        </div>
-
-        <!-- Image list -->
-        <div style="background:var(--white);border-radius:20px;border:1px solid var(--border);padding:1.5rem" id="optListWrap" style="display:none">
-          <div style="font-size:12px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.08em;margin-bottom:1rem">Product Images</div>
-          <div id="optList" style="display:flex;flex-direction:column;gap:8px"></div>
-        </div>
-      </div>
-    </div>
-
   </main>
 </div>
 
@@ -520,7 +466,7 @@ html,body{height:100%;font-family:var(--font-body);background:#f4f1ec;color:var(
       <div class="photo-upload-area" id="uploadArea">
         <input type="file" accept="image/*" multiple id="photoFileInput" onchange="handlePhotoSelect(event)">
         <div class="upload-icon">🖼️</div>
-        <div class="upload-text"><strong>Click to upload</strong> or drag & drop<br><span style="font-size:11px">JPG, PNG, WEBP · Auto-compressed &amp; uploaded to Supabase</span></div>
+        <div class="upload-text"><strong>Click to upload</strong> or drag & drop<br><span style="font-size:11px">JPG, PNG, WEBP — max 5MB each · Uploads to Supabase Storage</span></div>
       </div>
       <div class="upload-progress" id="uploadProgress"><div class="upload-progress-bar" id="uploadProgressBar"></div></div>
       <div class="photo-previews" id="photoPreviews"></div>
@@ -802,10 +748,9 @@ let _products = [];
 let _categories = [];
 let _editingId = null;
 let _chipGroups = [];
-let _photoFiles = [];        // only NEW files (not yet uploaded)
-let _photoUrls = [];         // ALL urls: existing + newly uploaded
+let _photoFiles = [];   // only NEW files (not yet uploaded)
+let _photoUrls = [];    // ALL urls: existing + newly uploaded
 let _existingPhotoCount = 0; // how many urls were pre-loaded (not new files)
-let _compressStates = {};    // index → 'compressing' | 'X KB → Y KB'  
 
 /* ═══════════════════════════════════════  AUTH — uses admin_users table  */
 
@@ -1235,7 +1180,6 @@ function openProductModal(id) {
   _chipGroups = [];
   _photoFiles = [];
   _photoUrls = [];
-  _compressStates = {};
   _existingPhotoCount = 0;
   try { clearCurrentGroup(); } catch(e) {}
   const _og = document.getElementById('optionGroupsList'); if(_og) _og.innerHTML = '';
@@ -1313,8 +1257,6 @@ async function saveProduct() {
     if (_photoFiles.length) {
       document.getElementById('uploadProgress').style.display = 'block';
       // SEO slug builder
-      // Formula: [prefix]-[product-name]-gift-coimbatore[-number].jpg
-      // prefix = personalised/custom/handmade based on name keywords
       const toSlug = function(s) {
         return s.toLowerCase().trim()
           .replace(/[^\w\s-]/g,'').replace(/[\s_]+/g,'-').replace(/-+/g,'-').slice(0,55);
@@ -1327,7 +1269,7 @@ async function saveProduct() {
           ? 'handmade'
           : 'personalised';
         var nameClean = toSlug(productName);
-        var suffix    = photoTotal > 1 ? '-' + (photoIdx + 1) : '';
+        var suffix = photoTotal > 1 ? '-' + (photoIdx + 1) : '';
         return prefix + '-' + nameClean + '-gift-coimbatore' + suffix + '.jpg';
       };
 
@@ -1376,6 +1318,10 @@ async function saveProduct() {
 
     if (savedId) {
       await saveProductOptions(savedId);
+      // Reload options back into local product so editing again shows saved variants
+      const reloaded = await loadProductOptions(savedId);
+      const idx = _products.findIndex(p => p.id === savedId);
+      if (idx >= 0) _products[idx].customisation_options = reloaded;
     }
     closeProductModal();
     renderProducts();
@@ -1414,116 +1360,36 @@ async function toggleActive(id, val) {
   } catch(e) { showToast('Error: ' + e.message, 'error'); }
 }
 
-/* ═══════════════════════════════════════
-   IMAGE COMPRESSION
-   Uses Canvas API — no libraries needed.
-   Resizes to max 1200px and re-encodes as
-   JPEG at 82% quality before upload.
-   Typical reduction: 3MB → 150–250KB (90%+)
-═══════════════════════════════════════ */
-function compressImage(file, maxPx, quality) {
-  maxPx   = maxPx   || 1200;
-  quality = quality || 0.82;
-  return new Promise(function(resolve) {
-    var reader = new FileReader();
-    reader.onload = function(e) {
-      var img = new Image();
-      img.onload = function() {
-        // Calculate new dimensions keeping aspect ratio
-        var w = img.width, h = img.height;
-        if (w > maxPx || h > maxPx) {
-          if (w >= h) { h = Math.round(h * maxPx / w); w = maxPx; }
-          else        { w = Math.round(w * maxPx / h); h = maxPx; }
-        }
-        var canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        var ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        canvas.toBlob(function(blob) {
-          // Convert blob back to a File with same name but .jpg
-          var name = file.name.replace(/\.[^.]+$/, '') + '.jpg';
-          var compressed = new File([blob], name, { type: 'image/jpeg' });
-          resolve({ compressed: compressed, originalSize: file.size, compressedSize: compressed.size });
-        }, 'image/jpeg', quality);
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
-function fmtSize(bytes) {
-  if (bytes < 1024)       return bytes + ' B';
-  if (bytes < 1024*1024)  return (bytes/1024).toFixed(0) + ' KB';
-  return (bytes/(1024*1024)).toFixed(1) + ' MB';
-}
-
 function handlePhotoSelect(e) {
   const files = Array.from(e.target.files);
   files.forEach(file => {
-    if (file.size > 20*1024*1024) { showToast('File too large: ' + file.name + ' (max 20MB)', 'error'); return; }
-
-    const insertIdx = _photoUrls.length;
-    _photoUrls.push(null);           // reserve slot
-    _photoFiles.push({ file: null, insertIdx }); // placeholder, file set after compression
-
-    // Show a compressing state immediately with a temp preview
-    const tempReader = new FileReader();
-    tempReader.onload = function(ev) {
-      _photoUrls[insertIdx] = ev.target.result;
-      _compressStates[insertIdx] = 'compressing';
+    if (file.size > 5*1024*1024) { showToast('File too large: ' + file.name + ' (max 5MB)', 'error'); return; }
+    const insertIdx = _photoUrls.length; // remember slot for this file
+    _photoUrls.push(null); // placeholder so index is reserved
+    _photoFiles.push({ file, insertIdx }); // store file with its reserved slot
+    const reader = new FileReader();
+    reader.onload = ev => {
+      _photoUrls[insertIdx] = ev.target.result; // fill placeholder with preview
       renderPhotoPreviews();
     };
-    tempReader.readAsDataURL(file);
-
-    // Compress in background
-    compressImage(file).then(function(result) {
-      // Update the stored file with compressed version
-      const entry = _photoFiles.find(f => f.insertIdx === insertIdx);
-      if (entry) entry.file = result.compressed;
-
-      // Update preview with compressed data URL
-      var fr = new FileReader();
-      fr.onload = function(ev2) {
-        _photoUrls[insertIdx] = ev2.target.result;
-        _compressStates[insertIdx] = fmtSize(result.originalSize) + ' → ' + fmtSize(result.compressedSize);
-        renderPhotoPreviews();
-      };
-      fr.readAsDataURL(result.compressed);
-    });
+    reader.readAsDataURL(file);
   });
   e.target.value = '';
 }
 
 function renderPhotoPreviews() {
-  document.getElementById('photoPreviews').innerHTML = _photoUrls.map((src, i) => {
-    const state  = _compressStates[i];
-    const isComp = state === 'compressing';
-    const badge  = state
-      ? `<span class="photo-compress-badge${isComp ? ' compressing' : ''}">${isComp ? 'Compressing…' : state}</span>`
-      : '';
-    return `<div class="photo-preview-wrap${isComp ? ' compressing' : ''}">
-      <img src="${src || ''}" alt="">
-      ${badge}
-      <button class="photo-preview-del" onclick="removePhoto(${i})">✕</button>
-    </div>`;
-  }).join('');
+  document.getElementById('photoPreviews').innerHTML = _photoUrls.map((src,i) =>
+    `<div class="photo-preview-wrap"><img src="${src}" alt=""><button class="photo-preview-del" onclick="removePhoto(${i})">✕</button></div>`
+  ).join('');
 }
 
 function removePhoto(i) {
   _photoUrls.splice(i, 1);
-  // Rebuild compressStates with shifted indices
-  const newStates = {};
-  Object.keys(_compressStates).forEach(function(k) {
-    var ki = parseInt(k);
-    if (ki < i)  newStates[ki]   = _compressStates[k];
-    if (ki > i)  newStates[ki-1] = _compressStates[k];
-    // ki === i → dropped
-  });
-  _compressStates = newStates;
+  // Remove matching entry from _photoFiles and update all insertIdx values after the removed slot
   _photoFiles = _photoFiles
     .filter(f => f.insertIdx !== i)
     .map(f => ({ ...f, insertIdx: f.insertIdx > i ? f.insertIdx - 1 : f.insertIdx }));
+  // Update existing count if we removed an existing photo
   if (i < _existingPhotoCount) _existingPhotoCount--;
   renderPhotoPreviews();
 }
@@ -1941,22 +1807,80 @@ function editSavedGroup(i) {
   (g.options||[]).forEach(function(o){addVariantRow(o,g.variantPrices?(g.variantPrices[o]||0):0);});
   showToast('Edit and click Save Group.');
 }
-function collectPendingChipGroup(){}
+function collectPendingChipGroup() {
+  // Auto-save any group the user filled in but forgot to click "Save Group"
+  const lbl = document.getElementById('f-opt-label');
+  const label = lbl ? lbl.value.trim() : '';
+  if (!label) return; // nothing pending
+  const rows = document.querySelectorAll('#variantRows > div');
+  if (!rows.length) return;
+  const options = [], vp = {};
+  const pt = document.getElementById('f-price-type');
+  const priceType = pt ? pt.value : 'none';
+  rows.forEach(function(r) {
+    const ni = r.querySelector('.vt-name-input'), ns = r.querySelector('.vt-name-display');
+    const pi = r.querySelector('.vt-price-input'), ps = r.querySelector('.vt-price-display');
+    const name = (ni && ni.style.display !== 'none' ? ni.value.trim() : ns ? ns.textContent.trim() : '');
+    const price = (pi && pi.style.display !== 'none' ? parseFloat(pi.value) || 0 : ps ? parseFloat(ps.textContent.replace('₹','')) || 0 : 0);
+    if (name) { options.push(name); if (priceType !== 'none') vp[name] = price; }
+  });
+  if (options.length) {
+    _chipGroups.push({ label, options, priceType, variantPrices: vp });
+    renderOptionGroups();
+    clearCurrentGroup();
+    console.log('Auto-saved pending group:', label, options);
+  }
+}
 function resetChipsEditor(){try{clearCurrentGroup();}catch(e){}}
 async function saveProductOptions(productId) {
-  if(!productId)return;
-  try{
-    await fetch(_cfg.u+'/rest/v1/product_option_groups?product_id=eq.'+productId,{method:'DELETE',headers:{'apikey':_cfg.k,'Authorization':'Bearer '+(_session?_session.access_token:_cfg.k)}});
-    for(let gi=0;gi<_chipGroups.length;gi++){
-      const g=_chipGroups[gi];
-      const gRes=await fetch(_cfg.u+'/rest/v1/product_option_groups',{method:'POST',headers:{'apikey':_cfg.k,'Authorization':'Bearer '+(_session?_session.access_token:_cfg.k),'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify({product_id:productId,label:g.label,price_type:g.priceType||'none',display_order:gi})});
-      const gData=await gRes.json(); const groupId=gData[0]?gData[0].id:null; if(!groupId)continue;
-      for(let vi=0;vi<g.options.length;vi++){
-        const val=g.options[vi],price=g.variantPrices?(g.variantPrices[val]||0):0;
-        await fetch(_cfg.u+'/rest/v1/product_option_values',{method:'POST',headers:{'apikey':_cfg.k,'Authorization':'Bearer '+(_session?_session.access_token:_cfg.k),'Content-Type':'application/json'},body:JSON.stringify({product_id:productId,group_id:groupId,value:val,price:price,display_order:vi})});
+  if (!productId) return;
+  try {
+    // Delete all existing option groups for this product (cascade deletes values too)
+    const delRes = await fetch(
+      _cfg.u + '/rest/v1/product_option_groups?product_id=eq.' + productId,
+      { method: 'DELETE', headers: sb.headers() }
+    );
+    if (!delRes.ok) { console.error('Delete groups failed:', await delRes.text()); }
+
+    if (!_chipGroups.length) return;
+
+    for (let gi = 0; gi < _chipGroups.length; gi++) {
+      const g = _chipGroups[gi];
+
+      // Insert group
+      const gRes = await fetch(
+        _cfg.u + '/rest/v1/product_option_groups',
+        {
+          method: 'POST',
+          headers: { ...sb.headers(), 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+          body: JSON.stringify({ product_id: productId, label: g.label, price_type: g.priceType || 'none', display_order: gi })
+        }
+      );
+      if (!gRes.ok) { console.error('Insert group failed:', await gRes.text()); continue; }
+      const gData = await gRes.json();
+      const groupId = gData[0] ? gData[0].id : null;
+      if (!groupId) { console.error('No groupId returned'); continue; }
+
+      // Insert each variant value
+      for (let vi = 0; vi < g.options.length; vi++) {
+        const val = g.options[vi];
+        const price = (g.priceType !== 'none' && g.variantPrices) ? (g.variantPrices[val] || 0) : 0;
+        const vRes = await fetch(
+          _cfg.u + '/rest/v1/product_option_values',
+          {
+            method: 'POST',
+            headers: { ...sb.headers(), 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+            body: JSON.stringify({ product_id: productId, group_id: groupId, value: val, price: price, display_order: vi })
+          }
+        );
+        if (!vRes.ok) { console.error('Insert value failed:', val, await vRes.text()); }
       }
     }
-  }catch(e){console.log('saveProductOptions:',e.message);}
+    console.log('saveProductOptions: saved', _chipGroups.length, 'groups for', productId);
+  } catch(e) {
+    console.error('saveProductOptions error:', e.message);
+    showToast('Variants save failed: ' + e.message, 'error');
+  }
 }
 async function loadProductOptions(productId) {
   if(!productId)return[];
@@ -1971,192 +1895,6 @@ async function loadProductOptions(productId) {
       return{label:g.label,options:options,priceType:g.price_type,variantPrices:vp};
     });
   }catch(e){return[];}
-}
-
-/* ═══════════════════════════════════════
-   BULK IMAGE OPTIMISER
-═══════════════════════════════════════ */
-let _optImages    = [];
-let _optRunning   = false;
-let _optStop      = false;
-let _optTotalSaved = 0;
-
-async function optScan() {
-  document.getElementById('optScanBtn').disabled = true;
-  document.getElementById('optStatus').textContent = 'Scanning…';
-  _optImages = [];
-
-  _products.forEach(function(p) {
-    (p.photos || []).forEach(function(url, idx) {
-      if (url && url.startsWith('http')) {
-        _optImages.push({ productId: p.id, productName: p.name, productCat: p.category || '', photoTotal: (p.photos||[]).length, url: url, urlIdx: idx, status: 'pending' });
-      }
-    });
-  });
-
-  document.getElementById('optTotal').textContent  = _optImages.length;
-  document.getElementById('optDone').textContent   = 0;
-  document.getElementById('optFailed').textContent = 0;
-  document.getElementById('optSaved').textContent  = '0 KB';
-  document.getElementById('optStatus').textContent = _optImages.length + ' images found — ready to compress';
-  document.getElementById('optRunBtn').style.display    = 'inline-flex';
-  document.getElementById('optListWrap').style.display  = 'block';
-  document.getElementById('optScanBtn').disabled = false;
-  _optTotalSaved = 0;
-  optRenderList();
-}
-
-function optRenderList() {
-  const el = document.getElementById('optList');
-  if (!_optImages.length) { el.innerHTML = '<div style="color:var(--gray);font-size:13px">No images found. Click Scan first.</div>'; return; }
-  el.innerHTML = _optImages.map(function(img, i) {
-    return optRowHTML(img, i);
-  }).join('');
-}
-
-function optRowHTML(img, i) {
-  const icon = { pending:'⬜', compressing:'⏳', done:'✅', failed:'❌', skipped:'⏭' }[img.status] || '⬜';
-  const info = img.savedBytes != null
-    ? '<span style="font-size:11px;color:#1F4E4A;font-weight:600;margin-left:8px">' + fmtSize(img.originalSize) + ' → ' + fmtSize(img.compressedSize) + ' (saved ' + fmtSize(img.savedBytes) + ')</span>'
-    : (img.status === 'failed' ? '<span style="font-size:11px;color:#c0392b;margin-left:8px">' + (img.error || 'Error') + '</span>' : '');
-  return '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:var(--cream);font-size:12px" id="optrow-' + i + '">'
-    + '<span style="font-size:15px">' + icon + '</span>'
-    + '<div style="flex:1;min-width:0"><div style="font-weight:500;color:var(--charcoal);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + img.productName + '</div>'
-    + '<div style="color:var(--gray);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'
-      + img.url.split('/').pop()
-      + (img.newFilename ? ' <span style="color:#1F4E4A;font-weight:600">→ ' + img.newFilename + '</span>' : '')
-      + '</div></div>'
-    + info + '</div>';
-}
-
-function optUpdateRow(i) {
-  const row = document.getElementById('optrow-' + i);
-  if (row) row.outerHTML = optRowHTML(_optImages[i], i);
-}
-
-async function optRun() {
-  if (_optRunning) return;
-  if (!_optImages.length) { showToast('Scan first', 'error'); return; }
-  _optRunning   = true;
-  _optStop      = false;
-  _optTotalSaved = 0;
-
-  document.getElementById('optRunBtn').style.display    = 'none';
-  document.getElementById('optStopBtn').style.display   = 'inline-flex';
-  document.getElementById('optProgressWrap').style.display = 'block';
-
-  let done = 0, failed = 0;
-
-  for (let i = 0; i < _optImages.length; i++) {
-    if (_optStop) break;
-    const img = _optImages[i];
-    if (img.status === 'done') { done++; continue; }
-
-    img.status = 'compressing';
-    optUpdateRow(i);
-    document.getElementById('optStatus').textContent = 'Processing ' + (i + 1) + ' / ' + _optImages.length + ' — ' + img.productName;
-
-    try {
-      // 1. Fetch original as blob
-      const resp = await fetch(img.url);
-      if (!resp.ok) throw new Error('Fetch failed ' + resp.status);
-      const blob     = await resp.blob();
-      const origFile = new File([blob], 'photo.jpg', { type: blob.type || 'image/jpeg' });
-
-      // 2. Compress
-      const result = await compressImage(origFile, 1200, 0.82);
-      const alreadySmall = result.compressedSize >= result.originalSize * 0.95;
-
-      // 3. Build SEO filename — Formula: [prefix]-[product-name]-gift-india[-number].jpg
-      const toSlug = function(s) {
-        return s.toLowerCase().trim()
-          .replace(/[^\w\s-]/g,'').replace(/[\s_]+/g,'-').replace(/-+/g,'-').slice(0,55);
-      };
-      const buildSeoSlug = function(productName, photoIdx, photoTotal) {
-        var n = productName.toLowerCase();
-        var prefix = n.includes('custom') || n.includes('personalised') || n.includes('personalized')
-          ? 'custom'
-          : n.includes('handmade') || n.includes('resin') || n.includes('embroidery') || n.includes('crochet') || n.includes('quilling') || n.includes('string')
-          ? 'handmade'
-          : 'personalised';
-        var nameClean = toSlug(productName);
-        var suffix    = photoTotal > 1 ? '-' + (photoIdx + 1) : '';
-        return prefix + '-' + nameClean + '-gift-coimbatore' + suffix + '.jpg';
-      };
-      const seoFile   = buildSeoSlug(img.productName, img.urlIdx, img.photoTotal);
-      const seoPath   = 'products/' + seoFile;
-      img.newFilename = seoFile;
-
-      // Check if already SEO-named — skip if already has gift-india pattern
-      const oldFile    = img.url.split('/').pop();
-      const alreadySEO = oldFile.includes('-gift-coimbatore') || oldFile.includes('-gift-india');
-
-      if (alreadySmall && alreadySEO) {
-        img.status         = 'skipped';
-        img.savedBytes     = 0;
-        img.originalSize   = result.originalSize;
-        img.compressedSize = result.compressedSize;
-        optUpdateRow(i);
-        done++;
-        continue;
-      }
-
-      // 4. Upload to new SEO path (POST to new path, not PUT to old path)
-      const fileToUpload = alreadySmall ? origFile : result.compressed;
-      const upResp = await fetch(_cfg.u + '/storage/v1/object/product-images/' + seoPath, {
-        method:  'POST',
-        headers: { 'apikey': _cfg.k, 'Authorization': 'Bearer ' + (_session && _session.access_token ? _session.access_token : _cfg.k), 'Content-Type': 'image/jpeg', 'x-upsert': 'true', 'Cache-Control': 'no-store' },
-        body: fileToUpload
-      });
-      if (!upResp.ok) throw new Error('Upload failed ' + upResp.status + ': ' + await upResp.text());
-
-      // 5. New public URL
-      const newUrl = _cfg.u + '/storage/v1/object/public/product-images/' + seoPath;
-
-      // 6. Update the product's photos array in Supabase DB
-      const product   = _products.find(function(p) { return p.id === img.productId; });
-      const newPhotos = (product.photos || []).slice();
-      newPhotos[img.urlIdx] = newUrl;
-      await sb.update('products', img.productId, { photos: newPhotos });
-
-      // Update local state so UI stays in sync
-      if (product) product.photos = newPhotos;
-      img.url = newUrl;
-
-      img.status         = 'done';
-      img.originalSize   = result.originalSize;
-      img.compressedSize = alreadySmall ? result.originalSize : result.compressedSize;
-      img.savedBytes     = alreadySmall ? 0 : (result.originalSize - result.compressedSize);
-      _optTotalSaved    += img.savedBytes;
-      done++;
-
-    } catch(e) {
-      img.status = 'failed';
-      img.error  = e.message;
-      failed++;
-    }
-
-    optUpdateRow(i);
-    document.getElementById('optDone').textContent    = done;
-    document.getElementById('optFailed').textContent  = failed;
-    document.getElementById('optSaved').textContent   = fmtSize(_optTotalSaved);
-    document.getElementById('optProgressBar').style.width = ((i + 1) / _optImages.length * 100) + '%';
-    await new Promise(function(r) { setTimeout(r, 100); });
-  }
-
-  _optRunning = false;
-  document.getElementById('optStopBtn').style.display = 'none';
-  document.getElementById('optRunBtn').style.display  = 'inline-flex';
-  const msg = _optStop
-    ? 'Stopped. ' + done + ' done, ' + failed + ' failed.'
-    : '✅ All done! ' + done + ' images processed · ' + fmtSize(_optTotalSaved) + ' saved.';
-  document.getElementById('optStatus').textContent = msg;
-  if (!_optStop) showToast('Done! Saved ' + fmtSize(_optTotalSaved) + ' across ' + done + ' images', 'success');
-}
-
-function optStop() {
-  _optStop = true;
-  document.getElementById('optStatus').textContent = 'Stopping after current image…';
 }
 
 /* hide loading, check existing session */
