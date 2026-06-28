@@ -921,6 +921,25 @@ const _SB = {
   k: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJsd2F2cmx3ZmZxdWNmeWhyZWRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTIwMzEsImV4cCI6MjA5NTAyODAzMX0.YuDNPuQ614xN6eP6AxCGBSMWUS6zTF1crByk1CdfQC8'
 };
 
+/* ═══════════════════════════════════════
+   IMAGE URL HELPER
+   Uses Supabase's built-in transform API to
+   serve resized/compressed images on the fly.
+   width=600 covers all card sizes; quality=70
+   keeps it sharp while cutting file size ~85%
+═══════════════════════════════════════ */
+function imgUrl(src, width, quality) {
+  if (!src) return src;
+  width   = width   || 600;
+  quality = quality || 70;
+  // Only transform Supabase Storage URLs
+  if (src.indexOf('supabase.co/storage') === -1) return src;
+  // Append transform params (Supabase renders via /render/image/public/)
+  var base = src.replace('/object/public/', '/render/image/public/');
+  var sep  = base.indexOf('?') > -1 ? '&' : '?';
+  return base + sep + 'width=' + width + '&quality=' + quality + '&resize=contain';
+}
+
 async function sbGet(table, qs) {
   let url = _SB.u + '/rest/v1/' + table;
   if (qs) url += '?' + qs;
@@ -1001,7 +1020,7 @@ async function initSite() {
   // Pre-warm bestseller images — browser starts downloading while loader is still visible
   ALL_PRODUCTS.filter(p => p.is_bestseller).slice(0, 8)
     .map(p => p.photos && p.photos[0]).filter(Boolean)
-    .forEach(src => { const i = new Image(); i.src = src; });
+    .forEach(src => { const i = new Image(); i.src = imgUrl(src, 400, 70); });
 
   renderBestsellers();
   renderCategoriesGrid();
@@ -1057,7 +1076,7 @@ function getPriceDisplay(p) {
 function bsCardHTML(p) {
   const imgSrc = p.photos && p.photos[0] ? p.photos[0] : null;
   const img = imgSrc
-    ? `<img src="${imgSrc}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover" onload="this.style.opacity=1;this.closest('.bs-img').style.background='none'" alt="${p.name}">`
+    ? `<img src="${imgUrl(imgSrc,400,70)}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover" onload="this.style.opacity=1;this.closest('.bs-img').style.background='none'" alt="${p.name}">`
     : (p.emoji || '🎁');
   const imgClass = imgSrc ? 'bs-img' : 'bs-img bs-i1';
   const imgStyle = imgSrc ? 'background:#dceae9;overflow:hidden' : '';
@@ -1078,7 +1097,7 @@ function renderCategoriesGrid() {
     if (coverImg) {
       return `<div class="cat-card" onclick="showPage('shop','${c.name}')">
         <div class="cat-img-wrap" id="catwrap-${c.name.replace(/\s+/g,'')}">
-          <img class="cat-img" src="${coverImg}" loading="lazy" decoding="async" alt="${c.name}"
+          <img class="cat-img" src="${imgUrl(coverImg,500,70)}" loading="lazy" decoding="async" alt="${c.name}"
             onload="this.classList.add('loaded');this.closest('.cat-img-wrap').classList.add('loaded')">
         </div>
         <div class="cat-overlay"></div>
@@ -1222,7 +1241,7 @@ function productCardHTML(p) {
   var imgSection;
   if (photos.length > 1) {
     var slidesHTML = photos.map(function(src, si) {
-      return '<div class="gallery-slide"><img src="' + src + '" alt="" loading="lazy" onclick="event.stopPropagation();openLightbox(' + JSON.stringify(photos) + ',' + si + ')"></div>';
+      return '<div class="gallery-slide"><img src="' + imgUrl(src,600,72) + '" alt="" loading="lazy" onclick="event.stopPropagation();openLightbox(' + JSON.stringify(photos) + ',' + si + ')"></div>';
     }).join('');
     var dotsHTML = photos.map(function(_, i) {
       return '<button class="gallery-dot' + (i === 0 ? ' active' : '') + '" onclick="event.stopPropagation();setGallerySlide(this,' + i + ')"></button>';
@@ -1234,7 +1253,7 @@ function productCardHTML(p) {
       + '<div class="gallery-dots">' + dotsHTML + '</div>'
       + '</div>';
   } else if (photos.length === 1) {
-    imgSection = '<div class="product-img" style="padding:0;overflow:hidden"><img src="' + photos[0] + '" style="width:100%;height:100%;object-fit:cover;object-position:center" alt="" loading="lazy" onclick="event.stopPropagation();openLightbox(' + JSON.stringify(photos) + ',0)"></div>';
+    imgSection = '<div class="product-img" style="padding:0;overflow:hidden"><img src="' + imgUrl(photos[0],600,72) + '" style="width:100%;height:100%;object-fit:cover;object-position:center" alt="" loading="lazy" onclick="event.stopPropagation();openLightbox(' + JSON.stringify(photos) + ',0)"></div>';
   } else {
     imgSection = '<div class="product-img">' + (p.emoji || '🎁') + '</div>';
   }
@@ -1432,7 +1451,7 @@ function openPopup(productId) {
 
   if (photos.length) {
     var img = document.createElement('img');
-    img.src = photos[0];
+    img.src = imgUrl(photos[0], 800, 80);
     img.alt = p.name;
     img.style.cursor = 'zoom-in';
     img.title = 'Click to view full image';
