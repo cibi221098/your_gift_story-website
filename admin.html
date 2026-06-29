@@ -1858,22 +1858,45 @@ async function saveProductQuestions(productId) {
   if (!productId) return;
   try {
     // Delete existing questions for this product
-    await fetch(
+    const delRes = await fetch(
       _cfg.u + '/rest/v1/product_questions?product_id=eq.' + productId,
       { method: 'DELETE', headers: sb.headers() }
     );
+    if (!delRes.ok) console.error('Delete questions failed:', await delRes.text());
+
     if (!_questions.length) return;
+
     // Insert new questions
-    const rows = _questions.map(function(q, i) {
-      return { product_id: productId, label: q.label || 'Custom message', placeholder: q.placeholder || '', is_required: !!q.required, display_order: i };
-    });
+    const rows = _questions
+      .filter(function(q) { return q.label && q.label.trim(); })
+      .map(function(q, i) {
+        return {
+          product_id:    productId,
+          label:         q.label.trim(),
+          placeholder:   (q.placeholder || '').trim(),
+          is_required:   !!q.required,
+          display_order: i
+        };
+      });
+
+    if (!rows.length) return;
+
     const res = await fetch(_cfg.u + '/rest/v1/product_questions', {
-      method: 'POST',
+      method:  'POST',
       headers: { ...sb.headers(), 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-      body: JSON.stringify(rows)
+      body:    JSON.stringify(rows)
     });
-    if (!res.ok) console.error('saveProductQuestions failed:', await res.text());
-  } catch(e) { console.error('saveProductQuestions error:', e.message); }
+    if (!res.ok) {
+      const err = await res.text();
+      console.error('saveProductQuestions failed:', err);
+      showToast('Questions save failed: ' + err, 'error');
+    } else {
+      console.log('saveProductQuestions: saved', rows.length, 'questions for', productId);
+    }
+  } catch(e) {
+    console.error('saveProductQuestions error:', e.message);
+    showToast('Questions save error: ' + e.message, 'error');
+  }
 }
 
 async function loadProductQuestions(productId) {
