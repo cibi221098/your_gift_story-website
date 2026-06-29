@@ -529,29 +529,17 @@ html,body{height:100%;font-family:var(--font-body);background:#f4f1ec;color:var(
 
       <button class="btn-sm btn-outline" style="font-size:11px;margin-top:.75rem" onclick="startNewGroup()">+ Add Another Group</button>
 
-      <div class="form-section-title">Customer Text Customisation</div>
-      <div style="display:flex;flex-direction:column;gap:.75rem;margin-bottom:1.25rem">
-        <div class="form-toggle-row">
-          <div>
-            <div class="form-toggle-label">Allow customer to type a custom message</div>
-            <div class="form-toggle-sub">Shows a text box on the product card for things like names, dates, or special notes</div>
-          </div>
-          <label class="toggle"><input type="checkbox" id="f-allow-text" onchange="toggleTextFields()"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
-        </div>
-        <div id="text-fields-wrap" style="display:none;flex-direction:column;gap:.6rem;background:#f4f1ec;border-radius:12px;padding:.85rem 1rem;border:1px solid var(--border)">
-          <div class="form-group" style="margin:0">
-            <label class="form-label">Field Label *</label>
-            <input class="form-input" id="f-text-label" placeholder="e.g. Name to print, Special message, Date…" style="font-size:13px">
-          </div>
-          <div class="form-group" style="margin:0">
-            <label class="form-label">Placeholder hint shown to customer</label>
-            <input class="form-input" id="f-text-placeholder" placeholder="e.g. Enter name here (max 20 chars)" style="font-size:13px">
-          </div>
-          <div style="display:flex;align-items:center;gap:.5rem">
-            <label class="toggle" style="flex-shrink:0"><input type="checkbox" id="f-text-required"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
-            <span style="font-size:13px;color:var(--char)">Make this field required before adding to cart</span>
-          </div>
-        </div>
+      <div class="form-section-title">Customer Questions</div>
+      <div style="margin-bottom:1.25rem">
+        <div style="font-size:12px;color:var(--gray);margin-bottom:.75rem">Add questions the customer must answer before adding to cart — e.g. "Enter name to print", "Enter date", "Share photo link"</div>
+        <div id="questions-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:.75rem"></div>
+        <button class="btn-sm btn-outline" style="font-size:12px;padding:7px 16px" onclick="addQuestion()">+ Add Question</button>
+      </div>
+
+      <div class="form-section-title">Pre-Cart Notice</div>
+      <div style="margin-bottom:1.25rem">
+        <div style="font-size:12px;color:var(--gray);margin-bottom:.6rem">If set, customer must tick a checkbox to confirm they read this before adding to cart</div>
+        <textarea class="form-input" id="f-notice" rows="3" placeholder="e.g. Please note: this product requires a clear photo. Ensure good lighting before submitting." style="resize:vertical;font-size:13px;font-family:inherit"></textarea>
       </div>
 
       <div class="form-section-title">Visibility</div>
@@ -912,6 +900,24 @@ async function loadOrders() {
       return;
     }
     _orders = Array.isArray(data) ? data : [];
+    // Fetch order_items for all orders and attach
+    if (_orders.length) {
+      const orderIds = _orders.map(o => o.id).join(',');
+      try {
+        const itemsRes = await fetch(
+          _cfg.u + '/rest/v1/order_items?order_id=in.(' + orderIds + ')&order=order_id.asc,display_order.asc',
+          { headers: sb.headers() }
+        );
+        if (itemsRes.ok) {
+          const allItems = await itemsRes.json();
+          _orders.forEach(function(o) {
+            o.items = (allItems || [])
+              .filter(function(i) { return i.order_id === o.id; })
+              .map(function(i) { return { name: i.product_name, price: i.price, custom: i.custom_notes }; });
+          });
+        }
+      } catch(e) { console.log('order_items fetch:', e.message); }
+    }
     buildFYOptions();
     renderOrders();
   } catch(e) {
@@ -1198,13 +1204,14 @@ function openProductModal(id) {
     document.getElementById('f-active').checked = !!p.is_active;
 
     // Restore text customisation
-    const tc = p.text_customisation || {};
-    document.getElementById('f-allow-text').checked = !!tc.enabled;
-    document.getElementById('f-text-label').value = tc.label || '';
-    document.getElementById('f-text-placeholder').value = tc.placeholder || '';
-    document.getElementById('f-text-required').checked = !!tc.required;
-    // Explicitly sync visibility — don't rely on onchange event
-    document.getElementById('text-fields-wrap').style.display = tc.enabled ? 'flex' : 'none';
+    // Load questions from product_questions table (fetched async)
+    _questions = [];
+    renderQuestions();
+    document.getElementById('f-notice').value = p.notice_message || '';
+    loadProductQuestions(id).then(function(qs) {
+      _questions = qs;
+      renderQuestions();
+    });
     _chipGroups = [];
     _variantRowCount = 0;
     // Use async load with proper await — show loading state
@@ -1222,13 +1229,13 @@ function openProductModal(id) {
     }
   } else {
     document.getElementById('modalTitle').textContent = 'Add New Product';
-    ['f-name','f-price','f-desc','f-opt-label','f-text-label','f-text-placeholder'].forEach(i => { const el=document.getElementById(i); if(el) el.value=''; });
+    ['f-name','f-price','f-desc','f-opt-label'].forEach(i => { const el=document.getElementById(i); if(el) el.value=''; });
     document.getElementById('f-category').value = '';
     document.getElementById('f-bestseller').checked = false;
     document.getElementById('f-active').checked = true;
-    document.getElementById('f-allow-text').checked = false;
-    document.getElementById('f-text-required').checked = false;
-    document.getElementById('text-fields-wrap').style.display = 'none';
+    _questions = [];
+    renderQuestions();
+    document.getElementById('f-notice').value = '';
     clearCurrentGroup();
     addVariantRow();
   }
@@ -1256,27 +1263,9 @@ async function saveProduct() {
     // Upload new photo files to Supabase Storage
     if (_photoFiles.length) {
       document.getElementById('uploadProgress').style.display = 'block';
-      // SEO slug builder
-      const toSlug = function(s) {
-        return s.toLowerCase().trim()
-          .replace(/[^\w\s-]/g,'').replace(/[\s_]+/g,'-').replace(/-+/g,'-').slice(0,55);
-      };
-      const buildSeoSlug = function(productName, photoIdx, photoTotal) {
-        var n = productName.toLowerCase();
-        var prefix = n.includes('custom') || n.includes('personalised') || n.includes('personalized')
-          ? 'custom'
-          : n.includes('handmade') || n.includes('resin') || n.includes('embroidery') || n.includes('crochet') || n.includes('quilling') || n.includes('string')
-          ? 'handmade'
-          : 'personalised';
-        var nameClean = toSlug(productName);
-        var suffix = photoTotal > 1 ? '-' + (photoIdx + 1) : '';
-        return prefix + '-' + nameClean + '-gift-coimbatore' + suffix + '.jpg';
-      };
-
       for (let i = 0; i < _photoFiles.length; i++) {
         const { file, insertIdx } = _photoFiles[i];
-        const seoName = buildSeoSlug(name, i, _photoFiles.length);
-        const path    = 'products/' + seoName;
+        const path = 'products/' + Date.now() + '-' + file.name.replace(/\s+/g,'_');
         const url = await sb.uploadImage(file, path);
         _photoUrls[insertIdx] = url; // replace the base64 preview with the real URL
         document.getElementById('uploadProgressBar').style.width = ((i+1)/_photoFiles.length*100) + '%';
@@ -1295,12 +1284,7 @@ async function saveProduct() {
       // Note: customisation_options saved separately via saveProductOptions()
       is_bestseller: document.getElementById('f-bestseller').checked,
       is_active: document.getElementById('f-active').checked,
-      text_customisation: document.getElementById('f-allow-text').checked ? {
-        enabled: true,
-        label: document.getElementById('f-text-label').value.trim() || 'Custom message',
-        placeholder: document.getElementById('f-text-placeholder').value.trim() || '',
-        required: document.getElementById('f-text-required').checked
-      } : null,
+      notice_message: document.getElementById('f-notice').value.trim() || null,
     };
 
     let savedId = _editingId;
@@ -1318,10 +1302,7 @@ async function saveProduct() {
 
     if (savedId) {
       await saveProductOptions(savedId);
-      // Reload options back into local product so editing again shows saved variants
-      const reloaded = await loadProductOptions(savedId);
-      const idx = _products.findIndex(p => p.id === savedId);
-      if (idx >= 0) _products[idx].customisation_options = reloaded;
+      await saveProductQuestions(savedId);
     }
     closeProductModal();
     renderProducts();
@@ -1407,19 +1388,42 @@ function renderCategoryDropdown() {
 }
 
 function renderCategoryGrid() {
-  document.getElementById('catAdminGrid').innerHTML = _categories.length
-    ? _categories.map(c => `
-      <div class="cat-admin-card">
-        ${c.icon ? `<div style="font-size:28px;margin-bottom:4px">${c.icon}</div>` : ''}
-        <div class="cat-admin-name" style="font-size:16px;font-weight:600">${c.name}</div>
-        <div class="cat-admin-count">${_products.filter(p=>p.category===c.name).length} products</div>
-        <div class="cat-admin-actions">
-          <button class="btn-sm btn-outline" style="font-size:11px;padding:5px 12px" onclick="editCat('${c.id}')">Edit</button>
-          <button class="btn-sm ${c.is_active?'btn-outline':'btn-primary'}" style="font-size:11px;padding:5px 12px" onclick="toggleCat('${c.id}',${!c.is_active})">${c.is_active?'Hide':'Show'}</button>
-          <button class="btn-sm btn-danger" style="font-size:11px;padding:5px 12px" onclick="deleteCat('${c.id}')">Delete</button>
-        </div>
-      </div>`).join('')
-    : '<div class="empty-state"><div class="empty-icon">🗂️</div><div>No categories yet.</div></div>';
+  const grid = document.getElementById('catAdminGrid');
+  if (!_categories.length) {
+    grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🗂️</div><div>No categories yet.</div></div>';
+    return;
+  }
+  grid.innerHTML = _categories.map((c, idx) => `
+    <div class="cat-admin-card" draggable="true" data-cat-id="${c.id}" data-idx="${idx}"
+      ondragstart="catDragStart(event,${idx})" ondragover="catDragOver(event)" ondrop="catDrop(event,${idx})" ondragend="catDragEnd()"
+      style="cursor:grab;position:relative">
+      <div style="position:absolute;top:10px;right:10px;color:#ccc;font-size:18px;cursor:grab" title="Drag to reorder">⠿</div>
+      <div class="cat-admin-name" style="font-size:16px;font-weight:600">${c.name}</div>
+      <div class="cat-admin-count">${_products.filter(p=>p.category===c.name).length} products</div>
+      <div class="cat-admin-actions">
+        <button class="btn-sm btn-outline" style="font-size:11px;padding:5px 12px" onclick="editCat('${c.id}')">Edit</button>
+        <button class="btn-sm ${c.is_active?'btn-outline':'btn-primary'}" style="font-size:11px;padding:5px 12px" onclick="toggleCat('${c.id}',${!c.is_active})">${c.is_active?'Hide':'Show'}</button>
+        <button class="btn-sm btn-danger" style="font-size:11px;padding:5px 12px" onclick="deleteCat('${c.id}')">Delete</button>
+      </div>
+    </div>`).join('');
+}
+
+// Drag-to-reorder state
+let _catDragIdx = null;
+function catDragStart(e, idx) { _catDragIdx = idx; e.currentTarget.style.opacity = '0.4'; }
+function catDragEnd() { document.querySelectorAll('.cat-admin-card').forEach(el => { el.style.opacity=''; el.style.background=''; }); }
+function catDragOver(e) { e.preventDefault(); e.currentTarget.style.background = 'var(--teal-light)'; }
+async function catDrop(e, toIdx) {
+  e.preventDefault();
+  if (_catDragIdx === null || _catDragIdx === toIdx) { catDragEnd(); return; }
+  // Reorder local array
+  const moved = _categories.splice(_catDragIdx, 1)[0];
+  _categories.splice(toIdx, 0, moved);
+  // Save new display_order for all categories
+  await Promise.all(_categories.map((c, i) => sb.update('categories', c.id, { display_order: i + 1 })));
+  renderCategoryGrid(); renderCategoryFilter(); renderCategoryDropdown();
+  showToast('Category order saved!', 'success');
+  _catDragIdx = null;
 }
 
 function addCategory() {
@@ -1742,8 +1746,49 @@ function addVariantRow(name, price) {
 function toggleEditRow(id) { /* kept for compat */ }
 function startNewGroup() { try{clearCurrentGroup();}catch(e){} setTimeout(function(){const l=document.getElementById('f-opt-label');if(l)l.focus();},50); }
 
+// ── Question management ──
+let _questions = [];
+
+function addQuestion() {
+  _questions.push({ label: '', placeholder: '', required: false });
+  renderQuestions();
+  setTimeout(function() {
+    var inputs = document.querySelectorAll('#questions-list .q-label-input');
+    if (inputs.length) inputs[inputs.length-1].focus();
+  }, 50);
+}
+
+function removeQuestion(idx) {
+  _questions.splice(idx, 1);
+  renderQuestions();
+}
+
+function renderQuestions() {
+  const el = document.getElementById('questions-list');
+  if (!el) return;
+  if (!_questions.length) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--gray);padding:6px 0">No questions added yet.</div>';
+    return;
+  }
+  el.innerHTML = _questions.map((q, i) => `
+    <div style="background:#f4f1ec;border-radius:12px;padding:.85rem 1rem;border:1px solid var(--border);display:flex;flex-direction:column;gap:.5rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
+        <span style="font-size:11px;font-weight:600;color:var(--teal);text-transform:uppercase;letter-spacing:.06em">Question ${i+1}</span>
+        <button onclick="removeQuestion(${i})" style="background:none;border:none;color:#c0392b;font-size:13px;cursor:pointer;padding:2px 6px">✕ Remove</button>
+      </div>
+      <input class="form-input q-label-input" style="font-size:13px;margin:0" placeholder="Label e.g. Enter name to print, Photo link…"
+        value="${q.label}" oninput="_questions[${i}].label=this.value">
+      <input class="form-input" style="font-size:13px;margin:0" placeholder="Placeholder hint for customer (optional)"
+        value="${q.placeholder||''}" oninput="_questions[${i}].placeholder=this.value">
+      <label style="display:flex;align-items:center;gap:.5rem;font-size:12px;cursor:pointer">
+        <input type="checkbox" ${q.required?'checked':''} onchange="_questions[${i}].required=this.checked">
+        Make this field required
+      </label>
+    </div>`).join('');
+}
+
 function toggleTextFields() {
-  const on = document.getElementById('f-allow-text').checked;
+  const on = document.getElementById('f-allow-text') ? document.getElementById('f-allow-text').checked : false;
   const wrap = document.getElementById('text-fields-wrap');
   wrap.style.display = on ? 'flex' : 'none';
   if (on) document.getElementById('f-text-label').focus();
@@ -1807,80 +1852,53 @@ function editSavedGroup(i) {
   (g.options||[]).forEach(function(o){addVariantRow(o,g.variantPrices?(g.variantPrices[o]||0):0);});
   showToast('Edit and click Save Group.');
 }
-function collectPendingChipGroup() {
-  // Auto-save any group the user filled in but forgot to click "Save Group"
-  const lbl = document.getElementById('f-opt-label');
-  const label = lbl ? lbl.value.trim() : '';
-  if (!label) return; // nothing pending
-  const rows = document.querySelectorAll('#variantRows > div');
-  if (!rows.length) return;
-  const options = [], vp = {};
-  const pt = document.getElementById('f-price-type');
-  const priceType = pt ? pt.value : 'none';
-  rows.forEach(function(r) {
-    const ni = r.querySelector('.vt-name-input'), ns = r.querySelector('.vt-name-display');
-    const pi = r.querySelector('.vt-price-input'), ps = r.querySelector('.vt-price-display');
-    const name = (ni && ni.style.display !== 'none' ? ni.value.trim() : ns ? ns.textContent.trim() : '');
-    const price = (pi && pi.style.display !== 'none' ? parseFloat(pi.value) || 0 : ps ? parseFloat(ps.textContent.replace('₹','')) || 0 : 0);
-    if (name) { options.push(name); if (priceType !== 'none') vp[name] = price; }
-  });
-  if (options.length) {
-    _chipGroups.push({ label, options, priceType, variantPrices: vp });
-    renderOptionGroups();
-    clearCurrentGroup();
-    console.log('Auto-saved pending group:', label, options);
-  }
-}
+function collectPendingChipGroup(){}
 function resetChipsEditor(){try{clearCurrentGroup();}catch(e){}}
-async function saveProductOptions(productId) {
+async function saveProductQuestions(productId) {
   if (!productId) return;
   try {
-    // Delete all existing option groups for this product (cascade deletes values too)
-    const delRes = await fetch(
-      _cfg.u + '/rest/v1/product_option_groups?product_id=eq.' + productId,
+    // Delete existing questions for this product
+    await fetch(
+      _cfg.u + '/rest/v1/product_questions?product_id=eq.' + productId,
       { method: 'DELETE', headers: sb.headers() }
     );
-    if (!delRes.ok) { console.error('Delete groups failed:', await delRes.text()); }
+    if (!_questions.length) return;
+    // Insert new questions
+    const rows = _questions.map(function(q, i) {
+      return { product_id: productId, label: q.label || 'Custom message', placeholder: q.placeholder || '', is_required: !!q.required, display_order: i };
+    });
+    const res = await fetch(_cfg.u + '/rest/v1/product_questions', {
+      method: 'POST',
+      headers: { ...sb.headers(), 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify(rows)
+    });
+    if (!res.ok) console.error('saveProductQuestions failed:', await res.text());
+  } catch(e) { console.error('saveProductQuestions error:', e.message); }
+}
 
-    if (!_chipGroups.length) return;
+async function loadProductQuestions(productId) {
+  try {
+    const rows = await sb.query('product_questions', '?product_id=eq.' + productId + '&order=display_order.asc');
+    return (rows || []).map(function(r) {
+      return { label: r.label, placeholder: r.placeholder || '', required: !!r.is_required };
+    });
+  } catch(e) { return []; }
+}
 
-    for (let gi = 0; gi < _chipGroups.length; gi++) {
-      const g = _chipGroups[gi];
-
-      // Insert group
-      const gRes = await fetch(
-        _cfg.u + '/rest/v1/product_option_groups',
-        {
-          method: 'POST',
-          headers: { ...sb.headers(), 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
-          body: JSON.stringify({ product_id: productId, label: g.label, price_type: g.priceType || 'none', display_order: gi })
-        }
-      );
-      if (!gRes.ok) { console.error('Insert group failed:', await gRes.text()); continue; }
-      const gData = await gRes.json();
-      const groupId = gData[0] ? gData[0].id : null;
-      if (!groupId) { console.error('No groupId returned'); continue; }
-
-      // Insert each variant value
-      for (let vi = 0; vi < g.options.length; vi++) {
-        const val = g.options[vi];
-        const price = (g.priceType !== 'none' && g.variantPrices) ? (g.variantPrices[val] || 0) : 0;
-        const vRes = await fetch(
-          _cfg.u + '/rest/v1/product_option_values',
-          {
-            method: 'POST',
-            headers: { ...sb.headers(), 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-            body: JSON.stringify({ product_id: productId, group_id: groupId, value: val, price: price, display_order: vi })
-          }
-        );
-        if (!vRes.ok) { console.error('Insert value failed:', val, await vRes.text()); }
+async function saveProductOptions(productId) {
+  if(!productId)return;
+  try{
+    await fetch(_cfg.u+'/rest/v1/product_option_groups?product_id=eq.'+productId,{method:'DELETE',headers:{'apikey':_cfg.k,'Authorization':'Bearer '+(_session?_session.access_token:_cfg.k)}});
+    for(let gi=0;gi<_chipGroups.length;gi++){
+      const g=_chipGroups[gi];
+      const gRes=await fetch(_cfg.u+'/rest/v1/product_option_groups',{method:'POST',headers:{'apikey':_cfg.k,'Authorization':'Bearer '+(_session?_session.access_token:_cfg.k),'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify({product_id:productId,label:g.label,price_type:g.priceType||'none',display_order:gi})});
+      const gData=await gRes.json(); const groupId=gData[0]?gData[0].id:null; if(!groupId)continue;
+      for(let vi=0;vi<g.options.length;vi++){
+        const val=g.options[vi],price=g.variantPrices?(g.variantPrices[val]||0):0;
+        await fetch(_cfg.u+'/rest/v1/product_option_values',{method:'POST',headers:{'apikey':_cfg.k,'Authorization':'Bearer '+(_session?_session.access_token:_cfg.k),'Content-Type':'application/json'},body:JSON.stringify({product_id:productId,group_id:groupId,value:val,price:price,display_order:vi})});
       }
     }
-    console.log('saveProductOptions: saved', _chipGroups.length, 'groups for', productId);
-  } catch(e) {
-    console.error('saveProductOptions error:', e.message);
-    showToast('Variants save failed: ' + e.message, 'error');
-  }
+  }catch(e){console.log('saveProductOptions:',e.message);}
 }
 async function loadProductOptions(productId) {
   if(!productId)return[];
