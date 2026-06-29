@@ -1112,16 +1112,18 @@ async function initSite() {
   const barAnim = setTimeout(() => setBar(60), 300);
 
   // Fire all 6 Supabase requests at the same time
-  const [rawProducts, optGroups, optValues, cats, testimonials, settings] = await Promise.all([
+  const [rawProducts, optGroups, optValues, pQuestions, cats, testimonials, settings] = await Promise.all([
     sbGet('products',              'is_active=eq.true&order=created_at.desc').catch(e => { console.error('Products:', e.message); return []; }),
     sbGet('product_option_groups', 'order=display_order.asc').catch(() => []),
     sbGet('product_option_values', 'order=display_order.asc').catch(() => []),
+    sbGet('product_questions',     'order=product_id.asc,display_order.asc').catch(() => []),
     sbGet('categories',            'is_active=eq.true&order=display_order.asc').catch(e => { console.error('Categories:', e.message); return []; }),
     sbGet('testimonials',          'is_active=eq.true&order=created_at.asc').catch(e => { console.error('Testimonials:', e.message); return []; }),
     sbGet('site_settings',         'select=key,value').catch(() => [])
   ]);
 
   ALL_PRODUCTS = (rawProducts || []).map(function(p) {
+    // Merge option groups/values
     var groups = (optGroups||[]).filter(function(g){ return g.product_id === p.id; });
     var customisation_options = groups.map(function(g) {
       var vals = (optValues||[]).filter(function(v){ return v.group_id === g.id; });
@@ -1129,7 +1131,12 @@ async function initSite() {
       vals.forEach(function(v){ if (v.price) variantPrices[v.value] = v.price; });
       return { label: g.label, options: vals.map(function(v){ return v.value; }), priceType: g.price_type, variantPrices: variantPrices };
     });
-    return Object.assign({}, p, { customisation_options: customisation_options });
+    // Merge product_questions (flat table replaces text_customisation JSONB)
+    var questions = (pQuestions||[]).filter(function(q){ return q.product_id === p.id; });
+    var text_customisation = questions.length
+      ? { enabled: true, questions: questions.map(function(q){ return { label: q.label, placeholder: q.placeholder||'', required: !!q.is_required }; }) }
+      : null;
+    return Object.assign({}, p, { customisation_options: customisation_options, text_customisation: text_customisation });
   });
 
   ALL_CATEGORIES   = cats        || [];
@@ -1718,16 +1725,33 @@ function openPopup(productId) {
   var price = getPriceDisplay(p);
 
   var optHTML = opts.map(function(g, gi) {
-    var chips = (g.options || []).map(function(o, i) {
-      return '<span class="popup-chip' + (i === 0 ? ' active' : '') + '" onclick="popupSelectChip(this,' + gi + ')">' + o + '</span>';
+    // Sort variants by price low to high if they have individual prices
+    var options = (g.options || []).slice();
+    if (g.priceType === 'per_variant' && g.variantPrices) {
+      options.sort(function(a, b) {
+        return (Number(g.variantPrices[a]) || 0) - (Number(g.variantPrices[b]) || 0);
+      });
+    }
+    var chips = options.map(function(o, i) {
+      var priceHint = (g.priceType === 'per_variant' && g.variantPrices && g.variantPrices[o])
+        ? ' <span style="font-size:10px;opacity:.7">₹' + Number(g.variantPrices[o]).toLocaleString('en-IN') + '</span>' : '';
+      return '<span class="popup-chip' + (i === 0 ? ' active' : '') + '" data-option="' + o + '" onclick="popupSelectChip(this,' + gi + ')">' + o + priceHint + '</span>';
     }).join('');
     return '<div class="popup-ctrl-label">' + g.label + '</div><div class="popup-chips" data-group="' + gi + '">' + chips + '</div>';
   }).join('');
 
-  var textHTML = tc && tc.enabled
-    ? '<div class="popup-ctrl-label">' + (tc.label || 'Custom message') + (tc.required ? ' <span style="color:#E24B4A">*</span>' : '') + '</div>'
-      + '<input id="popupTextInput" class="popup-input" placeholder="' + (tc.placeholder || 'Type here…') + '" ' + (tc.required ? 'data-required="1"' : '') + '>'
-    : '';
+  // Support both old single-field format and new multi-question format
+  var textHTML = '';
+  if (tc && tc.enabled) {
+    var questions = tc.questions && tc.questions.length ? tc.questions
+      : [{ label: tc.label || 'Custom message', placeholder: tc.placeholder || 'Type here…', required: !!tc.required }];
+    textHTML = questions.map(function(q, qi) {
+      return '<div class="popup-ctrl-label">' + (q.label || 'Custom message')
+        + (q.required ? ' <span style="color:#E24B4A">*</span>' : '') + '</div>'
+        + '<textarea id="popupTextInput_' + qi + '" class="popup-input" rows="2" style="resize:vertical;min-height:38px" placeholder="' + (q.placeholder || 'Type here…') + '" '
+        + (q.required ? 'data-required="1"' : '') + '></textarea>';
+    }).join('');
+  }
 
   var badgeHTML = p.is_bestseller ? '<span class="popup-badge">Bestseller</span><br>' : '';
 
@@ -1738,11 +1762,28 @@ function openPopup(productId) {
     + '<div class="popup-desc">' + (p.description || '') + '</div>'
     + optHTML
     + textHTML
-    + '<button class="popup-atc" onclick="popupAddToCart()">🛒 Add to Cart</button>';
+    + (p.notice_message
+        ? ('<div style="background:#fff8ee;border:1px solid #f0d080;border-radius:12px;padding:.85rem 1rem;margin:.5rem 0;font-size:13px;color:#5a4200;line-height:1.6">'
+          + '<div style="font-weight:600;margin-bottom:.4rem">&#128204; Please note</div>'
+          + '<div>' + p.notice_message + '</div>'
+          + '<label style="display:flex;align-items:flex-start;gap:.5rem;margin-top:.65rem;cursor:pointer;font-size:12px">'
+          + '<input type="checkbox" id="popupNoticeCheck" style="margin-top:2px;flex-shrink:0" onchange="toggleAtcBtn(this.checked)">'
+          + ' I have read and understood the above</label></div>')
+        : '')
+    + '<button class="popup-atc" id="popupAtcBtn" onclick="popupAddToCart()"'
+        + (p.notice_message ? ' disabled style="opacity:.5;cursor:not-allowed"' : '') + '>&#128722; Add to Cart</button>';
 
   document.getElementById('popupOverlay').classList.add('open');
   document.getElementById('popupBox').classList.add('open');
   document.body.style.overflow = 'hidden';
+}
+
+function toggleAtcBtn(checked) {
+  var btn = document.getElementById('popupAtcBtn');
+  if (!btn) return;
+  btn.disabled = !checked;
+  btn.style.opacity = checked ? '1' : '0.5';
+  btn.style.cursor = checked ? 'pointer' : 'not-allowed';
 }
 
 function closePopup() {
@@ -1781,23 +1822,28 @@ function popupAddToCart() {
   if (!popupProduct) return;
   var p = popupProduct;
 
-  // Validate required text input
-  var textInput = document.getElementById('popupTextInput');
-  if (textInput && textInput.dataset.required === '1' && !textInput.value.trim()) {
-    textInput.style.borderColor = '#E24B4A';
-    textInput.focus();
-    showToast('Please fill in the required field.');
-    setTimeout(function(){ textInput.style.borderColor = ''; }, 2000);
-    return;
+  // Validate all required question inputs
+  var allInputs = document.querySelectorAll('#popupBody .popup-input[data-required="1"]');
+  for (var ri = 0; ri < allInputs.length; ri++) {
+    var inp = allInputs[ri];
+    if (!inp.value.trim()) {
+      inp.style.borderColor = '#E24B4A';
+      inp.focus();
+      showToast('Please fill in all required fields.');
+      setTimeout(function(){ inp.style.borderColor = ''; }, 2000);
+      return;
+    }
   }
 
-  // Gather customisation
+  // Gather customisation — chips + all text inputs
   var parts = [];
   document.querySelectorAll('#popupBody .popup-chips').forEach(function(grp) {
     var active = grp.querySelector('.popup-chip.active');
-    if (active) parts.push(active.textContent.trim());
+    if (active) parts.push(active.dataset.option || active.textContent.trim());
   });
-  if (textInput && textInput.value.trim()) parts.push(textInput.value.trim());
+  document.querySelectorAll('#popupBody .popup-input').forEach(function(inp) {
+    if (inp.value.trim()) parts.push(inp.value.trim());
+  });
   var custom = parts.join(' · ') || 'Standard';
 
   // Get displayed price
@@ -2065,6 +2111,7 @@ async function saveOrderToSupabase(details) {
 
     const orderNumber = '#YGS' + fy + '-' + String(seq).padStart(3,'0');
 
+    // Insert order (no items column — now in order_items table)
     const res = await fetch(_SB.u + '/rest/v1/orders', {
       method: 'POST',
       headers: {
@@ -2080,7 +2127,6 @@ async function saveOrderToSupabase(details) {
         customer_address: details.address,
         customer_city:    details.city,
         customer_pincode: details.pincode,
-        items:            details.items,
         status:           'Pending',
         source:           'website',
         notes:            ''
@@ -2090,7 +2136,33 @@ async function saveOrderToSupabase(details) {
     if (!res.ok) {
       const errText = await res.text();
       console.error('Order insert failed:', res.status, errText);
-      return orderNumber; // still show success to customer
+      return orderNumber;
+    }
+
+    const orderData = await res.json();
+    const orderId = orderData && orderData[0] ? orderData[0].id : null;
+
+    // Insert order_items rows (flat table)
+    if (orderId && details.items && details.items.length) {
+      const itemRows = details.items.map(function(item, idx) {
+        return {
+          order_id:     orderId,
+          product_name: item.name || '',
+          price:        Number(item.price) || 0,
+          custom_notes: item.custom || '',
+          display_order: idx
+        };
+      });
+      await fetch(_SB.u + '/rest/v1/order_items', {
+        method: 'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'apikey':        _SB.k,
+          'Authorization': 'Bearer ' + _SB.k,
+          'Prefer':        'return=minimal'
+        },
+        body: JSON.stringify(itemRows)
+      });
     }
 
     return orderNumber;
