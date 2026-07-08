@@ -661,6 +661,7 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
   .shop-grid{grid-template-columns:1fr 1fr;gap:12px}
   .product-gallery,.product-img{height:auto;aspect-ratio:1/1}
   .cat-section-heading{margin-top:.5rem}
+  .cat-section-heading{display:none}
 
   /* SHOP FILTERS — fixed "Filters" button opens a bottom-sheet with categories/price/sort */
   .sidebar-section-title{margin-bottom:.5rem}
@@ -727,7 +728,7 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
   .bestsellers-grid{grid-template-columns:1fr}
   .categories-grid{grid-template-columns:repeat(2,1fr);gap:12px}
   .cat-card{aspect-ratio:4/5}
-  .shop-grid{grid-template-columns:1fr}
+  .shop-grid{grid-template-columns:1fr 1fr}
   .product-gallery,.product-img{height:auto;aspect-ratio:4/3}
   .popup-img-wrap{height:200px}
   .hero-ghost{font-size:clamp(50px,18vw,80px)}
@@ -1709,7 +1710,14 @@ function filterShop(cat) {
 function applyFilters() {
   const minP = parseInt(document.getElementById('priceMin')?.value) || 0;
   const maxP = parseInt(document.getElementById('priceMax')?.value) || 999999;
-  const sortVal = document.querySelector('.sidebar-sort select')?.value || 'default';
+  const sortSelect = document.querySelector('.sidebar-sort select');
+  let sortVal = sortSelect?.value || 'default';
+  // When a price range is set, always show results ordered min → max, unless the
+  // shopper has deliberately chosen a different sort (bestsellers / newest / high-low).
+  if ((minP > 0 || maxP < 999999) && (sortVal === 'default' || sortVal === 'low')) {
+    sortVal = 'low';
+    if (sortSelect) sortSelect.value = 'low';
+  }
   renderShopGrid(activeCategory, minP || null, maxP >= 999999 ? null : maxP, sortVal);
   updateFiltersBadge();
 }
