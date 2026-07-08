@@ -616,7 +616,9 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
   .bestsellers-grid{grid-template-columns:1fr 1fr;gap:12px}
   .bs-img{max-height:0;opacity:0;overflow:hidden;transition:max-height .35s ease,opacity .3s ease;aspect-ratio:1/1;height:auto}
   .bs-card.revealed .bs-img{max-height:400px;opacity:1}
-  .bs-tap-hint{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--gray);padding:12px 14px 0}
+  .bs-tap-hint{display:flex;align-items:center;gap:3px;position:absolute;top:10px;right:10px;
+    background:rgba(20,20,20,0.55);color:#fff;font-size:9px;font-weight:500;padding:3px 8px;
+    border-radius:20px;z-index:2;pointer-events:none}
   .bs-card.revealed .bs-tap-hint{display:none}
   .bs-card.revealed{position:relative}
   .bs-card.revealed .bs-img::after{content:'✕ Tap to hide';position:absolute;top:8px;right:8px;background:rgba(20,20,20,0.55);color:#fff;font-size:10px;padding:3px 9px;border-radius:20px;z-index:2}
@@ -1425,7 +1427,7 @@ function bsCardHTML(p) {
     : (p.emoji || '🎁');
   const imgClass = imgSrc ? 'bs-img' : 'bs-img bs-i1';
   const imgStyle = imgSrc ? 'background:#dceae9;overflow:hidden' : '';
-  return `<div class="bs-card" onclick="bsCardTap(this,'${p.id}')">   <span class="bs-badge${p.is_bestseller ? '' : ' new'}">${p.is_bestseller ? 'Bestseller' : 'New'}</span>   <div class="${imgClass}" style="${imgStyle}">${img}</div>   <div class="bs-tap-hint">📷 Tap to view photo</div>   <div class="bs-body">    <div class="bs-name">${p.name}</div>    <div class="bs-footer"><span class="bs-price">₹${Number(p.price).toLocaleString('en-IN')}</span><button class="bs-btn" onclick="event.stopPropagation();openPopup('${p.id}')">Shop Now</button></div>   </div>  </div>`;
+  return `<div class="bs-card" onclick="bsCardTap(this,'${p.id}')">   <span class="bs-badge${p.is_bestseller ? '' : ' new'}">${p.is_bestseller ? 'Bestseller' : 'New'}</span>   <div class="${imgClass}" style="${imgStyle}">${img}</div>   <div class="bs-tap-hint">Tap for photo</div>   <div class="bs-body">    <div class="bs-name">${p.name}</div>    <div class="bs-footer"><span class="bs-price">₹${Number(p.price).toLocaleString('en-IN')}</span><button class="bs-btn" onclick="event.stopPropagation();openPopup('${p.id}')">Shop Now</button></div>   </div>  </div>`;
 }
 
 /* Bestseller card tap: on mobile, tapping toggles the photo open/closed. Shop Now (separate button) always opens the buy popup. */
@@ -1667,7 +1669,17 @@ function showPage(page, cat) {
   document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
   const navEl = document.getElementById('nav-' + (page === 'shop' ? 'shop' : 'home'));
   if (navEl) navEl.classList.add('active');
-  if (page === 'shop') filterShop(cat || 'all');
+  if (page === 'shop') {
+    // Arriving fresh at the shop page (nav link, footer link, hero button, etc.) should show
+    // that category's full results — clear any price/sort filters left over from a previous visit.
+    const pMin = document.getElementById('priceMin');
+    const pMax = document.getElementById('priceMax');
+    const sortSel = document.querySelector('.sidebar-sort select');
+    if (pMin) pMin.value = '';
+    if (pMax) pMax.value = '';
+    if (sortSel) sortSel.value = 'default';
+    filterShop(cat || 'all');
+  }
 }
 
 function toggleMoreFilters() {
