@@ -379,6 +379,8 @@ section{padding:5rem 2rem}
 .occ-chip{font-size:11px;padding:5px 12px;border:1px solid var(--border);border-radius:20px;cursor:pointer;color:var(--charcoal);background:var(--cream);transition:all .15s}
 .occ-chip:hover,.occ-chip.active{border-color:var(--gold);background:var(--gold-light);color:#8a6830}
 .sidebar-sort select{width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:10px;font-size:13px;font-family:var(--font-body);background:var(--cream);color:var(--charcoal);outline:none;cursor:pointer}
+.btn-filters-toggle{display:none}
+.sidebar-more-filters{display:contents}
 .btn-reset{width:100%;padding:9px;background:transparent;border:1px solid var(--border);border-radius:10px;font-size:12px;color:var(--gray);cursor:pointer;font-family:var(--font-body);transition:all .2s}
 .btn-reset:hover{border-color:var(--teal);color:var(--teal)}
 .shop-grid-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem}
@@ -592,8 +594,8 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
   .btn-insta{display:none}
 
   /* HERO */
-  .hero{height:auto;min-height:85vh}
-  .hero-body{padding:2rem 1.25rem 1.5rem}
+  .hero{height:auto;min-height:0}
+  .hero-body{padding:1.75rem 1.25rem 1.25rem}
   .hero-ghost{font-size:clamp(60px,20vw,100px)}
   .hero-tagline{font-size:clamp(26px,7vw,40px)}
   .hero-tagline-2{font-size:clamp(20px,5.5vw,32px);margin-bottom:1rem}
@@ -611,10 +613,12 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
   .bs-name{font-size:13px}
   .bs-desc{display:none}
   .bs-price{font-size:16px}
+  .bs-btn{display:none}
+  .bs-footer{justify-content:flex-start}
 
   /* CATEGORIES */
-  .categories-grid{grid-template-columns:repeat(2,1fr);gap:10px}
-  .cat-card{aspect-ratio:4/5}
+  .categories-grid{grid-template-columns:repeat(2,1fr);gap:12px}
+  .cat-card{aspect-ratio:4/3}
   .cat-name{font-size:13px}
 
   /* SECTION HEADERS */
@@ -638,8 +642,8 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
   .about-p{font-size:14px}
 
   /* SHOP PAGE */
-  .shop-layout{grid-template-columns:1fr;padding:1.25rem}
-  .shop-sidebar{position:static;border-radius:12px}
+  .shop-layout{grid-template-columns:1fr;padding:1.25rem;gap:1rem}
+  .shop-sidebar{position:static;border-radius:12px;padding:1rem;gap:.85rem}
   .shop-page-hero{padding:2rem 1.25rem 1.5rem}
   .table-header{display:none}
   .table-row{grid-template-columns:48px 1fr auto auto;gap:.5rem}
@@ -648,6 +652,19 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
   .shop-grid{grid-template-columns:1fr 1fr;gap:12px}
   .product-gallery,.product-img{height:auto;aspect-ratio:1/1}
   .cat-section-heading{margin-top:.5rem}
+
+  /* SHOP FILTERS — chip row + collapsible "more filters" panel */
+  .sidebar-section-title{margin-bottom:.5rem}
+  .sidebar-cats{flex-direction:row;overflow-x:auto;gap:8px;padding-bottom:2px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .sidebar-cats::-webkit-scrollbar{display:none}
+  .sidebar-cat{flex-shrink:0;white-space:nowrap;padding:8px 14px;border:1px solid var(--border);gap:6px}
+  .sidebar-cat.active{border-color:var(--teal)}
+  .btn-filters-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;padding:10px 14px;background:var(--cream);border:1px solid var(--border);border-radius:10px;font-size:12px;font-weight:500;color:var(--charcoal);cursor:pointer;font-family:var(--font-body)}
+  .filters-toggle-arrow{transition:transform .25s ease;color:var(--gray)}
+  .btn-filters-toggle.open .filters-toggle-arrow{transform:rotate(180deg)}
+  .sidebar-more-filters{display:block;max-height:0;overflow:hidden;opacity:0;transition:max-height .3s ease,opacity .25s ease}
+  .sidebar-more-filters.open{max-height:400px;opacity:1}
+  .sidebar-more-filters .sidebar-divider:first-child{display:none}
 
   /* GALLERY — always show arrows on touch, bigger tap targets */
   .gallery-prev,.gallery-next{opacity:1;width:26px;height:26px;font-size:12px}
@@ -669,8 +686,8 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
 @media (max-width: 480px) {
   /* Very small screens */
   .bestsellers-grid{grid-template-columns:1fr}
-  .categories-grid{grid-template-columns:repeat(2,1fr)}
-  .cat-card{aspect-ratio:1/1}
+  .categories-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .cat-card{aspect-ratio:4/3}
   .shop-grid{grid-template-columns:1fr}
   .product-gallery,.product-img{height:auto;aspect-ratio:4/3}
   .popup-img-wrap{height:200px}
@@ -904,6 +921,10 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
           <div class="sidebar-cat active" data-cat="all" onclick="filterShop('all')"><span>All Gifts</span><span class="sidebar-cat-count" id="countAll">0</span></div>
         </div>
       </div>
+      <button class="btn-filters-toggle" id="filtersToggleBtn" onclick="toggleMoreFilters()">
+        <span>⚙ Price &amp; Sort</span><span class="filters-toggle-arrow" id="filtersToggleArrow">⌄</span>
+      </button>
+      <div class="sidebar-more-filters" id="sidebarMoreFilters">
       <hr class="sidebar-divider">
       <div>
         <div class="sidebar-section-title">Price Range (₹)</div>
@@ -925,6 +946,7 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
         </select>
       </div>
       <button class="btn-reset" onclick="resetFilters()">✕ Reset Filters</button>
+      </div>
     </aside>
 
     <div>
@@ -1585,6 +1607,11 @@ function showPage(page, cat) {
   const navEl = document.getElementById('nav-' + (page === 'shop' ? 'shop' : 'home'));
   if (navEl) navEl.classList.add('active');
   if (page === 'shop') filterShop(cat || 'all');
+}
+
+function toggleMoreFilters() {
+  document.getElementById('sidebarMoreFilters').classList.toggle('open');
+  document.getElementById('filtersToggleBtn').classList.toggle('open');
 }
 
 function filterShop(cat) {
