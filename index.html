@@ -382,6 +382,10 @@ section{padding:5rem 2rem}
 .sidebar-sort select{width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:10px;font-size:13px;font-family:var(--font-body);background:var(--cream);color:var(--charcoal);outline:none;cursor:pointer}
 .btn-filters-toggle{display:none}
 .sidebar-more-filters{display:contents}
+.mobile-filters-header{display:none}
+.mobile-filters-apply{display:none}
+.mobile-filters-overlay{display:none}
+.mobile-filters-fab{display:none}
 .btn-reset{width:100%;padding:9px;background:transparent;border:1px solid var(--border);border-radius:10px;font-size:12px;color:var(--gray);cursor:pointer;font-family:var(--font-body);transition:all .2s}
 .btn-reset:hover{border-color:var(--teal);color:var(--teal)}
 .shop-grid-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem}
@@ -614,6 +618,8 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
   .bs-card.revealed .bs-img{max-height:400px;opacity:1}
   .bs-tap-hint{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--gray);padding:12px 14px 0}
   .bs-card.revealed .bs-tap-hint{display:none}
+  .bs-card.revealed{position:relative}
+  .bs-card.revealed .bs-img::after{content:'✕ Tap to hide';position:absolute;top:8px;right:8px;background:rgba(20,20,20,0.55);color:#fff;font-size:10px;padding:3px 9px;border-radius:20px;z-index:2}
   .bs-name{font-size:13px}
   .bs-desc{display:none}
   .bs-price{font-size:16px}
@@ -656,18 +662,45 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
   .product-gallery,.product-img{height:auto;aspect-ratio:1/1}
   .cat-section-heading{margin-top:.5rem}
 
-  /* SHOP FILTERS — chip row + collapsible "more filters" panel */
+  /* SHOP FILTERS — fixed "Filters" button opens a bottom-sheet with categories/price/sort */
   .sidebar-section-title{margin-bottom:.5rem}
-  .sidebar-cats{flex-direction:row;overflow-x:auto;gap:8px;padding-bottom:2px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-  .sidebar-cats::-webkit-scrollbar{display:none}
-  .sidebar-cat{flex-shrink:0;white-space:nowrap;padding:8px 14px;border:1px solid var(--border);gap:6px}
+  .btn-filters-toggle{display:none !important}
+  .sidebar-more-filters{display:block !important;max-height:none !important;opacity:1 !important}
+  .sidebar-more-filters .sidebar-divider:first-child{display:block}
+  .sidebar-cats{flex-wrap:wrap;overflow-x:visible;white-space:normal;gap:8px}
+  .sidebar-cat{flex-shrink:0}
   .sidebar-cat.active{border-color:var(--teal)}
-  .btn-filters-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;padding:10px 14px;background:var(--cream);border:1px solid var(--border);border-radius:10px;font-size:12px;font-weight:500;color:var(--charcoal);cursor:pointer;font-family:var(--font-body)}
-  .filters-toggle-arrow{transition:transform .25s ease;color:var(--gray)}
-  .btn-filters-toggle.open .filters-toggle-arrow{transform:rotate(180deg)}
-  .sidebar-more-filters{display:block;max-height:0;overflow:hidden;opacity:0;transition:max-height .3s ease,opacity .25s ease}
-  .sidebar-more-filters.open{max-height:400px;opacity:1}
-  .sidebar-more-filters .sidebar-divider:first-child{display:none}
+
+  .shop-sidebar{position:fixed;left:0;right:0;bottom:0;top:auto;max-height:82vh;overflow-y:auto;
+    transform:translateY(115%);transition:transform .32s cubic-bezier(.4,0,.2,1);z-index:210;
+    border-radius:20px 20px 0 0;box-shadow:0 -10px 34px rgba(0,0,0,0.18);
+    background:var(--cream);padding:1.25rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom))}
+  .shop-sidebar.open{transform:translateY(0)}
+
+  .mobile-filters-header{display:flex;align-items:center;justify-content:space-between;
+    padding-bottom:.85rem;margin-bottom:.85rem;border-bottom:1px solid var(--border);
+    font-family:var(--font-display);font-size:17px;font-weight:600;color:var(--charcoal)}
+  .mobile-filters-header button{background:var(--teal-light);border:none;color:var(--teal);
+    width:30px;height:30px;border-radius:50%;font-size:13px;cursor:pointer}
+
+  .mobile-filters-apply{display:block;width:100%;margin-top:1rem;padding:13px;border:none;
+    border-radius:12px;background:var(--teal);color:var(--cream);font-weight:600;font-size:14px;
+    font-family:var(--font-body);cursor:pointer}
+
+  .mobile-filters-overlay{display:block;position:fixed;inset:0;background:rgba(26,26,26,0.5);
+    z-index:205;opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(2px)}
+  .mobile-filters-overlay.open{opacity:1;pointer-events:all}
+
+  .mobile-filters-fab{display:flex;align-items:center;gap:7px;position:fixed;
+    left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom));
+    z-index:150;background:var(--teal);color:var(--cream);border:none;border-radius:30px;
+    padding:12px 22px;font-size:13px;font-weight:600;font-family:var(--font-body);
+    box-shadow:0 10px 24px rgba(31,78,74,0.35);cursor:pointer}
+  .filters-badge{background:var(--gold);color:var(--charcoal);border-radius:50%;
+    width:18px;height:18px;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:700}
+
+  /* room so the fixed Filters button never covers the last row of products */
+  .shop-layout{padding-bottom:90px}
 
   /* GALLERY — always show arrows on touch, bigger tap targets */
   .gallery-prev,.gallery-next{opacity:1;width:26px;height:26px;font-size:12px}
@@ -678,8 +711,11 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
   .gallery-dot.active::after{background:#fff;transform:translate(-50%,-50%) scale(1.2)}
   .gallery-dots{bottom:2px}
 
-  /* FOOTER */
-  .footer-top{grid-template-columns:1fr;gap:2rem}
+  /* FOOTER — 2-column on mobile, brand block spans full width */
+  .footer-top{grid-template-columns:1fr 1fr;gap:2rem 1.25rem}
+  .footer-top>div{min-width:0}
+  .footer-top>div:first-child{grid-column:1/-1}
+  .footer-contact-link,.footer-contact-item span{overflow-wrap:anywhere}
   .footer-bottom{flex-direction:column;gap:.75rem;text-align:center}
 
   /* CART DRAWER */
@@ -917,7 +953,11 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
     </div>
   </div>
   <div class="shop-layout">
-    <aside class="shop-sidebar">
+    <aside class="shop-sidebar" id="shopSidebar">
+      <div class="mobile-filters-header">
+        <span>Filters</span>
+        <button onclick="closeFiltersSheet()" aria-label="Close filters">✕</button>
+      </div>
       <div>
         <div class="sidebar-section-title">Categories</div>
         <div class="sidebar-cats" id="sidebarCats">
@@ -950,7 +990,14 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
       </div>
       <button class="btn-reset" onclick="resetFilters()">✕ Reset Filters</button>
       </div>
+      <button class="mobile-filters-apply" onclick="closeFiltersSheet()">Apply Filters</button>
     </aside>
+
+    <div class="mobile-filters-overlay" id="mobileFiltersOverlay" onclick="closeFiltersSheet()"></div>
+    <button class="mobile-filters-fab" id="filtersFab" onclick="openFiltersSheet()">
+      ⚙ Filters<span class="filters-badge" id="filtersBadge" style="display:none">0</span>
+    </button>
+
 
     <div>
       <div class="shop-grid-header">
@@ -1380,11 +1427,11 @@ function bsCardHTML(p) {
   return `<div class="bs-card" onclick="bsCardTap(this,'${p.id}')">   <span class="bs-badge${p.is_bestseller ? '' : ' new'}">${p.is_bestseller ? 'Bestseller' : 'New'}</span>   <div class="${imgClass}" style="${imgStyle}">${img}</div>   <div class="bs-tap-hint">📷 Tap to view photo</div>   <div class="bs-body">    <div class="bs-name">${p.name}</div>    <div class="bs-footer"><span class="bs-price">₹${Number(p.price).toLocaleString('en-IN')}</span><button class="bs-btn" onclick="event.stopPropagation();openPopup('${p.id}')">Shop Now</button></div>   </div>  </div>`;
 }
 
-/* Bestseller card tap: on mobile, first tap reveals the photo; next tap (or on desktop) opens the buy popup */
+/* Bestseller card tap: on mobile, tapping toggles the photo open/closed. Shop Now (separate button) always opens the buy popup. */
 function bsCardTap(card, id) {
   const isMobile = window.matchMedia('(max-width: 768px)').matches;
-  if (isMobile && !card.classList.contains('revealed')) {
-    card.classList.add('revealed');
+  if (isMobile) {
+    card.classList.toggle('revealed');
     return;
   }
   openPopup(id);
@@ -1627,6 +1674,32 @@ function toggleMoreFilters() {
   document.getElementById('filtersToggleBtn').classList.toggle('open');
 }
 
+function openFiltersSheet() {
+  document.getElementById('shopSidebar').classList.add('open');
+  document.getElementById('mobileFiltersOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeFiltersSheet() {
+  document.getElementById('shopSidebar').classList.remove('open');
+  document.getElementById('mobileFiltersOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function updateFiltersBadge() {
+  const badge = document.getElementById('filtersBadge');
+  if (!badge) return;
+  let count = 0;
+  if (activeCategory && activeCategory !== 'all') count++;
+  const pMin = document.getElementById('priceMin')?.value;
+  const pMax = document.getElementById('priceMax')?.value;
+  if (pMin) count++;
+  if (pMax) count++;
+  const sortSel = document.querySelector('.sidebar-sort select');
+  if (sortSel && sortSel.value !== 'default') count++;
+  badge.textContent = count;
+  badge.style.display = count > 0 ? 'flex' : 'none';
+}
+
 function filterShop(cat) {
   activeCategory = cat;
   document.querySelectorAll('.sidebar-cat').forEach(el => el.classList.toggle('active', el.dataset.cat === cat));
@@ -1638,6 +1711,7 @@ function applyFilters() {
   const maxP = parseInt(document.getElementById('priceMax')?.value) || 999999;
   const sortVal = document.querySelector('.sidebar-sort select')?.value || 'default';
   renderShopGrid(activeCategory, minP || null, maxP >= 999999 ? null : maxP, sortVal);
+  updateFiltersBadge();
 }
 
 function toggleOcc(el) { el.classList.toggle('active'); }
@@ -2413,7 +2487,7 @@ function closePolicy() {
 }
 
 // Close on Escape key
-document.addEventListener('keydown', function(e) { if (e.key === 'Escape') { closePolicy(); closeMobileNav(); } });
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') { closePolicy(); closeMobileNav(); closeFiltersSheet(); } });
 
 function scrollToAbout() { if (currentPage !== 'home') showPage('home'); setTimeout(() => document.getElementById('about-section').scrollIntoView({behavior:'smooth'}), 100); }
 function scrollToContact() { if (currentPage !== 'home') showPage('home'); setTimeout(() => document.getElementById('contact-section').scrollIntoView({behavior:'smooth'}), 100); }
