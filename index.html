@@ -162,6 +162,23 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(250,246,239,
 .btn-insta-story:hover{background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff;border-color:transparent}
 .cart-count{background:var(--gold);color:var(--charcoal);border-radius:50%;width:18px;height:18px;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:600}
 
+/* ── HAMBURGER + MOBILE NAV DRAWER ── */
+.btn-hamburger{display:none;flex-direction:column;justify-content:center;gap:4px;width:36px;height:36px;background:none;border:none;cursor:pointer;padding:0}
+.btn-hamburger span{display:block;width:20px;height:2px;background:var(--teal);border-radius:2px;margin:0 auto;transition:transform .25s ease,opacity .25s ease}
+.btn-hamburger.open span:nth-child(1){transform:translateY(6px) rotate(45deg)}
+.btn-hamburger.open span:nth-child(2){opacity:0}
+.btn-hamburger.open span:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
+.mobile-nav-overlay{position:fixed;inset:0;background:rgba(26,26,26,0.5);z-index:199;opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(3px)}
+.mobile-nav-overlay.open{opacity:1;pointer-events:all}
+.mobile-nav-drawer{position:fixed;top:0;right:0;bottom:0;width:min(300px,80vw);background:var(--cream);z-index:200;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);box-shadow:-8px 0 30px rgba(0,0,0,0.12);display:flex;flex-direction:column;padding:0}
+.mobile-nav-drawer.open{transform:translateX(0)}
+.mobile-nav-header{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:1px solid var(--border)}
+.mobile-nav-close{background:none;border:none;font-size:18px;color:var(--gray);cursor:pointer;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.mobile-nav-links{list-style:none;padding:1rem 0;flex:1}
+.mobile-nav-links a{display:block;padding:14px 1.5rem;font-size:15px;font-weight:500;color:var(--charcoal);text-decoration:none;cursor:pointer;border-bottom:1px solid var(--border)}
+.mobile-nav-links a:active{background:var(--teal-light);color:var(--teal)}
+.mobile-nav-insta{display:flex;align-items:center;gap:10px;margin:1rem 1.5rem 1.5rem;padding:12px 16px;border:1.5px solid var(--border);border-radius:12px;color:var(--charcoal);text-decoration:none;font-size:13px;font-weight:500}
+
 /* ── SHARED ── */
 section{padding:5rem 2rem}
 .section-inner{max-width:1200px;margin:0 auto}
@@ -570,6 +587,9 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
   .nav-links{display:none}
   .nav-inner{padding:0 1rem}
   .btn-cart{padding:8px 14px;font-size:12px}
+  .nav-actions{gap:.6rem}
+  .btn-hamburger{display:flex}
+  .btn-insta{display:none}
 
   /* HERO */
   .hero{height:auto;min-height:85vh}
@@ -587,7 +607,7 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
 
   /* BESTSELLERS */
   .bestsellers-grid{grid-template-columns:1fr 1fr;gap:12px}
-  .bs-img{height:130px}
+  .bs-img{height:auto;aspect-ratio:1/1}
   .bs-name{font-size:13px}
   .bs-desc{display:none}
   .bs-price{font-size:16px}
@@ -626,8 +646,17 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
   .table-row>div:nth-child(3),
   .table-row>div:nth-child(4){display:none}
   .shop-grid{grid-template-columns:1fr 1fr;gap:12px}
-  .product-gallery,.product-img{height:160px}
+  .product-gallery,.product-img{height:auto;aspect-ratio:1/1}
   .cat-section-heading{margin-top:.5rem}
+
+  /* GALLERY — always show arrows on touch, bigger tap targets */
+  .gallery-prev,.gallery-next{opacity:1;width:26px;height:26px;font-size:12px}
+  .gallery-prev{left:4px}
+  .gallery-next{right:4px}
+  .gallery-dot{width:16px;height:16px;background:transparent;position:relative}
+  .gallery-dot::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.5)}
+  .gallery-dot.active::after{background:#fff;transform:translate(-50%,-50%) scale(1.2)}
+  .gallery-dots{bottom:2px}
 
   /* FOOTER */
   .footer-top{grid-template-columns:1fr;gap:2rem}
@@ -643,7 +672,7 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
   .categories-grid{grid-template-columns:repeat(2,1fr)}
   .cat-card{aspect-ratio:1/1}
   .shop-grid{grid-template-columns:1fr}
-  .product-gallery,.product-img{height:200px}
+  .product-gallery,.product-img{height:auto;aspect-ratio:4/3}
   .popup-img-wrap{height:200px}
   .hero-ghost{font-size:clamp(50px,18vw,80px)}
   .section-title{font-size:clamp(24px,8vw,32px)}
@@ -681,9 +710,31 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>
       </a>
       <button class="btn-cart" onclick="openCart()">🛒 Cart <span class="cart-count" id="cartCount">0</span></button>
+      <button class="btn-hamburger" onclick="toggleMobileNav()" aria-label="Open menu" id="hamburgerBtn">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </div>
 </nav>
+
+<!-- MOBILE NAV DRAWER -->
+<div class="mobile-nav-overlay" id="mobileNavOverlay" onclick="closeMobileNav()"></div>
+<div class="mobile-nav-drawer" id="mobileNavDrawer">
+  <div class="mobile-nav-header">
+    <span class="nav-logo-main">Menu</span>
+    <button class="mobile-nav-close" onclick="closeMobileNav()" aria-label="Close menu">✕</button>
+  </div>
+  <ul class="mobile-nav-links">
+    <li><a onclick="showPage('home');closeMobileNav()">Home</a></li>
+    <li><a onclick="showPage('shop');closeMobileNav()">Shop</a></li>
+    <li><a onclick="scrollToAbout();closeMobileNav()">About</a></li>
+    <li><a onclick="scrollToContact();closeMobileNav()">Contact</a></li>
+  </ul>
+  <a href="https://www.instagram.com/your.giftstory/" target="_blank" rel="noopener" class="mobile-nav-insta">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>
+    Follow us on Instagram
+  </a>
+</div>
 
 <!-- ═══ HOME PAGE ═══ -->
 <div id="page-home" class="page active">
@@ -1454,6 +1505,27 @@ function setGallerySlide(btn, idx) {
   card.querySelectorAll('.gallery-dot').forEach(function(d, i) { d.classList.toggle('active', i === idx); });
 }
 
+/* Swipe support for product galleries on touch devices */
+(function() {
+  var touchStartX = 0, touchStartY = 0, activeCard = null;
+  document.addEventListener('touchstart', function(e) {
+    var slides = e.target.closest('.gallery-slides');
+    if (!slides) { activeCard = null; return; }
+    activeCard = slides.closest('.product-card');
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  document.addEventListener('touchend', function(e) {
+    if (!activeCard) return;
+    var dx = e.changedTouches[0].clientX - touchStartX;
+    var dy = e.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+      galleryNav(activeCard, dx < 0 ? 1 : -1);
+    }
+    activeCard = null;
+  }, { passive: true });
+})();
+
 function trimDesc(text, maxWords) {
   if (!text) return '';
   var words = text.trim().split(/\s+/);
@@ -1949,6 +2021,24 @@ function updateTotal() {
 }
 
 function openCart() { document.getElementById('cartDrawer').classList.add('open'); document.getElementById('overlay').classList.add('open'); }
+
+function toggleMobileNav() {
+  const drawer = document.getElementById('mobileNavDrawer');
+  const isOpen = drawer.classList.contains('open');
+  if (isOpen) { closeMobileNav(); } else { openMobileNav(); }
+}
+function openMobileNav() {
+  document.getElementById('mobileNavDrawer').classList.add('open');
+  document.getElementById('mobileNavOverlay').classList.add('open');
+  document.getElementById('hamburgerBtn').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeMobileNav() {
+  document.getElementById('mobileNavDrawer').classList.remove('open');
+  document.getElementById('mobileNavOverlay').classList.remove('open');
+  document.getElementById('hamburgerBtn').classList.remove('open');
+  document.body.style.overflow = '';
+}
 function closeCart() { document.getElementById('cartDrawer').classList.remove('open'); document.getElementById('overlay').classList.remove('open'); }
 
 function showToast(msg) {
@@ -2283,7 +2373,7 @@ function closePolicy() {
 }
 
 // Close on Escape key
-document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closePolicy(); });
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') { closePolicy(); closeMobileNav(); } });
 
 function scrollToAbout() { if (currentPage !== 'home') showPage('home'); setTimeout(() => document.getElementById('about-section').scrollIntoView({behavior:'smooth'}), 100); }
 function scrollToContact() { if (currentPage !== 'home') showPage('home'); setTimeout(() => document.getElementById('contact-section').scrollIntoView({behavior:'smooth'}), 100); }
