@@ -1874,65 +1874,74 @@ function openPopup(productId) {
   if (!p) return;
   popupProduct = p;
 
-  // Image area — clear immediately so old image never shows through
   var imgWrap = document.getElementById('popupImgWrap');
+  var popupBox = document.getElementById('popupBox');
   var photos = (p.photos || []).filter(Boolean);
 
-  // Blank out any existing image src instantly (stops old image showing)
-  var oldImg = imgWrap.querySelector('img');
-  if (oldImg) { oldImg.src = ''; oldImg.style.opacity = '0'; }
+  // ── STEP 1: Instantly hide the image wrap and clear it ──
+  // Setting display:none forces the GPU to drop the old texture immediately
+  imgWrap.style.display = 'none';
+  imgWrap.style.cssText = 'display:none';
 
-  // Apply shimmer BEFORE clearing innerHTML so there's no flash
-  imgWrap.style.cssText = 'background:linear-gradient(90deg,#dceae9 25%,#c9dedd 50%,#dceae9 75%);background-size:800px 100%;animation:bsShimmer 1.5s infinite linear';
+  // Remove old image src before it can flash
+  var oldImg = imgWrap.querySelector('img');
+  if (oldImg) { oldImg.src = ''; oldImg.remove(); }
   imgWrap.innerHTML = '';
+
+  // Clear body instantly too — old name/price must not flash
+  document.getElementById('popupBody').innerHTML = '';
 
   var closeBtn = document.createElement('button');
   closeBtn.className = 'popup-close';
   closeBtn.innerHTML = '✕';
   closeBtn.onclick = closePopup;
 
-  if (photos.length) {
-    var img = document.createElement('img');
-    img.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:center;opacity:0';
-    img.alt = p.name;
-    img.title = 'Click to view full image';
-    img.onclick = function(e) { e.stopPropagation(); openLightbox(photos, 0); };
+  // ── STEP 2: In next frame, show shimmer and start loading new image ──
+  requestAnimationFrame(function() {
+    // Show shimmer — GPU now paints fresh teal, old image completely gone
+    imgWrap.style.cssText = 'display:block;background:linear-gradient(90deg,#dceae9 25%,#c9dedd 50%,#dceae9 75%);background-size:800px 100%;animation:bsShimmer 1.5s infinite linear';
 
-    // Use exact src from cache (already in browser memory) — zero network request
-    var finalSrc = _imgCache[p.id] || imgUrl(photos[0], 600, 72);
+    if (photos.length) {
+      var img = document.createElement('img');
+      img.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:center;opacity:0;position:relative;z-index:1';
+      img.alt = p.name;
+      img.title = 'Click to view full image';
+      img.onclick = function(e) { e.stopPropagation(); openLightbox(photos, 0); };
 
-    img.src = finalSrc;
+      // Use cache if available — guaranteed same URL = instant from browser memory
+      var finalSrc = _imgCache[p.id] || imgUrl(photos[0], 600, 72);
+      img.src = finalSrc;
 
-    // If already cached, browser fires onload synchronously — show instantly
-    if (img.complete && img.naturalWidth) {
-      img.style.opacity = '1';
-      imgWrap.style.cssText = '';
+      if (img.complete && img.naturalWidth) {
+        // Already cached — show in next frame after shimmer has painted
+        requestAnimationFrame(function() {
+          img.style.opacity = '1';
+          imgWrap.style.cssText = 'display:block';
+        });
+      } else {
+        img.onload = function() {
+          img.style.transition = 'opacity .2s ease';
+          img.style.opacity = '1';
+          imgWrap.style.cssText = 'display:block';
+        };
+      }
+      imgWrap.appendChild(img);
     } else {
-      img.onload = function() {
-        img.style.transition = 'opacity .2s ease';
-        img.style.opacity = '1';
-        imgWrap.style.cssText = '';
-      };
+      imgWrap.style.cssText = 'display:block';
+      var ph = document.createElement('div');
+      ph.className = 'popup-img-placeholder';
+      ph.textContent = p.emoji || '🎁';
+      imgWrap.appendChild(ph);
     }
-    imgWrap.appendChild(img);
-  } else {
-    var ph = document.createElement('div');
-    ph.className = 'popup-img-placeholder';
-    ph.textContent = p.emoji || '🎁';
-    imgWrap.appendChild(ph);
-  }
-  imgWrap.appendChild(closeBtn);
+    imgWrap.appendChild(closeBtn);
+  });
 
-  // Clear body immediately — old name/price must not flash even for one frame
-  document.getElementById('popupBody').innerHTML = '';
-
-  // Body content
+  // Build body content
   var opts = p.customisation_options || [];
   var tc = p.text_customisation;
   var price = getPriceDisplay(p);
 
   var optHTML = opts.map(function(g, gi) {
-    // Sort variants by price low to high if they have individual prices
     var options = (g.options || []).slice();
     if (g.priceType === 'per_variant' && g.variantPrices) {
       options.sort(function(a, b) {
@@ -1947,7 +1956,6 @@ function openPopup(productId) {
     return '<div class="popup-ctrl-label">' + g.label + '</div><div class="popup-chips" data-group="' + gi + '">' + chips + '</div>';
   }).join('');
 
-  // Support both old single-field format and new multi-question format
   var textHTML = '';
   if (tc && tc.enabled) {
     var questions = tc.questions && tc.questions.length ? tc.questions
@@ -1961,14 +1969,11 @@ function openPopup(productId) {
   }
 
   var badgeHTML = p.is_bestseller ? '<span class="popup-badge">Bestseller</span><br>' : '';
-
-  document.getElementById('popupBody').innerHTML =
-    badgeHTML
+  var bodyHTML = badgeHTML
     + '<div class="popup-name">' + p.name + '</div>'
     + '<div class="popup-price" id="popupPrice">' + price + '</div>'
     + '<div class="popup-desc">' + (p.description || '') + '</div>'
-    + optHTML
-    + textHTML
+    + optHTML + textHTML
     + (p.notice_message
         ? ('<div style="background:#fff8ee;border:1px solid #f0d080;border-radius:12px;padding:.85rem 1rem;margin:.5rem 0;font-size:13px;color:#5a4200;line-height:1.6">'
           + '<div style="font-weight:600;margin-bottom:.4rem">&#128204; Please note</div>'
@@ -1980,6 +1985,8 @@ function openPopup(productId) {
     + '<button class="popup-atc" id="popupAtcBtn" onclick="popupAddToCart()"'
         + (p.notice_message ? ' disabled style="opacity:.5;cursor:not-allowed"' : '') + '>&#128722; Add to Cart</button>';
 
+  // Open overlay and set body in the SAME frame as shimmer — atomic, no flash possible
+  document.getElementById('popupBody').innerHTML = bodyHTML;
   document.getElementById('popupOverlay').classList.add('open');
   document.getElementById('popupBox').classList.add('open');
   document.body.style.overflow = 'hidden';
