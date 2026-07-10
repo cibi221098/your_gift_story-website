@@ -154,6 +154,9 @@ html,body{height:100%;font-family:var(--font-body);background:#f4f1ec;color:var(
 .photo-preview-wrap{position:relative;width:72px;height:72px}
 .photo-preview-wrap img{width:72px;height:72px;border-radius:10px;object-fit:cover;border:1px solid var(--border)}
 .photo-preview-del{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--red);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;line-height:1}
+.photo-compress-badge{position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);background:#1F4E4A;color:#fff;font-size:9px;font-weight:600;padding:2px 6px;border-radius:8px;white-space:nowrap;letter-spacing:0.02em;pointer-events:none}
+.photo-compress-badge.compressing{background:#C9A668}
+.photo-preview-wrap.compressing img{opacity:0.5}
 .chips-editor{display:flex;flex-wrap:wrap;gap:6px;padding:.5rem;border:1px solid var(--border);border-radius:10px;background:var(--white);min-height:44px;cursor:text}
 .chip-tag{display:inline-flex;align-items:center;gap:5px;background:var(--teal-l);border:1px solid rgba(31,78,74,.2);border-radius:20px;padding:4px 10px;font-size:12px;color:var(--teal)}
 .chip-tag-del{background:none;border:none;cursor:pointer;color:var(--teal);font-size:14px;line-height:1;padding:0}
@@ -295,6 +298,7 @@ html,body{height:100%;font-family:var(--font-body);background:#f4f1ec;color:var(
       <div class="nav-item" data-panel="testimonials" onclick="showPanel('testimonials',this)"><span class="nav-icon">💬</span> Testimonials</div>
       <div class="nav-section-label">Settings</div>
       <div class="nav-item" data-panel="settings" onclick="showPanel('settings',this)"><span class="nav-icon">⚙️</span> Site Settings</div>
+      <div class="nav-item" data-panel="optimise" onclick="showPanel('optimise',this)"><span class="nav-icon">🗜️</span> Optimise Images</div>
     </nav>
     <div class="sidebar-bottom">
       <div class="supabase-status"><div class="status-dot"></div><span>Supabase connected</span></div>
@@ -442,6 +446,8 @@ html,body{height:100%;font-family:var(--font-body);background:#f4f1ec;color:var(
   </main>
 </div>
 
+<!-- OPTIMISE PANEL is inside the main sidebar layout above -->
+
 <!-- PRODUCT MODAL -->
 <div class="modal-overlay" id="productModal">
   <div class="modal">
@@ -466,7 +472,7 @@ html,body{height:100%;font-family:var(--font-body);background:#f4f1ec;color:var(
       <div class="photo-upload-area" id="uploadArea">
         <input type="file" accept="image/*" multiple id="photoFileInput" onchange="handlePhotoSelect(event)">
         <div class="upload-icon">🖼️</div>
-        <div class="upload-text"><strong>Click to upload</strong> or drag & drop<br><span style="font-size:11px">JPG, PNG, WEBP — max 5MB each · Uploads to Supabase Storage</span></div>
+        <div class="upload-text"><strong>Click to upload</strong> or drag & drop<br><span style="font-size:11px">JPG, PNG, WEBP · Auto-compressed &amp; uploaded to Supabase</span></div>
       </div>
       <div class="upload-progress" id="uploadProgress"><div class="upload-progress-bar" id="uploadProgressBar"></div></div>
       <div class="photo-previews" id="photoPreviews"></div>
@@ -535,7 +541,6 @@ html,body{height:100%;font-family:var(--font-body);background:#f4f1ec;color:var(
         <div id="questions-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:.75rem"></div>
         <button class="btn-sm btn-outline" style="font-size:12px;padding:7px 16px" onclick="addQuestion()">+ Add Question</button>
       </div>
-
       <div class="form-section-title">Pre-Cart Notice</div>
       <div style="margin-bottom:1.25rem">
         <div style="font-size:12px;color:var(--gray);margin-bottom:.6rem">If set, customer must tick a checkbox to confirm they read this before adding to cart</div>
@@ -900,23 +905,12 @@ async function loadOrders() {
       return;
     }
     _orders = Array.isArray(data) ? data : [];
-    // Fetch order_items for all orders and attach
     if (_orders.length) {
-      const orderIds = _orders.map(o => o.id).join(',');
+      const ids = _orders.map(o=>o.id).join(',');
       try {
-        const itemsRes = await fetch(
-          _cfg.u + '/rest/v1/order_items?order_id=in.(' + orderIds + ')&order=order_id.asc,display_order.asc',
-          { headers: sb.headers() }
-        );
-        if (itemsRes.ok) {
-          const allItems = await itemsRes.json();
-          _orders.forEach(function(o) {
-            o.items = (allItems || [])
-              .filter(function(i) { return i.order_id === o.id; })
-              .map(function(i) { return { name: i.product_name, price: i.price, custom: i.custom_notes }; });
-          });
-        }
-      } catch(e) { console.log('order_items fetch:', e.message); }
+        const ir=await fetch(_cfg.u+'/rest/v1/order_items?order_id=in.('+ids+')&order=order_id.asc,display_order.asc',{headers:sb.headers()});
+        if(ir.ok){const allItems=await ir.json();_orders.forEach(function(o){o.items=(allItems||[]).filter(function(i){return i.order_id===o.id;}).map(function(i){return{name:i.product_name,price:i.price,custom:i.custom_notes};});});}
+      }catch(e){console.log('order_items:',e.message);}
     }
     buildFYOptions();
     renderOrders();
@@ -1186,6 +1180,7 @@ function openProductModal(id) {
   _chipGroups = [];
   _photoFiles = [];
   _photoUrls = [];
+  _compressStates = {};
   _existingPhotoCount = 0;
   try { clearCurrentGroup(); } catch(e) {}
   const _og = document.getElementById('optionGroupsList'); if(_og) _og.innerHTML = '';
@@ -1204,14 +1199,10 @@ function openProductModal(id) {
     document.getElementById('f-active').checked = !!p.is_active;
 
     // Restore text customisation
-    // Load questions from product_questions table (fetched async)
     _questions = [];
     renderQuestions();
     document.getElementById('f-notice').value = p.notice_message || '';
-    loadProductQuestions(id).then(function(qs) {
-      _questions = qs;
-      renderQuestions();
-    });
+    loadProductQuestions(id).then(function(qs){ _questions = qs; renderQuestions(); });
     _chipGroups = [];
     _variantRowCount = 0;
     // Use async load with proper await — show loading state
@@ -1233,9 +1224,9 @@ function openProductModal(id) {
     document.getElementById('f-category').value = '';
     document.getElementById('f-bestseller').checked = false;
     document.getElementById('f-active').checked = true;
-    _questions = [];
-    renderQuestions();
-    document.getElementById('f-notice').value = '';
+    document.getElementById('f-allow-text').checked = false;
+    document.getElementById('f-text-required').checked = false;
+    document.getElementById('text-fields-wrap').style.display = 'none';
     clearCurrentGroup();
     addVariantRow();
   }
@@ -1263,9 +1254,12 @@ async function saveProduct() {
     // Upload new photo files to Supabase Storage
     if (_photoFiles.length) {
       document.getElementById('uploadProgress').style.display = 'block';
+      const _toSlug=function(s){return s.toLowerCase().trim().replace(/[^\w\s-]/g,'').replace(/[\s_]+/g,'-').replace(/-+/g,'-').slice(0,55);};
+      const _buildSeoSlug=function(productName,photoIdx,photoTotal){var n=productName.toLowerCase();var prefix=n.includes('custom')||n.includes('personalised')||n.includes('personalized')?'custom':n.includes('resin')||n.includes('embroidery')||n.includes('quilling')||n.includes('string')?'handmade':'personalised';var suffix=photoTotal>1?'-'+(photoIdx+1):'';return prefix+'-'+_toSlug(productName)+'-gift-coimbatore'+suffix+'.jpg';};
       for (let i = 0; i < _photoFiles.length; i++) {
         const { file, insertIdx } = _photoFiles[i];
-        const path = 'products/' + Date.now() + '-' + file.name.replace(/\s+/g,'_');
+        const seoName = _buildSeoSlug(name, i, _photoFiles.length);
+        const path = 'products/' + seoName;
         const url = await sb.uploadImage(file, path);
         _photoUrls[insertIdx] = url; // replace the base64 preview with the real URL
         document.getElementById('uploadProgressBar').style.width = ((i+1)/_photoFiles.length*100) + '%';
@@ -1284,7 +1278,7 @@ async function saveProduct() {
       // Note: customisation_options saved separately via saveProductOptions()
       is_bestseller: document.getElementById('f-bestseller').checked,
       is_active: document.getElementById('f-active').checked,
-      notice_message: document.getElementById('f-notice').value.trim() || null,
+      notice_message: (document.getElementById('f-notice') ? document.getElementById('f-notice').value.trim() : '') || null,
     };
 
     let savedId = _editingId;
@@ -1341,37 +1335,70 @@ async function toggleActive(id, val) {
   } catch(e) { showToast('Error: ' + e.message, 'error'); }
 }
 
+let _compressStates = {};
+function fmtSize(bytes){if(bytes<1024)return bytes+' B';if(bytes<1024*1024)return (bytes/1024).toFixed(0)+' KB';return (bytes/(1024*1024)).toFixed(1)+' MB';}
+function compressImage(file,maxPx,quality){
+  maxPx=maxPx||1200;quality=quality||0.82;
+  return new Promise(function(resolve){
+    var reader=new FileReader();
+    reader.onload=function(e){
+      var img=new Image();
+      img.onload=function(){
+        var w=img.width,h=img.height;
+        if(w>maxPx||h>maxPx){if(w>=h){h=Math.round(h*maxPx/w);w=maxPx;}else{w=Math.round(w*maxPx/h);h=maxPx;}}
+        var canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+        var ctx=canvas.getContext('2d');ctx.drawImage(img,0,0,w,h);
+        canvas.toBlob(function(blob){
+          var name=file.name.replace(/\.[^.]+$/,'')+'.jpg';
+          var compressed=new File([blob],name,{type:'image/jpeg'});
+          resolve({compressed:compressed,originalSize:file.size,compressedSize:compressed.size});
+        },'image/jpeg',quality);
+      };img.src=e.target.result;
+    };reader.readAsDataURL(file);
+  });
+}
 function handlePhotoSelect(e) {
   const files = Array.from(e.target.files);
   files.forEach(file => {
-    if (file.size > 5*1024*1024) { showToast('File too large: ' + file.name + ' (max 5MB)', 'error'); return; }
-    const insertIdx = _photoUrls.length; // remember slot for this file
-    _photoUrls.push(null); // placeholder so index is reserved
-    _photoFiles.push({ file, insertIdx }); // store file with its reserved slot
-    const reader = new FileReader();
-    reader.onload = ev => {
-      _photoUrls[insertIdx] = ev.target.result; // fill placeholder with preview
+    if (file.size > 20*1024*1024) { showToast('File too large: ' + file.name + ' (max 20MB)', 'error'); return; }
+    const insertIdx = _photoUrls.length;
+    _photoUrls.push(null);
+    _photoFiles.push({ file: null, insertIdx });
+    const tempReader = new FileReader();
+    tempReader.onload = function(ev) {
+      _photoUrls[insertIdx] = ev.target.result;
+      _compressStates[insertIdx] = 'compressing';
       renderPhotoPreviews();
     };
-    reader.readAsDataURL(file);
+    tempReader.readAsDataURL(file);
+    compressImage(file).then(function(result) {
+      const entry = _photoFiles.find(f => f.insertIdx === insertIdx);
+      if (entry) entry.file = result.compressed;
+      var fr = new FileReader();
+      fr.onload = function(ev2) {
+        _photoUrls[insertIdx] = ev2.target.result;
+        _compressStates[insertIdx] = fmtSize(result.originalSize) + ' → ' + fmtSize(result.compressedSize);
+        renderPhotoPreviews();
+      };
+      fr.readAsDataURL(result.compressed);
+    });
   });
   e.target.value = '';
 }
 
 function renderPhotoPreviews() {
-  document.getElementById('photoPreviews').innerHTML = _photoUrls.map((src,i) =>
-    `<div class="photo-preview-wrap"><img src="${src}" alt=""><button class="photo-preview-del" onclick="removePhoto(${i})">✕</button></div>`
-  ).join('');
+  document.getElementById('photoPreviews').innerHTML = _photoUrls.map((src,i) => {
+    const state=_compressStates[i];const isComp=state==='compressing';
+    const badge=state?`<span class="photo-compress-badge${isComp?' compressing':''}">${isComp?'Compressing…':state}</span>`:'';
+    return `<div class="photo-preview-wrap${isComp?' compressing':''}"><img src="${src||''}" alt="">${badge}<button class="photo-preview-del" onclick="removePhoto(${i})">✕</button></div>`;
+  }).join('');
 }
 
 function removePhoto(i) {
   _photoUrls.splice(i, 1);
-  // Remove matching entry from _photoFiles and update all insertIdx values after the removed slot
-  _photoFiles = _photoFiles
-    .filter(f => f.insertIdx !== i)
-    .map(f => ({ ...f, insertIdx: f.insertIdx > i ? f.insertIdx - 1 : f.insertIdx }));
-  // Update existing count if we removed an existing photo
-  if (i < _existingPhotoCount) _existingPhotoCount--;
+  const ns={};Object.keys(_compressStates).forEach(function(k){var ki=parseInt(k);if(ki<i)ns[ki]=_compressStates[k];if(ki>i)ns[ki-1]=_compressStates[k];});_compressStates=ns;
+  _photoFiles=_photoFiles.filter(f=>f.insertIdx!==i).map(f=>({...f,insertIdx:f.insertIdx>i?f.insertIdx-1:f.insertIdx}));
+  if(i<_existingPhotoCount)_existingPhotoCount--;
   renderPhotoPreviews();
 }
 
@@ -1389,15 +1416,12 @@ function renderCategoryDropdown() {
 
 function renderCategoryGrid() {
   const grid = document.getElementById('catAdminGrid');
-  if (!_categories.length) {
-    grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🗂️</div><div>No categories yet.</div></div>';
-    return;
-  }
+  if (!_categories.length) { grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🗂️</div><div>No categories yet.</div></div>'; return; }
   grid.innerHTML = _categories.map((c, idx) => `
     <div class="cat-admin-card" draggable="true" data-cat-id="${c.id}" data-idx="${idx}"
       ondragstart="catDragStart(event,${idx})" ondragover="catDragOver(event)" ondrop="catDrop(event,${idx})" ondragend="catDragEnd()"
       style="cursor:grab;position:relative">
-      <div style="position:absolute;top:10px;right:10px;color:#ccc;font-size:18px;cursor:grab" title="Drag to reorder">⠿</div>
+      <div style="position:absolute;top:10px;right:10px;color:#ccc;font-size:18px" title="Drag to reorder">⠿</div>
       <div class="cat-admin-name" style="font-size:16px;font-weight:600">${c.name}</div>
       <div class="cat-admin-count">${_products.filter(p=>p.category===c.name).length} products</div>
       <div class="cat-admin-actions">
@@ -1407,23 +1431,19 @@ function renderCategoryGrid() {
       </div>
     </div>`).join('');
 }
-
-// Drag-to-reorder state
 let _catDragIdx = null;
-function catDragStart(e, idx) { _catDragIdx = idx; e.currentTarget.style.opacity = '0.4'; }
-function catDragEnd() { document.querySelectorAll('.cat-admin-card').forEach(el => { el.style.opacity=''; el.style.background=''; }); }
-function catDragOver(e) { e.preventDefault(); e.currentTarget.style.background = 'var(--teal-light)'; }
-async function catDrop(e, toIdx) {
+function catDragStart(e,idx){_catDragIdx=idx;e.currentTarget.style.opacity='0.4';}
+function catDragEnd(){document.querySelectorAll('.cat-admin-card').forEach(el=>{el.style.opacity='';el.style.background='';});}
+function catDragOver(e){e.preventDefault();e.currentTarget.style.background='var(--teal-light)';}
+async function catDrop(e,toIdx){
   e.preventDefault();
-  if (_catDragIdx === null || _catDragIdx === toIdx) { catDragEnd(); return; }
-  // Reorder local array
-  const moved = _categories.splice(_catDragIdx, 1)[0];
-  _categories.splice(toIdx, 0, moved);
-  // Save new display_order for all categories
-  await Promise.all(_categories.map((c, i) => sb.update('categories', c.id, { display_order: i + 1 })));
-  renderCategoryGrid(); renderCategoryFilter(); renderCategoryDropdown();
-  showToast('Category order saved!', 'success');
-  _catDragIdx = null;
+  if(_catDragIdx===null||_catDragIdx===toIdx){catDragEnd();return;}
+  const moved=_categories.splice(_catDragIdx,1)[0];
+  _categories.splice(toIdx,0,moved);
+  await Promise.all(_categories.map((c,i)=>sb.update('categories',c.id,{display_order:i+1})));
+  renderCategoryGrid();renderCategoryFilter();renderCategoryDropdown();
+  showToast('Category order saved!','success');
+  _catDragIdx=null;
 }
 
 function addCategory() {
@@ -1746,49 +1766,8 @@ function addVariantRow(name, price) {
 function toggleEditRow(id) { /* kept for compat */ }
 function startNewGroup() { try{clearCurrentGroup();}catch(e){} setTimeout(function(){const l=document.getElementById('f-opt-label');if(l)l.focus();},50); }
 
-// ── Question management ──
-let _questions = [];
-
-function addQuestion() {
-  _questions.push({ label: '', placeholder: '', required: false });
-  renderQuestions();
-  setTimeout(function() {
-    var inputs = document.querySelectorAll('#questions-list .q-label-input');
-    if (inputs.length) inputs[inputs.length-1].focus();
-  }, 50);
-}
-
-function removeQuestion(idx) {
-  _questions.splice(idx, 1);
-  renderQuestions();
-}
-
-function renderQuestions() {
-  const el = document.getElementById('questions-list');
-  if (!el) return;
-  if (!_questions.length) {
-    el.innerHTML = '<div style="font-size:12px;color:var(--gray);padding:6px 0">No questions added yet.</div>';
-    return;
-  }
-  el.innerHTML = _questions.map((q, i) => `
-    <div style="background:#f4f1ec;border-radius:12px;padding:.85rem 1rem;border:1px solid var(--border);display:flex;flex-direction:column;gap:.5rem">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
-        <span style="font-size:11px;font-weight:600;color:var(--teal);text-transform:uppercase;letter-spacing:.06em">Question ${i+1}</span>
-        <button onclick="removeQuestion(${i})" style="background:none;border:none;color:#c0392b;font-size:13px;cursor:pointer;padding:2px 6px">✕ Remove</button>
-      </div>
-      <input class="form-input q-label-input" style="font-size:13px;margin:0" placeholder="Label e.g. Enter name to print, Photo link…"
-        value="${q.label}" oninput="_questions[${i}].label=this.value">
-      <input class="form-input" style="font-size:13px;margin:0" placeholder="Placeholder hint for customer (optional)"
-        value="${q.placeholder||''}" oninput="_questions[${i}].placeholder=this.value">
-      <label style="display:flex;align-items:center;gap:.5rem;font-size:12px;cursor:pointer">
-        <input type="checkbox" ${q.required?'checked':''} onchange="_questions[${i}].required=this.checked">
-        Make this field required
-      </label>
-    </div>`).join('');
-}
-
 function toggleTextFields() {
-  const on = document.getElementById('f-allow-text') ? document.getElementById('f-allow-text').checked : false;
+  const on = document.getElementById('f-allow-text').checked;
   const wrap = document.getElementById('text-fields-wrap');
   wrap.style.display = on ? 'flex' : 'none';
   if (on) document.getElementById('f-text-label').focus();
@@ -1852,76 +1831,32 @@ function editSavedGroup(i) {
   (g.options||[]).forEach(function(o){addVariantRow(o,g.variantPrices?(g.variantPrices[o]||0):0);});
   showToast('Edit and click Save Group.');
 }
-function collectPendingChipGroup(){}
+function collectPendingChipGroup(){
+  const lbl=document.getElementById('f-opt-label');const label=lbl?lbl.value.trim():'';if(!label)return;
+  const rows=document.querySelectorAll('#variantRows > div');if(!rows.length)return;
+  const options=[],vp={};const pt=document.getElementById('f-price-type');const priceType=pt?pt.value:'none';
+  rows.forEach(function(r){const ni=r.querySelector('.vt-name-input'),ns=r.querySelector('.vt-name-display');const pi=r.querySelector('.vt-price-input'),ps=r.querySelector('.vt-price-display');const name=(ni&&ni.style.display!=='none'?ni.value.trim():ns?ns.textContent.trim():'');const price=(pi&&pi.style.display!=='none'?parseFloat(pi.value)||0:ps?parseFloat(ps.textContent.replace('₹',''))||0:0);if(name){options.push(name);if(priceType!=='none')vp[name]=price;}});
+  if(options.length){_chipGroups.push({label,options,priceType,variantPrices:vp});renderOptionGroups();clearCurrentGroup();}
+}
 function resetChipsEditor(){try{clearCurrentGroup();}catch(e){}}
-async function saveProductQuestions(productId) {
-  if (!productId) return;
-  try {
-    // Delete existing questions for this product
-    const delRes = await fetch(
-      _cfg.u + '/rest/v1/product_questions?product_id=eq.' + productId,
-      { method: 'DELETE', headers: sb.headers() }
-    );
-    if (!delRes.ok) console.error('Delete questions failed:', await delRes.text());
-
-    if (!_questions.length) return;
-
-    // Insert new questions
-    const rows = _questions
-      .filter(function(q) { return q.label && q.label.trim(); })
-      .map(function(q, i) {
-        return {
-          product_id:    productId,
-          label:         q.label.trim(),
-          placeholder:   (q.placeholder || '').trim(),
-          is_required:   !!q.required,
-          display_order: i
-        };
-      });
-
-    if (!rows.length) return;
-
-    const res = await fetch(_cfg.u + '/rest/v1/product_questions', {
-      method:  'POST',
-      headers: { ...sb.headers(), 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-      body:    JSON.stringify(rows)
-    });
-    if (!res.ok) {
-      const err = await res.text();
-      console.error('saveProductQuestions failed:', err);
-      showToast('Questions save failed: ' + err, 'error');
-    } else {
-      console.log('saveProductQuestions: saved', rows.length, 'questions for', productId);
-    }
-  } catch(e) {
-    console.error('saveProductQuestions error:', e.message);
-    showToast('Questions save error: ' + e.message, 'error');
-  }
-}
-
-async function loadProductQuestions(productId) {
-  try {
-    const rows = await sb.query('product_questions', '?product_id=eq.' + productId + '&order=display_order.asc');
-    return (rows || []).map(function(r) {
-      return { label: r.label, placeholder: r.placeholder || '', required: !!r.is_required };
-    });
-  } catch(e) { return []; }
-}
-
 async function saveProductOptions(productId) {
   if(!productId)return;
   try{
-    await fetch(_cfg.u+'/rest/v1/product_option_groups?product_id=eq.'+productId,{method:'DELETE',headers:{'apikey':_cfg.k,'Authorization':'Bearer '+(_session?_session.access_token:_cfg.k)}});
+    const delRes=await fetch(_cfg.u+'/rest/v1/product_option_groups?product_id=eq.'+productId,{method:'DELETE',headers:sb.headers()});
+    if(!delRes.ok)console.error('Delete groups failed:',await delRes.text());
+    if(!_chipGroups.length)return;
     for(let gi=0;gi<_chipGroups.length;gi++){
       const g=_chipGroups[gi];
-      const gRes=await fetch(_cfg.u+'/rest/v1/product_option_groups',{method:'POST',headers:{'apikey':_cfg.k,'Authorization':'Bearer '+(_session?_session.access_token:_cfg.k),'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify({product_id:productId,label:g.label,price_type:g.priceType||'none',display_order:gi})});
-      const gData=await gRes.json(); const groupId=gData[0]?gData[0].id:null; if(!groupId)continue;
+      const gRes=await fetch(_cfg.u+'/rest/v1/product_option_groups',{method:'POST',headers:{...sb.headers(),'Prefer':'return=representation'},body:JSON.stringify({product_id:productId,label:g.label,price_type:g.priceType||'none',display_order:gi})});
+      if(!gRes.ok){console.error('Insert group failed:',await gRes.text());continue;}
+      const gData=await gRes.json();const groupId=gData[0]?gData[0].id:null;if(!groupId)continue;
       for(let vi=0;vi<g.options.length;vi++){
-        const val=g.options[vi],price=g.variantPrices?(g.variantPrices[val]||0):0;
-        await fetch(_cfg.u+'/rest/v1/product_option_values',{method:'POST',headers:{'apikey':_cfg.k,'Authorization':'Bearer '+(_session?_session.access_token:_cfg.k),'Content-Type':'application/json'},body:JSON.stringify({product_id:productId,group_id:groupId,value:val,price:price,display_order:vi})});
+        const val=g.options[vi];const price=(g.priceType!=='none'&&g.variantPrices)?(g.variantPrices[val]||0):0;
+        const vRes=await fetch(_cfg.u+'/rest/v1/product_option_values',{method:'POST',headers:{...sb.headers(),'Prefer':'return=minimal'},body:JSON.stringify({product_id:productId,group_id:groupId,value:val,price:price,display_order:vi})});
+        if(!vRes.ok)console.error('Insert value failed:',val,await vRes.text());
       }
     }
-  }catch(e){console.log('saveProductOptions:',e.message);}
+  }catch(e){console.error('saveProductOptions:',e.message);showToast('Variants save failed: '+e.message,'error');}
 }
 async function loadProductOptions(productId) {
   if(!productId)return[];
@@ -1937,6 +1872,94 @@ async function loadProductOptions(productId) {
     });
   }catch(e){return[];}
 }
+
+/* ── Questions Management ── */
+let _questions=[];
+function addQuestion(){_questions.push({label:'',placeholder:'',required:false});renderQuestions();setTimeout(function(){var inputs=document.querySelectorAll('#questions-list .q-label-input');if(inputs.length)inputs[inputs.length-1].focus();},50);}
+function removeQuestion(idx){_questions.splice(idx,1);renderQuestions();}
+function renderQuestions(){
+  const el=document.getElementById('questions-list');if(!el)return;
+  if(!_questions.length){el.innerHTML='<div style="font-size:12px;color:var(--gray);padding:6px 0">No questions added yet.</div>';return;}
+  el.innerHTML=_questions.map((q,i)=>`<div style="background:#f4f1ec;border-radius:12px;padding:.85rem 1rem;border:1px solid var(--border);display:flex;flex-direction:column;gap:.5rem"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px"><span style="font-size:11px;font-weight:600;color:var(--teal);text-transform:uppercase;letter-spacing:.06em">Question ${i+1}</span><button onclick="removeQuestion(${i})" style="background:none;border:none;color:#c0392b;font-size:13px;cursor:pointer;padding:2px 6px">✕ Remove</button></div><input class="form-input q-label-input" style="font-size:13px;margin:0" placeholder="Label e.g. Enter name to print, Share photo link…" value="${q.label}" oninput="_questions[${i}].label=this.value"><input class="form-input" style="font-size:13px;margin:0" placeholder="Placeholder hint for customer (optional)" value="${q.placeholder||''}" oninput="_questions[${i}].placeholder=this.value"><label style="display:flex;align-items:center;gap:.5rem;font-size:12px;cursor:pointer"><input type="checkbox" ${q.required?'checked':''} onchange="_questions[${i}].required=this.checked"> Make this field required</label></div>`).join('');
+}
+async function saveProductQuestions(productId){
+  if(!productId)return;
+  try{
+    const delRes=await fetch(_cfg.u+'/rest/v1/product_questions?product_id=eq.'+productId,{method:'DELETE',headers:sb.headers()});
+    if(!delRes.ok)console.error('Delete questions failed:',await delRes.text());
+    const rows=_questions.filter(function(q){return q.label&&q.label.trim();}).map(function(q,i){return{product_id:productId,label:q.label.trim(),placeholder:(q.placeholder||'').trim(),is_required:!!q.required,display_order:i};});
+    if(!rows.length)return;
+    const res=await fetch(_cfg.u+'/rest/v1/product_questions',{method:'POST',headers:{...sb.headers(),'Prefer':'return=minimal'},body:JSON.stringify(rows)});
+    if(!res.ok){const err=await res.text();console.error('saveProductQuestions failed:',err);showToast('Questions save failed: '+err,'error');}
+  }catch(e){console.error('saveProductQuestions error:',e.message);showToast('Questions error: '+e.message,'error');}
+}
+async function loadProductQuestions(productId){
+  try{const rows=await sb.query('product_questions','?product_id=eq.'+productId+'&order=display_order.asc');return(rows||[]).map(function(r){return{label:r.label,placeholder:r.placeholder||'',required:!!r.is_required};});}
+  catch(e){return[];}
+}
+
+/* ── Bulk Image Optimiser ── */
+let _optImages=[],_optRunning=false,_optStop=false,_optTotalSaved=0;
+async function optScan(){
+  document.getElementById('optScanBtn').disabled=true;
+  document.getElementById('optStatus').textContent='Scanning…';
+  _optImages=[];
+  _products.forEach(function(p){(p.photos||[]).forEach(function(url,idx){if(url&&url.startsWith('http')){_optImages.push({productId:p.id,productName:p.name,productCat:p.category||'',photoTotal:(p.photos||[]).length,url:url,urlIdx:idx,status:'pending'});}});});
+  document.getElementById('optTotal').textContent=_optImages.length;
+  document.getElementById('optDone').textContent=0;document.getElementById('optFailed').textContent=0;document.getElementById('optSaved').textContent='0 KB';
+  document.getElementById('optStatus').textContent=_optImages.length+' images found — ready to compress';
+  document.getElementById('optRunBtn').style.display='inline-flex';
+  document.getElementById('optListWrap').style.display='block';
+  document.getElementById('optScanBtn').disabled=false;
+  _optTotalSaved=0;optRenderList();
+}
+function optRowHTML(img,i){
+  const icon={pending:'⬜',compressing:'⏳',done:'✅',failed:'❌',skipped:'⏭'}[img.status]||'⬜';
+  const info=img.savedBytes!=null?'<span style="font-size:11px;color:#1F4E4A;font-weight:600;margin-left:8px">'+fmtSize(img.originalSize)+' → '+fmtSize(img.compressedSize)+' (saved '+fmtSize(img.savedBytes)+')</span>':(img.status==='failed'?'<span style="font-size:11px;color:#c0392b;margin-left:8px">'+(img.error||'Error')+'</span>':'');
+  return '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:var(--cream);font-size:12px" id="optrow-'+i+'"><span style="font-size:15px">'+icon+'</span><div style="flex:1;min-width:0"><div style="font-weight:500;color:var(--charcoal);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+img.productName+'</div><div style="color:var(--gray);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+img.url.split('/').pop()+(img.newFilename?' → '+img.newFilename:'')+'</div></div>'+info+'</div>';
+}
+function optRenderList(){const el=document.getElementById('optList');if(!_optImages.length){el.innerHTML='<div style="color:var(--gray);font-size:13px">No images found. Click Scan first.</div>';return;}el.innerHTML=_optImages.map((img,i)=>optRowHTML(img,i)).join('');}
+function optUpdateRow(i){const row=document.getElementById('optrow-'+i);if(row)row.outerHTML=optRowHTML(_optImages[i],i);}
+async function optRun(){
+  if(_optRunning)return;if(!_optImages.length){showToast('Scan first','error');return;}
+  _optRunning=true;_optStop=false;_optTotalSaved=0;
+  document.getElementById('optRunBtn').style.display='none';document.getElementById('optStopBtn').style.display='inline-flex';document.getElementById('optProgressWrap').style.display='block';
+  let done=0,failed=0;
+  const toSlug=function(s){return s.toLowerCase().trim().replace(/[^\w\s-]/g,'').replace(/[\s_]+/g,'-').replace(/-+/g,'-').slice(0,55);};
+  const buildSeoSlug=function(productName,photoIdx,photoTotal){var n=productName.toLowerCase();var prefix=n.includes('resin')||n.includes('embroidery')||n.includes('quilling')||n.includes('string')?'handmade':n.includes('custom')||n.includes('personalised')||n.includes('personalized')?'custom':'personalised';var suffix=photoTotal>1?'-'+(photoIdx+1):'';return prefix+'-'+toSlug(productName)+'-gift-coimbatore'+suffix+'.jpg';};
+  for(let i=0;i<_optImages.length;i++){
+    if(_optStop)break;const img=_optImages[i];if(img.status==='done'){done++;continue;}
+    img.status='compressing';optUpdateRow(i);
+    document.getElementById('optStatus').textContent='Processing '+(i+1)+' / '+_optImages.length+' — '+img.productName;
+    try{
+      const resp=await fetch(img.url);if(!resp.ok)throw new Error('Fetch failed '+resp.status);
+      const blob=await resp.blob();const origFile=new File([blob],'photo.jpg',{type:blob.type||'image/jpeg'});
+      const result=await compressImage(origFile,1200,0.82);
+      const seoFile=buildSeoSlug(img.productName,img.urlIdx,img.photoTotal);
+      const seoPath='products/'+seoFile;img.newFilename=seoFile;
+      const oldFile=img.url.split('/').pop();const alreadySEO=oldFile.includes('-gift-coimbatore');
+      if(result.compressedSize>=result.originalSize*0.95&&alreadySEO){img.status='skipped';img.savedBytes=0;img.originalSize=result.originalSize;img.compressedSize=result.compressedSize;optUpdateRow(i);done++;continue;}
+      const fileToUpload=result.compressedSize<result.originalSize*0.95?result.compressed:origFile;
+      const upResp=await fetch(_cfg.u+'/storage/v1/object/product-images/'+seoPath,{method:'POST',headers:{...sb.headers(),'Content-Type':'image/jpeg','x-upsert':'true','Cache-Control':'no-store'},body:fileToUpload});
+      if(!upResp.ok)throw new Error('Upload failed '+upResp.status+': '+await upResp.text());
+      const newUrl=_cfg.u+'/storage/v1/object/public/product-images/'+seoPath;
+      const product=_products.find(function(p){return p.id===img.productId;});
+      const newPhotos=(product&&product.photos||[]).slice();newPhotos[img.urlIdx]=newUrl;
+      await sb.update('products',img.productId,{photos:newPhotos});
+      if(product)product.photos=newPhotos;img.url=newUrl;
+      img.status='done';img.originalSize=result.originalSize;img.compressedSize=result.compressedSize<result.originalSize*0.95?result.compressedSize:result.originalSize;img.savedBytes=img.originalSize-img.compressedSize;_optTotalSaved+=img.savedBytes;done++;
+    }catch(e){img.status='failed';img.error=e.message;failed++;}
+    optUpdateRow(i);
+    document.getElementById('optDone').textContent=done;document.getElementById('optFailed').textContent=failed;document.getElementById('optSaved').textContent=fmtSize(_optTotalSaved);
+    document.getElementById('optProgressBar').style.width=((i+1)/_optImages.length*100)+'%';
+    await new Promise(function(r){setTimeout(r,100);});
+  }
+  _optRunning=false;document.getElementById('optStopBtn').style.display='none';document.getElementById('optRunBtn').style.display='inline-flex';
+  const msg=_optStop?'Stopped. '+done+' done, '+failed+' failed.':'✅ All done! '+done+' processed · '+fmtSize(_optTotalSaved)+' saved.';
+  document.getElementById('optStatus').textContent=msg;
+  if(!_optStop)showToast('Done! Saved '+fmtSize(_optTotalSaved)+' across '+done+' images','success');
+}
+function optStop(){_optStop=true;document.getElementById('optStatus').textContent='Stopping after current image…';}
 
 /* hide loading, check existing session */
 document.getElementById('loadingOverlay').classList.add('hidden');
