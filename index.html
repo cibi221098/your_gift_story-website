@@ -55,8 +55,8 @@
       "url": "https://your-gift-story-website.vercel.app/",
       "logo": "https://your-gift-story-website.vercel.app/logo.png",
       "image": "https://your-gift-story-website.vercel.app/og-image.jpg",
-      "telephone": "+919999999999",
-      "email": "yourgiftstory@gmail.com",
+      "telephone": "+919025305650",
+      "email": "contact.yourgiftstory@gmail.com",
       "address": {
         "@type": "PostalAddress",
         "addressLocality": "Coimbatore",
@@ -955,7 +955,7 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
   <div class="shop-page-hero">
     <div class="shop-page-hero-inner">
       <div class="shop-page-eyebrow">Handcrafted with love</div>
-      <h1 class="shop-page-title">Browse our <em>Gifts</em></h1>
+      <h2 class="shop-page-title">Browse our <em>Gifts</em></h2>
       <p class="shop-page-sub">Every item made to order · Personalised just for you</p>
     </div>
   </div>
@@ -1286,6 +1286,21 @@ async function initSite() {
       let num = s.whatsapp.replace(/\D/g, '');
       if (num.length === 10) num = '91' + num;
       WHATSAPP_NUMBER = num;
+    }
+
+    // Update LocalBusiness schema with the real phone/email — the placeholder
+    // in the <head> is only a fallback for before this data loads
+    const schemaEl = document.querySelector('script[type="application/ld+json"]');
+    if (schemaEl) {
+      try {
+        const data = JSON.parse(schemaEl.textContent);
+        const biz = (data['@graph'] || []).find(n => n['@type'] && n['@type'].includes('LocalBusiness'));
+        if (biz) {
+          if (WHATSAPP_NUMBER) biz.telephone = '+' + WHATSAPP_NUMBER;
+          if (s.email) biz.email = s.email;
+          schemaEl.textContent = JSON.stringify(data);
+        }
+      } catch(e) {}
     }
   }
 
@@ -2562,21 +2577,23 @@ function scrollToAbout() { if (currentPage !== 'home') showPage('home'); setTime
 function scrollToContact() { if (currentPage !== 'home') showPage('home'); setTimeout(() => document.getElementById('contact-section').scrollIntoView({behavior:'smooth'}), 100); }
 
 /* ════ FAQ STRUCTURED DATA — boosts featured snippets & voice search ════ */
+/* Kept in sync with the visible FAQ popup content above (POLICIES.faqs) —
+   Google requires FAQPage schema to match what's actually shown on the page */
 (function() {
   var faq = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
     'mainEntity': [
-      { '@type': 'Question', 'name': 'Do you deliver gifts pan India?',
-        'acceptedAnswer': { '@type': 'Answer', 'text': 'Yes! Your Gift Story is based in Coimbatore, Tamil Nadu and delivers handmade personalised gifts across Tamil Nadu and pan India. Orders are placed and fulfilled 100% online.' } },
-      { '@type': 'Question', 'name': 'Are your gifts fully customisable?',
-        'acceptedAnswer': { '@type': 'Answer', 'text': 'Every product at Your Gift Story is fully customisable — names, photos, messages, colours and more. Just place your order and share your details via WhatsApp.' } },
-      { '@type': 'Question', 'name': 'What kind of handmade gifts do you sell?',
-        'acceptedAnswer': { '@type': 'Answer', 'text': 'We sell resin art keychains, frames and bookmarks, embroidery gifts, personalised photo frames, mini albums, gift hampers, crochet bouquets, string art, caricatures, and more — all handmade and customisable.' } },
-      { '@type': 'Question', 'name': 'What is the price range of your gifts?',
-        'acceptedAnswer': { '@type': 'Answer', 'text': 'Our gifts range from ₹80 for personalised letters to ₹6,399 for premium gift hampers — something for every budget.' } },
-      { '@type': 'Question', 'name': 'How do I place an order?',
-        'acceptedAnswer': { '@type': 'Answer', 'text': 'Place an order directly on our website or reach us on WhatsApp. After checkout we collect your personalisation details and confirm delivery.' } }
+      { '@type': 'Question', 'name': 'How long does delivery take?',
+        'acceptedAnswer': { '@type': 'Answer', 'text': 'Delivery timelines vary depending on the gift you choose. Once your order is confirmed, we will reach out on WhatsApp and let you know the exact timeline based on your specific gift. Most orders are delivered within 5 to 7 working days.' } },
+      { '@type': 'Question', 'name': 'Can I fully customise my gift?',
+        'acceptedAnswer': { '@type': 'Answer', 'text': 'Every product at Your Gift Story is fully customisable — names, photos, messages, colours and more. After you place your order, we will reach out on WhatsApp to collect all your personalisation details.' } },
+      { '@type': 'Question', 'name': 'What if my gift arrives damaged?',
+        'acceptedAnswer': { '@type': 'Answer', 'text': 'In the rare case your gift arrives damaged, contact us within 48 hours of delivery with photos via WhatsApp or email. We will review and arrange a replacement or refund as quickly as possible.' } },
+      { '@type': 'Question', 'name': 'Can I cancel my order?',
+        'acceptedAnswer': { '@type': 'Answer', 'text': 'Orders can be cancelled within 2 hours of placing them, before personalisation work begins. Once our artisans have started crafting, cancellations are not possible as materials and time have already been invested.' } },
+      { '@type': 'Question', 'name': 'Do you deliver across India?',
+        'acceptedAnswer': { '@type': 'Answer', 'text': 'Yes! We are based in Coimbatore, Tamil Nadu and deliver pan India — no matter which city or town your loved one is in. All orders are placed and managed 100% online.' } }
     ]
   };
   var s = document.createElement('script');
