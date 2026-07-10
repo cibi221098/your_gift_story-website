@@ -314,9 +314,10 @@ section{padding:5rem 2rem}
 .sp-arrow-prev{left:-48px}
 .sp-arrow-next{right:-48px}
 /* dots */
-.sp-dots{display:flex;gap:8px;justify-content:center;margin-top:1.75rem}
-.sp-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.2);cursor:pointer;transition:all .3s;border:none;padding:0}
-.sp-dot.active{background:var(--gold);transform:scale(1.25)}
+.sp-dots{display:flex;gap:2px;justify-content:center;margin-top:1.75rem}
+.sp-dot{width:24px;height:24px;border-radius:50%;background:transparent;cursor:pointer;transition:all .3s;border:none;padding:0;display:flex;align-items:center;justify-content:center;position:relative}
+.sp-dot::after{content:'';width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.2);transition:all .3s}
+.sp-dot.active::after{background:var(--gold);transform:scale(1.25)}
 /* mini previews */
 .sp-thumbs{display:none;gap:8px;justify-content:center;margin-top:1.5rem;flex-wrap:wrap}
 .sp-thumb{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:10px 14px;cursor:pointer;transition:all .2s;text-align:center;flex:1;max-width:140px}
@@ -789,6 +790,7 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
 </div>
 
 <!-- ═══ HOME PAGE ═══ -->
+<main id="mainContent">
 <div id="page-home" class="page active">
 
   <!-- HERO: Style E — ghost word + blobs + cream BG -->
@@ -1115,6 +1117,7 @@ footer{background:var(--charcoal);color:var(--cream);padding:4rem 2rem 2rem}
     </div>
   </div>
 </div>
+</main>
 
 <!-- IMAGE LIGHTBOX -->
 <div class="lightbox-overlay" id="lightboxOverlay" onclick="closeLightbox()">
