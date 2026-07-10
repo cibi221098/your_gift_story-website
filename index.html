@@ -79,18 +79,6 @@
           "name": "India"
         }
       ],
-      "hasOfferCatalog": {
-        "@type": "OfferCatalog",
-        "name": "Handmade & Personalised Gifts",
-        "itemListElement": [
-          { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "Resin Art Gifts" } },
-          { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "Personalised Photo Gifts" } },
-          { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "Embroidery Gifts" } },
-          { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "Gift Hampers" } },
-          { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "Custom Cards & Letters" } },
-          { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "Corporate Gifts" } }
-        ]
-      },
       "sameAs": [
         "https://www.instagram.com/your.giftstory/"
       ],
@@ -118,7 +106,8 @@
   ]
 }
 </script>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet"></noscript>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -1356,7 +1345,21 @@ function injectProductSchema() {
         'priceCurrency': 'INR',
         'availability':  p.is_active ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
         'url':           'https://your-gift-story-website.vercel.app/',
-        'seller': { '@type': 'Organization', 'name': 'Your Gift Story' }
+        'seller': { '@type': 'Organization', 'name': 'Your Gift Story' },
+        'shippingDetails': {
+          '@type': 'OfferShippingDetails',
+          'shippingDestination': { '@type': 'DefinedRegion', 'addressCountry': 'IN' },
+          'deliveryTime': {
+            '@type': 'ShippingDeliveryTime',
+            'transitTime': { '@type': 'QuantitativeValue', 'minValue': 5, 'maxValue': 7, 'unitCode': 'DAY' }
+          }
+        },
+        'hasMerchantReturnPolicy': {
+          '@type': 'MerchantReturnPolicy',
+          'applicableCountry': 'IN',
+          'returnPolicyCategory': 'https://schema.org/MerchantReturnNotPermitted',
+          'merchantReturnLink': 'https://your-gift-story-website.vercel.app/'
+        }
       },
       'category': p.category || 'Gifts'
     };
@@ -1381,21 +1384,6 @@ function renderFooterCategories() {
   const liHTML = sorted.map(c =>
     `<li><a onclick="showPage('shop','${c.name}')" style="cursor:pointer">${c.name}</a></li>`
   ).join('') + `<li><a onclick="showPage('shop','all')" style="cursor:pointer">All Gifts</a></li>`;
-
-  // Update schema offerCatalog dynamically
-  const schemaEl = document.querySelector('script[type="application/ld+json"]');
-  if (schemaEl) {
-    try {
-      const data = JSON.parse(schemaEl.textContent);
-      const biz  = (data['@graph'] || []).find(n => n['@type'] && n['@type'].includes('LocalBusiness'));
-      if (biz && biz.hasOfferCatalog) {
-        biz.hasOfferCatalog.itemListElement = sorted.map(c => ({
-          '@type': 'Offer', 'itemOffered': { '@type': 'Product', 'name': c.name + ' Gifts' }
-        }));
-        schemaEl.textContent = JSON.stringify(data);
-      }
-    } catch(e) {}
-  }
 
   ['footerCats1','footerCats2'].forEach(id => {
     const el = document.getElementById(id);
