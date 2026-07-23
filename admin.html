@@ -423,6 +423,35 @@ html,body{height:100%;font-family:var(--font-body);background:#f4f1ec;color:var(
       </div>
     </div>
 
+    <!-- OPTIMISE IMAGES -->
+    <div class="panel" id="panel-optimise">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem">
+        <div>
+          <h2 style="font-family:var(--font-display);font-size:24px;font-weight:400;color:var(--teal)">Optimise Images</h2>
+          <p style="font-size:13px;color:var(--gray);margin-top:4px">Scans all product photos, compresses them and renames them with SEO-friendly filenames.</p>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-sm btn-outline" id="optScanBtn" onclick="optScan()">Scan Images</button>
+          <button class="btn-sm btn-primary" id="optRunBtn" style="display:none" onclick="optRun()">▶ Run Optimiser</button>
+          <button class="btn-sm btn-danger" id="optStopBtn" style="display:none" onclick="optStop()">■ Stop</button>
+        </div>
+      </div>
+
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:1rem">
+        <div class="stat-card"><div class="stat-label">Total Images</div><div class="stat-value" id="optTotal">0</div></div>
+        <div class="stat-card"><div class="stat-label">Processed</div><div class="stat-value" id="optDone">0</div><div class="stat-sub"><span id="optFailed">0</span> failed</div></div>
+        <div class="stat-card"><div class="stat-label">Space Saved</div><div class="stat-value" id="optSaved" style="font-size:24px">0 KB</div></div>
+      </div>
+
+      <div style="font-size:13px;color:var(--char);margin-bottom:.75rem" id="optStatus">Click "Scan Images" to find product photos.</div>
+
+      <div class="upload-progress" id="optProgressWrap" style="display:none;margin-bottom:1rem"><div class="upload-progress-bar" id="optProgressBar" style="width:0%"></div></div>
+
+      <div id="optListWrap" style="display:none;background:var(--white);border:1px solid var(--border);border-radius:16px;padding:1rem">
+        <div id="optList" style="display:flex;flex-direction:column;gap:6px;max-height:480px;overflow-y:auto"></div>
+      </div>
+    </div>
+
     <!-- SETTINGS -->
     <div class="panel" id="panel-settings">
       <div style="background:var(--white);border-radius:20px;border:1px solid var(--border);padding:2rem;max-width:640px">
@@ -445,8 +474,6 @@ html,body{height:100%;font-family:var(--font-body);background:#f4f1ec;color:var(
 
   </main>
 </div>
-
-<!-- OPTIMISE PANEL is inside the main sidebar layout above -->
 
 <!-- PRODUCT MODAL -->
 <div class="modal-overlay" id="productModal">
