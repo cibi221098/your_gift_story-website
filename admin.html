@@ -1224,9 +1224,6 @@ function openProductModal(id) {
     document.getElementById('f-category').value = '';
     document.getElementById('f-bestseller').checked = false;
     document.getElementById('f-active').checked = true;
-    document.getElementById('f-allow-text').checked = false;
-    document.getElementById('f-text-required').checked = false;
-    document.getElementById('text-fields-wrap').style.display = 'none';
     clearCurrentGroup();
     addVariantRow();
   }
@@ -1766,12 +1763,6 @@ function addVariantRow(name, price) {
 function toggleEditRow(id) { /* kept for compat */ }
 function startNewGroup() { try{clearCurrentGroup();}catch(e){} setTimeout(function(){const l=document.getElementById('f-opt-label');if(l)l.focus();},50); }
 
-function toggleTextFields() {
-  const on = document.getElementById('f-allow-text').checked;
-  const wrap = document.getElementById('text-fields-wrap');
-  wrap.style.display = on ? 'flex' : 'none';
-  if (on) document.getElementById('f-text-label').focus();
-}
 function clearCurrentGroup() {
   const lbl=document.getElementById('f-opt-label'); if(lbl) lbl.value='';
   const pt=document.getElementById('f-price-type'); if(pt) pt.value='none';
